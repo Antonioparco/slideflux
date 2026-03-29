@@ -243,6 +243,44 @@ textarea{resize:vertical;line-height:1.6}
 .toast{position:fixed;bottom:18px;right:18px;background:var(--ink);color:white;padding:9px 14px;border-radius:9px;font-size:13px;font-weight:500;opacity:0;transition:opacity .3s;pointer-events:none;z-index:300;max-width:290px}
 .toast.show{opacity:1}
 @media(max-width:768px){.app{grid-template-columns:1fr}.sidebar{position:static;height:auto}.main{padding:1.25rem}.two-col{grid-template-columns:1fr}.export-opts{grid-template-columns:1fr}.preview-panel{width:100vw}}
+
+/* ICON MODAL */
+.icon-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:400;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.icon-modal-overlay.open{opacity:1;pointer-events:all}
+.icon-modal{background:#1A2320;border-radius:14px;width:380px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5)}
+.icon-modal-hdr{padding:1rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.icon-modal-title{font-size:13px;font-weight:600;color:white}
+.icon-search-input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;color:white;outline:none;margin:0 1.25rem;margin-top:10px;box-sizing:border-box}
+.icon-search-input:focus{border-color:var(--teal)}
+.icon-search-input::placeholder{color:rgba(255,255,255,.3)}
+.icon-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:1rem 1.25rem;overflow-y:auto;flex:1}
+.icon-cell{width:100%;aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;padding:6px}
+.icon-cell:hover{border-color:var(--teal);background:rgba(26,158,143,.15)}
+.icon-cell img{width:100%;height:100%;object-fit:contain;filter:invert(1)}
+.icon-cell.selected{border-color:var(--teal);border-width:2px;background:rgba(26,158,143,.2)}
+.icon-loading{padding:2rem;text-align:center;color:rgba(255,255,255,.4);font-size:12px}
+
+/* TEMPLATE PICKER IN PREVIEW */
+.tpl-picker{background:rgba(255,255,255,.05);border-radius:9px;padding:10px 13px}
+.tpl-picker-title{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.tpl-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.tpl-scroll::-webkit-scrollbar{height:3px}
+.tpl-scroll::-webkit-scrollbar-track{background:rgba(255,255,255,.05)}
+.tpl-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
+.tpl-chip{flex-shrink:0;padding:5px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.55);font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap;display:flex;align-items:center;gap:4px}
+.tpl-chip:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.85)}
+.tpl-chip.active{border-color:var(--teal);background:rgba(26,158,143,.15);color:var(--teal)}
+
+/* MULTI-SLOT IMAGE SECTIONS */
+.slot-grid{display:grid;gap:8px;padding:10px 13px}
+.slot-item{background:rgba(255,255,255,.04);border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,.08)}
+.slot-hdr{padding:7px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.06)}
+.slot-label{font-size:11px;font-weight:600;color:rgba(255,255,255,.5)}
+.slot-btns{display:flex;gap:4px}
+.slot-img{width:100%;height:70px;object-fit:cover;display:block}
+.slot-placeholder{height:56px;display:flex;align-items:center;justify-content:center;font-size:11px;color:rgba(255,255,255,.3)}
+.icon-preview{height:56px;display:flex;align-items:center;justify-content:center}
+.icon-preview img{width:32px;height:32px;object-fit:contain;filter:invert(1)}
 </style>
 </head>
 <body>
@@ -263,6 +301,20 @@ textarea{resize:vertical;line-height:1.6}
 </div>
 
 <input type="file" id="img-upload-input" accept="image/*" style="display:none" onchange="handleImageUpload(this)" />
+
+<!-- ICON SEARCH MODAL -->
+<div class="icon-modal-overlay" id="icon-modal-overlay" onclick="closeIconModal(event)">
+  <div class="icon-modal" onclick="event.stopPropagation()">
+    <div class="icon-modal-hdr">
+      <span class="icon-modal-title">Choose an icon</span>
+      <button onclick="closeIconModal()" style="background:none;border:none;color:rgba(255,255,255,.6);font-size:18px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <input type="text" class="icon-search-input" id="icon-search-input" placeholder="Search icons e.g. star, chart, user..." oninput="searchIcons(this.value)" />
+    <div class="icon-grid" id="icon-grid">
+      <div class="icon-loading">Type to search icons from Iconify</div>
+    </div>
+  </div>
+</div>
 
 <div class="app">
   <aside class="sidebar">
@@ -523,14 +575,21 @@ let expandedIndex=null,previewIndex=0;
 let slideImages={},slideTemplates={};
 let logoData=null,logoPos='top-left',logoWhiteBg=false;
 let brandOn=false,brandColors={primary:'#1A9E8F',secondary:'#0E7A6E',accent:'#D95B2A',text:'#1A2320'};
+// Per-slide per-slot images: slotImages[slideIndex][slotKey] = dataURL
+let slotImages={};
+// Per-slide icon selections: slideIcons[slideIndex][slotIndex] = {name, svg}
+let slideIcons={};
+// Icon search state
+let iconSearchSlide=null,iconSearchSlot=null;
 
 const TEMPLATES=[
-  {id:'bullets-image',label:'Bullets + Image',icon:'📝'},
-  {id:'3images',label:'3 Images',icon:'🖼'},
-  {id:'4icons',label:'4 Icons',icon:'⬡'},
-  {id:'fullbleed',label:'Full Bleed',icon:'🌅'},
+  {id:'default',label:'Bullets + Image',icon:'📝'},
   {id:'two-col',label:'Two Columns',icon:'▌▐'},
-  {id:'stat',label:'Big Stat',icon:'📊'}
+  {id:'fullbleed',label:'Full Bleed',icon:'🌅'},
+  {id:'stat',label:'Big Stat',icon:'📊'},
+  {id:'3images',label:'3 Images',icon:'🖼'},
+  {id:'2icons',label:'2 Icons',icon:'◈'},
+  {id:'4icons',label:'4 Icons',icon:'⬡'}
 ];
 
 const typeColors={title:'#1A9E8F',agenda:'#1A9E8F',content:'#0E7A6E',data:'#D95B2A',quote:'#B04520',cta:'#D95B2A',conclusion:'#1A9E8F',intro:'#0E7A6E'};
@@ -653,7 +712,7 @@ async function generateOutline(){
   document.getElementById('outline-wrap').style.display='block';
   document.getElementById('export-wrap').style.display='none';
   document.getElementById('outline-body').innerHTML='<div class="center-state"><div class="spinner"></div><p class="state-txt">Building your outline...</p></div>';
-  slideImages={};slideTemplates={};
+  slideImages={};slideTemplates={};slotImages={};slideIcons={};
   try{
     const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'outline',input,slideCount})});
     const data=await res.json();
@@ -757,54 +816,76 @@ function renderPreview(){
   const s=outline[previewIndex],t=getTheme();
   const isDark=s.type==='title'||s.type==='conclusion'||s.type==='cta'||previewIndex===0;
   const hasImg=!!slideImages[previewIndex];
-  const tpl=slideTemplates[previewIndex];
+  const tpl=slideTemplates[previewIndex]||'default';
+  const i=previewIndex;
 
-  document.getElementById('nav-count').textContent=`${previewIndex+1} / ${outline.length}`;
-  document.getElementById('nav-prev').disabled=previewIndex===0;
-  document.getElementById('nav-next').disabled=previewIndex===outline.length-1;
+  document.getElementById('nav-count').textContent=`${i+1} / ${outline.length}`;
+  document.getElementById('nav-prev').disabled=i===0;
+  document.getElementById('nav-next').disabled=i===outline.length-1;
 
   const titleBg=brandOn?brandColors.primary:'#'+t.titleBg;
   const accentC=brandOn?brandColors.accent:'#'+t.accent;
   const lightBg='#'+(t.slideBg||'FFFFFF');
   const textC='#'+(t.slideText||'1A2320');
-
-  // Logo overlay
   const isBottom=logoPos==='bottom-left';
-  const logoStyle=previewIndex===0
+  const logoStyle=i===0
     ?`position:absolute;${isBottom?'bottom:5%;':'top:5%;'}left:3%;max-height:13%;max-width:28%;object-fit:contain;z-index:10`
     :`position:absolute;${isBottom?'bottom:3%;':'top:3%;'}left:2%;max-height:7%;max-width:18%;object-fit:contain;z-index:10`;
   const logoHTML=logoData?`<img src="${logoData}" style="${logoStyle}" />`:'';
   const logoBgHTML=logoData&&logoWhiteBg
-    ?`<div style="position:absolute;${isBottom?'bottom:0':'top:0'};left:0;right:0;height:${previewIndex===0?'20%':'12%'};background:white;z-index:9;opacity:.95"></div>`:'';
+    ?`<div style="position:absolute;${isBottom?'bottom:0':'top:0'};left:0;right:0;height:${i===0?'20%':'12%'};background:white;z-index:9;opacity:.95"></div>`:'';
 
+  // ── SLIDE CANVAS ──
   let canvas='';
   if(isDark){
     canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
-      ${hasImg?`<img src="${slideImages[previewIndex]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`:''}
-      <div class="acc-bar"></div>
-      ${logoBgHTML}${logoHTML}
-      <div class="slide-num">${previewIndex+1}</div>
+      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`:''}
+      <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
+      <div class="slide-num">${i+1}</div>
       <div class="main-title">${s.title}</div>
       <div class="sub-txt">${(s.bullets||[])[0]||''}</div>
     </div>`;
   } else if(tpl==='3images'){
-    const imgs=Array(3).fill(null).map((_,k)=>`<div style="flex:1;background:${accentC}22;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:clamp(16px,3vw,24px)">🖼</div>`).join('');
+    const slots=(slotImages[i]||{});
+    const imgs=[0,1,2].map(k=>{
+      const src=slots[k];
+      return src
+        ?`<div style="flex:1;border-radius:4px;overflow:hidden"><img src="${src}" style="width:100%;height:100%;object-fit:cover" /></div>`
+        :`<div style="flex:1;background:${accentC}33;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2vw,14px);color:${accentC};font-weight:600">Image ${k+1}</div>`;
+    }).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
       <div class="sl-title" style="top:6%">${s.title}</div>
-      <div style="position:absolute;left:4%;right:4%;top:22%;bottom:5%;display:flex;gap:3%">${imgs}</div>
+      <div style="position:absolute;left:4%;right:4%;top:22%;height:55%;display:flex;gap:2%">${imgs}</div>
+      <div style="position:absolute;left:4%;right:4%;bottom:3%;display:flex;gap:2%">
+        ${[0,1,2].map(k=>`<div style="flex:1;font-size:clamp(6px,1vw,8px);color:${textC};text-align:center;line-height:1.3">${(s.bullets||[])[k]||''}</div>`).join('')}
+      </div>
     </div>`;
-  } else if(tpl==='4icons'){
-    const icons=['⚡','🎯','💡','🚀'];
-    const cells=icons.map((ic,k)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px"><div style="font-size:clamp(14px,2.5vw,20px)">${ic}</div><div style="font-size:clamp(6px,1.1vw,9px);color:${textC};text-align:center;font-weight:600">${(s.bullets||[])[k]||'Point '+(k+1)}</div></div>`).join('');
+  } else if(tpl==='2icons'||tpl==='4icons'){
+    const count=tpl==='2icons'?2:4;
+    const iconSlots=slideIcons[i]||{};
+    const slots=slotImages[i]||{};
+    const cells=Array(count).fill(null).map((_,k)=>{
+      const icon=iconSlots[k];
+      const img=slots[k];
+      const content=icon
+        ?`<img src="${icon.svg}" style="width:clamp(16px,3vw,24px);height:clamp(16px,3vw,24px);object-fit:contain;filter:invert(1) sepia(1) saturate(5) hue-rotate(120deg)" />`
+        :img
+          ?`<img src="${img}" style="width:clamp(16px,3vw,24px);height:clamp(16px,3vw,24px);object-fit:contain" />`
+          :`<div style="width:clamp(14px,2.5vw,20px);height:clamp(14px,2.5vw,20px);border-radius:50%;background:${accentC};opacity:.5"></div>`;
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px">
+        <div style="width:clamp(28px,5vw,44px);height:clamp(28px,5vw,44px);border-radius:50%;background:${accentC}22;display:flex;align-items:center;justify-content:center">${content}</div>
+        <div style="font-size:clamp(5px,.9vw,8px);color:${textC};text-align:center;font-weight:600;line-height:1.3">${(s.bullets||[])[k]||'Point '+(k+1)}</div>
+      </div>`;
+    }).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
       <div class="sl-title" style="top:6%">${s.title}</div>
-      <div style="position:absolute;left:3%;right:3%;top:24%;bottom:5%;display:flex;gap:2%">${cells}</div>
+      <div style="position:absolute;left:3%;right:3%;top:26%;bottom:5%;display:flex;gap:2%">${cells}</div>
     </div>`;
   } else if(tpl==='fullbleed'){
     canvas=`<div class="slide-canvas-inner" style="background:${titleBg}">
-      ${hasImg?`<img src="${slideImages[previewIndex]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5" />`:''}
+      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5" />`:''}
       <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 60%)"></div>
       ${logoBgHTML}${logoHTML}
       <div style="position:absolute;bottom:12%;left:6%;right:6%;font-size:clamp(13px,3vw,20px);font-weight:700;color:white;line-height:1.2">${s.title}</div>
@@ -830,28 +911,91 @@ function renderPreview(){
       <div style="position:absolute;top:68%;left:10%;right:10%;text-align:center;font-size:clamp(7px,1.3vw,10px);color:${textC};opacity:.7">${(s.bullets||[]).slice(1).join(' · ')}</div>
     </div>`;
   } else {
-    // Default: bullets left, image right
     const bullets=(s.bullets||[]).map(b=>`<div class="b-item"><div class="b-dot"></div><div class="b-txt">${b}</div></div>`).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
-      ${hasImg?`<img src="${slideImages[previewIndex]}" style="position:absolute;right:0;top:0;bottom:0;width:38%;height:100%;object-fit:cover" />`:''}
+      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;bottom:0;width:38%;height:100%;object-fit:cover" />`:''}
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
       <div class="sl-title" style="${hasImg?'right:42%':''}">${s.title}</div>
       <div class="acc-line"></div>
       <div class="sl-bullets" style="${hasImg?'right:42%':''}">${bullets}</div>
-      <div class="slide-num">${previewIndex+1} / ${outline.length}</div>
+      <div class="slide-num">${i+1} / ${outline.length}</div>
     </div>`;
+  }
+
+  // ── TEMPLATE PICKER ──
+  const tplPicker=`<div class="tpl-picker">
+    <div class="tpl-picker-title">Slide layout</div>
+    <div class="tpl-scroll">
+      ${TEMPLATES.map(t=>`<button class="tpl-chip${tpl===t.id?' active':''}" onclick="setTplFromPreview('${t.id}',this)">${t.icon} ${t.label}</button>`).join('')}
+    </div>
+  </div>`;
+
+  // ── MEDIA SECTIONS ──
+  let mediaSections='';
+  if(!isDark){
+    if(tpl==='3images'){
+      const slots=slotImages[i]||{};
+      mediaSections=`<div class="image-section">
+        <div class="image-section-hdr"><span class="image-section-title">🖼 Images</span></div>
+        <div class="slot-grid" style="grid-template-columns:1fr 1fr 1fr">
+          ${[0,1,2].map(k=>{
+            const src=slots[k];
+            return `<div class="slot-item">
+              <div class="slot-hdr"><span class="slot-label">Image ${k+1}</span><div class="slot-btns">
+                <button class="img-btn suggest" onclick="suggestSlotImage(${i},${k})" title="Suggest">✦</button>
+                <button class="img-btn upload" onclick="triggerSlotUpload(${i},${k})" title="Upload">⬆</button>
+                ${src?`<button class="img-btn remove" onclick="removeSlotImage(${i},${k})" title="Remove">✕</button>`:''}
+              </div></div>
+              ${src?`<img class="slot-img" src="${src}" />`:`<div class="slot-placeholder" style="background:${accentC}20;color:${accentC}">+</div>`}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    } else if(tpl==='2icons'||tpl==='4icons'){
+      const count=tpl==='2icons'?2:4;
+      const iconSlots=slideIcons[i]||{};
+      const imgSlots=slotImages[i]||{};
+      mediaSections=`<div class="image-section">
+        <div class="image-section-hdr"><span class="image-section-title">Icons / Images</span></div>
+        <div class="slot-grid" style="grid-template-columns:${count===2?'1fr 1fr':'1fr 1fr 1fr 1fr'}">
+          ${Array(count).fill(null).map((_,k)=>{
+            const icon=iconSlots[k];
+            const img=imgSlots[k];
+            const hasContent=!!(icon||img);
+            return `<div class="slot-item">
+              <div class="slot-hdr"><span class="slot-label">Slot ${k+1}</span><div class="slot-btns">
+                <button class="img-btn suggest" onclick="openIconModal(${i},${k})" title="Pick icon" style="color:#A89FE8;border-color:#6A5ACD50">⬡</button>
+                <button class="img-btn upload" onclick="triggerSlotUpload(${i},${k})" title="Upload image">⬆</button>
+                ${hasContent?`<button class="img-btn remove" onclick="removeSlotContent(${i},${k})" title="Remove">✕</button>`:''}
+              </div></div>
+              ${icon?`<div class="icon-preview"><img src="${icon.svg}" style="width:28px;height:28px;object-fit:contain;filter:invert(.7)" /></div>`
+                :img?`<img class="slot-img" src="${img}" style="height:50px" />`
+                :`<div class="slot-placeholder" style="background:${accentC}20;color:${accentC}">+</div>`}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+    } else if(tpl!=='two-col'&&tpl!=='stat'){
+      // Single image slot for default and fullbleed
+      mediaSections=hasImg
+        ?`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Slide image</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ New</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button><button class="img-btn remove" onclick="removeImage(${i})">✕ Remove</button></div></div><div class="image-preview-area"><img class="slide-image" src="${slideImages[i]}" /></div></div>`
+        :`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Add an image</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ Suggest</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button></div></div><div class="image-preview-area"><div class="image-empty">No image yet — suggest one or upload your own.</div></div></div>`;
+    }
   }
 
   const bulletsMeta=(s.bullets||[]).map(b=>`<li>${b}</li>`).join('');
   const noteHTML=s.speakerNote?`<div class="preview-note">🎤 ${s.speakerNote}</div>`:'';
-  const imageArea=hasImg
-    ?`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Slide image</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${previewIndex})">✦ New</button><button class="img-btn upload" onclick="triggerUpload(${previewIndex})">⬆ Upload</button><button class="img-btn remove" onclick="removeImage(${previewIndex})">✕ Remove</button></div></div><div class="image-preview-area"><img class="slide-image" src="${slideImages[previewIndex]}" /></div></div>`
-    :`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Add an image</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${previewIndex})">✦ Suggest</button><button class="img-btn upload" onclick="triggerUpload(${previewIndex})">⬆ Upload</button></div></div><div class="image-preview-area"><div class="image-empty">No image yet — suggest one or upload your own.</div></div></div>`;
 
   document.getElementById('preview-body').innerHTML=`
     <div class="slide-canvas">${canvas}</div>
-    ${imageArea}
+    ${tplPicker}
+    ${mediaSections}
     <div class="preview-meta"><div class="preview-meta-title">${s.title}</div><ul class="preview-meta-bullets">${bulletsMeta}</ul>${noteHTML}</div>`;
+}
+
+function setTplFromPreview(tplId, el){
+  slideTemplates[previewIndex]=tplId;
+  renderPreview();
 }
 
 // ── IMAGES ──
@@ -866,14 +1010,104 @@ async function suggestImage(i){
   }catch(e){showToast('Could not find image — upload your own');renderPreview();}
 }
 
-function triggerUpload(i){previewIndex=i;document.getElementById('img-upload-input').click()}
+async function suggestSlotImage(slideIdx,slot){
+  try{
+    const seed=Math.floor(Math.random()*999);
+    const url=`https://picsum.photos/seed/${seed}/600/400`;
+    await new Promise((res,rej)=>{const img=new Image();img.onload=res;img.onerror=rej;img.src=url});
+    if(!slotImages[slideIdx])slotImages[slideIdx]={};
+    slotImages[slideIdx][slot]=url;
+    renderPreview();showToast('Image found ✓');
+  }catch(e){showToast('Could not find image — upload your own');}
+}
+
+let uploadTarget={type:'main',slideIdx:0,slot:0};
+function triggerUpload(i){uploadTarget={type:'main',slideIdx:i};previewIndex=i;document.getElementById('img-upload-input').click()}
+function triggerSlotUpload(slideIdx,slot){uploadTarget={type:'slot',slideIdx,slot};document.getElementById('img-upload-input').click()}
+
 function handleImageUpload(inp){
   if(!inp.files[0])return;
   const r=new FileReader();
-  r.onload=ev=>{slideImages[previewIndex]=ev.target.result;renderPreview();showToast('Image uploaded ✓')};
+  r.onload=ev=>{
+    const data=ev.target.result;
+    if(uploadTarget.type==='slot'){
+      if(!slotImages[uploadTarget.slideIdx])slotImages[uploadTarget.slideIdx]={};
+      slotImages[uploadTarget.slideIdx][uploadTarget.slot]=data;
+    }else{
+      slideImages[uploadTarget.slideIdx]=data;
+      previewIndex=uploadTarget.slideIdx;
+    }
+    renderPreview();showToast('Image uploaded ✓');
+  };
   r.readAsDataURL(inp.files[0]);inp.value='';
 }
+
 function removeImage(i){delete slideImages[i];renderPreview();showToast('Image removed')}
+function removeSlotImage(slideIdx,slot){if(slotImages[slideIdx])delete slotImages[slideIdx][slot];renderPreview();showToast('Image removed')}
+function removeSlotContent(slideIdx,slot){
+  if(slotImages[slideIdx])delete slotImages[slideIdx][slot];
+  if(slideIcons[slideIdx])delete slideIcons[slideIdx][slot];
+  renderPreview();showToast('Removed');
+}
+
+// ── ICON SEARCH ──
+let iconSearchTimer=null;
+function openIconModal(slideIdx,slot){
+  iconSearchSlide=slideIdx;iconSearchSlot=slot;
+  document.getElementById('icon-modal-overlay').classList.add('open');
+  document.getElementById('icon-search-input').value='';
+  document.getElementById('icon-grid').innerHTML='<div class="icon-loading">Type to search 200,000+ icons from Iconify</div>';
+  setTimeout(()=>document.getElementById('icon-search-input').focus(),100);
+}
+
+function closeIconModal(e){
+  if(e&&e.target!==document.getElementById('icon-modal-overlay'))return;
+  document.getElementById('icon-modal-overlay').classList.remove('open');
+}
+
+function searchIcons(query){
+  clearTimeout(iconSearchTimer);
+  if(!query||query.length<2){document.getElementById('icon-grid').innerHTML='<div class="icon-loading">Type at least 2 characters...</div>';return;}
+  document.getElementById('icon-grid').innerHTML='<div class="icon-loading"><div class="spinner-sm" style="display:inline-block;margin-right:6px"></div>Searching...</div>';
+  iconSearchTimer=setTimeout(()=>fetchIcons(query),400);
+}
+
+async function fetchIcons(query){
+  try{
+    const res=await fetch(`https://api.iconify.design/search?query=${encodeURIComponent(query)}&limit=36`);
+    const data=await res.json();
+    const icons=data.icons||[];
+    if(!icons.length){document.getElementById('icon-grid').innerHTML='<div class="icon-loading">No icons found — try another keyword</div>';return;}
+    const grid=icons.map(name=>{
+      const [prefix,iconName]=name.split(':');
+      const svgUrl=`https://api.iconify.design/${prefix}/${iconName}.svg`;
+      return `<div class="icon-cell" onclick="selectIcon('${name}','${svgUrl}')" title="${name}">
+        <img src="${svgUrl}" onerror="this.parentElement.style.display='none'" />
+      </div>`;
+    }).join('');
+    document.getElementById('icon-grid').innerHTML=grid;
+  }catch(e){document.getElementById('icon-grid').innerHTML='<div class="icon-loading">Search failed — check connection</div>';}
+}
+
+function selectIcon(name,svgUrl){
+  if(!slideIcons[iconSearchSlide])slideIcons[iconSearchSlide]={};
+  slideIcons[iconSearchSlide][iconSearchSlot]={name,svg:svgUrl};
+  // also remove any uploaded image for this slot
+  if(slotImages[iconSearchSlide])delete slotImages[iconSearchSlide][iconSearchSlot];
+  document.getElementById('icon-modal-overlay').classList.remove('open');
+  renderPreview();showToast('Icon selected ✓');
+}
+
+// ── BUILD ──
+async function buildPresentation(){
+  if(!outline)return;
+  const payload={action:'pptx',title:outline[0]?.title||'Presentation',style,format:exportFmt,orientation,outline,slideImages,slotImages,slideIcons,slideTemplates,logoData,logoPos,logoWhiteBg,brandOn,brandColors};
+  showToast('Building your file, please wait...');
+  document.getElementById('build-btn').disabled=true;
+  try{
+    const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    if(!res.ok)throw new Error('Server error');
+    const blob=await res.blob();function removeImage(i){delete slideImages[i];renderPreview();showToast('Image removed')}
 
 // ── BUILD ──
 async function buildPresentation(){
