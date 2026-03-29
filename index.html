@@ -7,385 +7,91 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --teal: #1A9E8F;
-    --teal-dark: #0E7A6E;
-    --teal-light: #E6F7F5;
-    --teal-mid: #B2E4DF;
-    --orange: #D95B2A;
-    --orange-dark: #B04520;
-    --orange-light: #FAEEE8;
-    --ink: #1A2320;
-    --ink-2: #4A5553;
-    --ink-3: #8A9896;
-    --surface: #FFFFFF;
-    --bg: #F2F6F5;
-    --border: #D8E6E4;
-    --border-2: #C2D8D5;
+    --teal: #1A9E8F; --teal-dark: #0E7A6E; --teal-light: #E6F7F5; --teal-mid: #B2E4DF;
+    --orange: #D95B2A; --orange-dark: #B04520; --orange-light: #FAEEE8;
+    --ink: #1A2320; --ink-2: #4A5553; --ink-3: #8A9896;
+    --surface: #FFFFFF; --bg: #F2F6F5; --border: #D8E6E4; --border-2: #C2D8D5;
   }
-
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    min-height: 100vh;
-    color: var(--ink);
-  }
-
-  .app {
-    display: grid;
-    grid-template-columns: 272px 1fr;
-    min-height: 100vh;
-  }
-
-  /* ── SIDEBAR ── */
-  .sidebar {
-    background: var(--ink);
-    padding: 1.5rem 1rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-    overflow-y: auto;
-    position: sticky;
-    top: 0;
-    height: 100vh;
-  }
-
-  .logo-wrap {
-    padding-bottom: 1.25rem;
-    border-bottom: 1px solid rgba(255,255,255,.08);
-  }
-
-  .logo-lockup {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .logo-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: conic-gradient(from 180deg, #1A9E8F 0%, #0E7A6E 45%, #D95B2A 45%, #B04520 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
-
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; color: var(--ink); }
+  .app { display: grid; grid-template-columns: 272px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--ink); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto; position: sticky; top: 0; height: 100vh; }
+  .logo-wrap { padding-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .logo-lockup { display: flex; align-items: center; gap: 10px; }
+  .logo-icon { width: 36px; height: 36px; border-radius: 50%; background: conic-gradient(from 180deg, #1A9E8F 0%, #0E7A6E 45%, #D95B2A 45%, #B04520 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
   .logo-icon svg { width: 18px; height: 18px; }
-
-  .logo-text {
-    font-size: 22px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: white;
-  }
-
+  .logo-text { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; color: white; }
   .logo-text span { color: var(--orange); }
-
-  .sec-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: rgba(255,255,255,.3);
-    text-transform: uppercase;
-    letter-spacing: .1em;
-    margin-bottom: 8px;
-  }
-
-  /* Category grid */
+  .sec-label { font-size: 10px; font-weight: 600; color: rgba(255,255,255,.3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px; }
   .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-
-  .cat-btn {
-    padding: 8px 6px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,.08);
-    background: rgba(255,255,255,.03);
-    cursor: pointer;
-    font-size: 11px;
-    font-family: 'DM Sans', sans-serif;
-    color: rgba(255,255,255,.45);
-    text-align: center;
-    transition: all .15s;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-  }
-
+  .cat-btn { padding: 8px 6px; border-radius: 8px; border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.03); cursor: pointer; font-size: 11px; font-family: 'DM Sans', sans-serif; color: rgba(255,255,255,.45); text-align: center; transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 4px; }
   .cat-btn:hover { border-color: rgba(255,255,255,.18); color: rgba(255,255,255,.8); }
   .cat-btn.active { border-color: var(--teal); background: rgba(26,158,143,.15); color: var(--teal); font-weight: 500; }
   .cat-icon { font-size: 16px; line-height: 1; }
-
-  /* Style cards */
   .style-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
-
-  .style-card {
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 8px;
-    padding: 8px;
-    cursor: pointer;
-    background: rgba(255,255,255,.03);
-    transition: all .15s;
-  }
-
+  .style-card { border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 8px; cursor: pointer; background: rgba(255,255,255,.03); transition: all .15s; }
   .style-card:hover { border-color: rgba(255,255,255,.18); }
   .style-card.selected { border-color: var(--teal); border-width: 1.5px; background: rgba(26,158,143,.1); }
-
-  .style-preview {
-    height: 34px;
-    border-radius: 5px;
-    margin-bottom: 6px;
-    display: flex;
-    align-items: flex-end;
-    padding: 5px;
-  }
-
+  .style-preview { height: 34px; border-radius: 5px; margin-bottom: 6px; display: flex; align-items: flex-end; padding: 5px; }
   .style-bar { height: 3px; border-radius: 2px; }
   .style-name { font-size: 10px; font-weight: 500; color: rgba(255,255,255,.4); }
   .style-card.selected .style-name { color: var(--teal); }
-
-  /* Slide count */
   .count-row { display: flex; align-items: center; gap: 10px; }
-
-  .cnt-btn {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    border: 1px solid rgba(255,255,255,.15);
-    background: transparent;
-    cursor: pointer;
-    font-size: 16px;
-    color: rgba(255,255,255,.5);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'DM Sans', sans-serif;
-    transition: all .15s;
-  }
-
+  .cnt-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: transparent; cursor: pointer; font-size: 16px; color: rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center; font-family: 'DM Sans', sans-serif; transition: all .15s; }
   .cnt-btn:hover { border-color: var(--teal); color: var(--teal); }
   .cnt-val { font-size: 17px; font-weight: 600; color: white; min-width: 24px; text-align: center; }
-
-  /* ── MAIN ── */
   .main { padding: 2rem 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
-
-  .page-header { margin-bottom: .25rem; }
   .page-title { font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -.02em; margin-bottom: 4px; }
   .page-sub { font-size: 13px; color: var(--ink-2); }
-
-  /* Cards */
-  .card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 4px rgba(26,35,32,.04);
-  }
-
-  /* Input tabs */
-  .inp-tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 1.25rem;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: .875rem;
-  }
-
-  .itab {
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    background: transparent;
-    color: var(--ink-2);
-    display: flex; align-items: center; gap: 6px;
-    transition: all .12s;
-  }
-
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(26,35,32,.04); }
+  .inp-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: .875rem; }
+  .itab { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; background: transparent; color: var(--ink-2); display: flex; align-items: center; gap: 6px; transition: all .12s; }
   .itab.active { background: var(--teal-light); color: var(--teal-dark); }
   .itab:hover:not(.active) { background: var(--bg); }
-
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
-
-  /* Form fields */
-  .field-lbl {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--ink-2);
-    display: block;
-    margin-bottom: 6px;
-  }
-
+  .field-lbl { font-size: 12px; font-weight: 500; color: var(--ink-2); display: block; margin-bottom: 6px; }
   .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
   .field-wrap { margin-bottom: 12px; }
-
-  input[type="text"], textarea {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 9px 12px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    color: var(--ink);
-    background: var(--surface);
-    outline: none;
-    transition: border-color .15s, box-shadow .15s;
-  }
-
-  input[type="text"]:focus, textarea:focus {
-    border-color: var(--teal);
-    box-shadow: 0 0 0 3px rgba(26,158,143,.1);
-  }
-
+  input[type="text"], textarea { width: 100%; border: 1px solid var(--border); border-radius: 9px; padding: 9px 12px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); outline: none; transition: border-color .15s, box-shadow .15s; }
+  input[type="text"]:focus, textarea:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(26,158,143,.1); }
   textarea { resize: vertical; line-height: 1.6; }
-
-  /* Upload zone */
-  .upload-zone {
-    border: 1.5px dashed var(--border-2);
-    border-radius: 10px;
-    padding: 2.5rem 1rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all .15s;
-    margin-bottom: 12px;
-  }
-
-  .upload-zone:hover, .upload-zone.drag {
-    border-color: var(--teal);
-    background: var(--teal-light);
-  }
-
+  .upload-zone { border: 1.5px dashed var(--border-2); border-radius: 10px; padding: 2.5rem 1rem; text-align: center; cursor: pointer; transition: all .15s; margin-bottom: 12px; }
+  .upload-zone:hover, .upload-zone.drag { border-color: var(--teal); background: var(--teal-light); }
   .upload-zone input { display: none; }
   .up-icon { font-size: 28px; margin-bottom: 8px; }
   .up-title { font-size: 14px; font-weight: 500; color: var(--ink); margin-bottom: 3px; }
   .up-sub { font-size: 12px; color: var(--ink-3); }
-
-  .file-pill {
-    display: inline-flex; align-items: center; gap: 6px;
-    background: var(--teal-light);
-    border: 1px solid var(--teal-mid);
-    border-radius: 99px;
-    padding: 5px 12px;
-    font-size: 12px;
-    color: var(--teal-dark);
-    margin-top: 10px;
-  }
-
-  .file-pill button {
-    background: none; border: none; cursor: pointer;
-    color: var(--teal); font-size: 15px; line-height: 1; padding: 0; display: flex;
-  }
-
-  /* Generate button */
-  .gen-btn {
-    width: 100%; padding: 11px;
-    border-radius: 9px;
-    background: var(--teal);
-    color: white; border: none; cursor: pointer;
-    font-size: 14px; font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: background .15s, transform .1s;
-    margin-top: 4px;
-  }
-
+  .file-pill { display: inline-flex; align-items: center; gap: 6px; background: var(--teal-light); border: 1px solid var(--teal-mid); border-radius: 99px; padding: 5px 12px; font-size: 12px; color: var(--teal-dark); margin-top: 10px; }
+  .file-pill button { background: none; border: none; cursor: pointer; color: var(--teal); font-size: 15px; line-height: 1; padding: 0; display: flex; }
+  .gen-btn { width: 100%; padding: 11px; border-radius: 9px; background: var(--teal); color: white; border: none; cursor: pointer; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .15s, transform .1s; margin-top: 4px; }
   .gen-btn:hover { background: var(--teal-dark); }
   .gen-btn:active { transform: scale(.99); }
   .gen-btn:disabled { background: var(--border); color: var(--ink-3); cursor: not-allowed; transform: none; }
-
-  /* Outline */
-  .outline-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 1px 4px rgba(26,35,32,.04);
-  }
-
-  .outline-hdr {
-    padding: 12px 1.5rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg);
-    display: flex; align-items: center; justify-content: space-between;
-  }
-
+  .outline-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(26,35,32,.04); }
+  .outline-hdr { padding: 12px 1.5rem; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: space-between; }
   .outline-hdr-title { font-size: 13px; font-weight: 600; color: var(--ink); }
-
-  .badge {
-    font-size: 11px; font-weight: 600;
-    padding: 3px 9px; border-radius: 99px;
-    background: var(--teal-light); color: var(--teal-dark);
-    border: 1px solid var(--teal-mid);
-  }
-
+  .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--teal-light); color: var(--teal-dark); border: 1px solid var(--teal-mid); }
   .outline-body { padding: .75rem 1.5rem; }
-
-  .slide-row {
-    display: flex; gap: 12px; align-items: flex-start;
-    padding: 9px 0;
-    border-bottom: 1px solid var(--border);
-  }
-
+  .slide-row { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--border); }
   .slide-row:last-child { border-bottom: none; }
-
-  .snum {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: var(--teal); color: white;
-    font-size: 11px; font-weight: 600;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-top: 2px;
-  }
-
+  .snum { width: 22px; height: 22px; border-radius: 50%; background: var(--teal); color: white; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
   .sinfo { flex: 1; }
   .stitle { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
   .sdesc { font-size: 11px; color: var(--ink-2); line-height: 1.5; }
-
-  .stype {
-    font-size: 10px; font-weight: 600;
-    padding: 2px 7px; border-radius: 99px;
-    flex-shrink: 0; align-self: flex-start; margin-top: 3px;
-  }
-
-  /* Export card */
-  .export-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 4px rgba(26,35,32,.04);
-  }
-
+  .stype { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; flex-shrink: 0; align-self: flex-start; margin-top: 3px; }
+  .export-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(26,35,32,.04); }
   .export-title { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 1rem; }
-
   .export-opts { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
-
-  .exp-opt {
-    border: 1px solid var(--border);
-    border-radius: 10px; padding: 14px 8px;
-    cursor: pointer; text-align: center;
-    transition: all .15s; background: var(--surface);
-  }
-
+  .exp-opt { border: 1px solid var(--border); border-radius: 10px; padding: 14px 8px; cursor: pointer; text-align: center; transition: all .15s; background: var(--surface); }
   .exp-opt:hover { border-color: var(--border-2); background: var(--bg); }
   .exp-opt.selected.pptx { border-color: var(--orange); border-width: 2px; background: var(--orange-light); }
   .exp-opt.selected.pdf { border-color: var(--teal); border-width: 2px; background: var(--teal-light); }
   .exp-opt.selected.both { border-color: #6A5ACD; border-width: 2px; background: #F0EEFF; }
-
   .exp-icon { font-size: 22px; margin-bottom: 5px; }
   .exp-name { font-size: 12px; font-weight: 600; color: var(--ink); }
   .exp-desc { font-size: 10px; color: var(--ink-3); margin-top: 2px; }
-
-  .build-btn {
-    width: 100%; padding: 11px;
-    border-radius: 9px; border: none; cursor: pointer;
-    font-size: 14px; font-weight: 600;
-    font-family: 'DM Sans', sans-serif;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: background .15s, transform .1s;
-  }
-
+  .build-btn { width: 100%; padding: 11px; border-radius: 9px; border: none; cursor: pointer; font-size: 14px; font-weight: 600; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .15s, transform .1s; }
   .build-btn:active { transform: scale(.99); }
   .build-btn.pptx { background: var(--orange); color: white; }
   .build-btn.pptx:hover { background: var(--orange-dark); }
@@ -394,64 +100,26 @@
   .build-btn.both { background: #6A5ACD; color: white; }
   .build-btn.both:hover { background: #5848B0; }
   .build-btn:disabled { background: var(--border); color: var(--ink-3); cursor: not-allowed; transform: none; }
-
-  /* Loading / empty */
-  .center-state {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; padding: 3rem; gap: 12px;
-  }
-
-  .spinner {
-    width: 30px; height: 30px;
-    border: 2px solid var(--border);
-    border-top-color: var(--teal);
-    border-radius: 50%;
-    animation: spin .8s linear infinite;
-  }
-
+  .center-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; gap: 12px; }
+  .spinner { width: 30px; height: 30px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .state-txt { font-size: 13px; color: var(--ink-2); }
-
-  /* Toast */
-  .toast {
-    position: fixed; bottom: 20px; right: 20px;
-    background: var(--ink); color: white;
-    padding: 10px 16px; border-radius: 10px;
-    font-size: 13px; font-weight: 500;
-    opacity: 0; transition: opacity .3s;
-    pointer-events: none; z-index: 100; max-width: 300px;
-  }
-
+  .toast { position: fixed; bottom: 20px; right: 20px; background: var(--ink); color: white; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 100; max-width: 300px; }
   .toast.show { opacity: 1; }
-
-  /* Responsive */
-  @media (max-width: 768px) {
-    .app { grid-template-columns: 1fr; }
-    .sidebar { position: static; height: auto; }
-    .main { padding: 1.25rem; }
-    .two-col { grid-template-columns: 1fr; }
-    .export-opts { grid-template-columns: 1fr; }
-  }
+  @media (max-width: 768px) { .app { grid-template-columns: 1fr; } .sidebar { position: static; height: auto; } .main { padding: 1.25rem; } .two-col { grid-template-columns: 1fr; } .export-opts { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-
 <div class="app">
-
-  <!-- ── SIDEBAR ── -->
   <aside class="sidebar">
     <div class="logo-wrap">
       <div class="logo-lockup">
         <div class="logo-icon">
-          <svg viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M9 3L13 9L9 15L5 9L9 3Z" fill="white" opacity="0.9"/>
-            <path d="M9 3L13 9H5L9 3Z" fill="white"/>
-          </svg>
+          <svg viewBox="0 0 18 18" fill="none"><path d="M9 3L13 9L9 15L5 9L9 3Z" fill="white" opacity="0.9"/><path d="M9 3L13 9H5L9 3Z" fill="white"/></svg>
         </div>
         <div class="logo-text">slide<span>flux</span></div>
       </div>
     </div>
-
     <div>
       <p class="sec-label">Presentation category</p>
       <div class="cat-grid">
@@ -465,49 +133,35 @@
         <button class="cat-btn" onclick="setCat('other',this)"><span class="cat-icon">✦</span>Other</button>
       </div>
     </div>
-
     <div>
       <p class="sec-label">Visual style</p>
       <div class="style-grid">
         <div class="style-card selected" onclick="setStyle('professional',this)">
-          <div class="style-preview" style="background:#1E2761">
-            <div class="style-bar" style="width:55%;background:rgba(255,255,255,.8)"></div>
-          </div>
+          <div class="style-preview" style="background:#1E2761"><div class="style-bar" style="width:55%;background:rgba(255,255,255,.8)"></div></div>
           <div class="style-name">Professional</div>
         </div>
         <div class="style-card" onclick="setStyle('teal',this)">
-          <div class="style-preview" style="background:#1A9E8F">
-            <div class="style-bar" style="width:45%;background:#E6F7F5"></div>
-          </div>
+          <div class="style-preview" style="background:#1A9E8F"><div class="style-bar" style="width:45%;background:#E6F7F5"></div></div>
           <div class="style-name">Teal</div>
         </div>
         <div class="style-card" onclick="setStyle('warm',this)">
-          <div class="style-preview" style="background:#D95B2A">
-            <div class="style-bar" style="width:48%;background:#FAEEE8"></div>
-          </div>
+          <div class="style-preview" style="background:#D95B2A"><div class="style-bar" style="width:48%;background:#FAEEE8"></div></div>
           <div class="style-name">Warm</div>
         </div>
         <div class="style-card" onclick="setStyle('minimal',this)">
-          <div class="style-preview" style="background:#F0F0EE;border:.5px solid #ddd">
-            <div class="style-bar" style="width:50%;background:#1A2320"></div>
-          </div>
+          <div class="style-preview" style="background:#F0F0EE;border:.5px solid #ddd"><div class="style-bar" style="width:50%;background:#1A2320"></div></div>
           <div class="style-name">Minimal</div>
         </div>
         <div class="style-card" onclick="setStyle('berry',this)">
-          <div class="style-preview" style="background:#6D2E46">
-            <div class="style-bar" style="width:50%;background:#ECE2D0"></div>
-          </div>
+          <div class="style-preview" style="background:#6D2E46"><div class="style-bar" style="width:50%;background:#ECE2D0"></div></div>
           <div class="style-name">Berry</div>
         </div>
         <div class="style-card" onclick="setStyle('forest',this)">
-          <div class="style-preview" style="background:#2C5F2D">
-            <div class="style-bar" style="width:45%;background:#97BC62"></div>
-          </div>
+          <div class="style-preview" style="background:#2C5F2D"><div class="style-bar" style="width:45%;background:#97BC62"></div></div>
           <div class="style-name">Forest</div>
         </div>
       </div>
     </div>
-
     <div>
       <p class="sec-label">Number of slides</p>
       <div class="count-row">
@@ -519,97 +173,55 @@
     </div>
   </aside>
 
-  <!-- ── MAIN ── -->
   <main class="main">
-    <div class="page-header">
+    <div>
       <h1 class="page-title">Create a presentation</h1>
       <p class="page-sub">Pick a category, describe your topic, and export in seconds</p>
     </div>
-
-    <!-- Input card -->
     <div class="card">
       <div class="inp-tabs">
         <button class="itab active" onclick="switchTab('topic',this)">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2h8M2 5h6M2 8h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>
-          Topic
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2h8M2 5h6M2 8h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Topic
         </button>
         <button class="itab" onclick="switchTab('bullets',this)">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="2" cy="3" r="1" fill="currentColor"/><circle cx="2" cy="6" r="1" fill="currentColor"/><circle cx="2" cy="9" r="1" fill="currentColor"/><path d="M4.5 3h5.5M4.5 6h5.5M4.5 9h5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-          Bullet outline
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="2" cy="3" r="1" fill="currentColor"/><circle cx="2" cy="6" r="1" fill="currentColor"/><circle cx="2" cy="9" r="1" fill="currentColor"/><path d="M4.5 3h5.5M4.5 6h5.5M4.5 9h5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Bullet outline
         </button>
         <button class="itab" onclick="switchTab('notes',this)">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1" width="9" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4h5M3.5 6.5h5M3.5 9h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>
-          Free-form notes
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1" width="9" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4h5M3.5 6.5h5M3.5 9h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>Free-form notes
         </button>
         <button class="itab" onclick="switchTab('upload',this)">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 8V3M4 5l2-2 2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 9.5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-          Upload file
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 8V3M4 5l2-2 2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 9.5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Upload file
         </button>
       </div>
 
-      <!-- Topic pane -->
       <div id="pane-topic" class="tab-pane active">
         <div class="two-col">
-          <div>
-            <label class="field-lbl">Presentation topic *</label>
-            <input type="text" id="topic-in" placeholder="e.g. The future of renewable energy" />
-          </div>
-          <div>
-            <label class="field-lbl">Target audience</label>
-            <input type="text" id="audience-in" placeholder="e.g. Investors, executives" />
-          </div>
+          <div><label class="field-lbl">Presentation topic *</label><input type="text" id="topic-in" placeholder="e.g. The future of renewable energy" /></div>
+          <div><label class="field-lbl">Target audience</label><input type="text" id="audience-in" placeholder="e.g. Investors, executives" /></div>
         </div>
-        <div class="field-wrap">
-          <label class="field-lbl">Main goal</label>
-          <input type="text" id="goal-in" placeholder="e.g. Persuade, inform, pitch, train, inspire..." />
-        </div>
-        <div class="field-wrap" style="margin-bottom:0">
-          <label class="field-lbl">Key message (optional)</label>
-          <input type="text" id="msg-in" placeholder="e.g. We should adopt solar energy by 2027" />
-        </div>
+        <div class="field-wrap"><label class="field-lbl">Main goal</label><input type="text" id="goal-in" placeholder="e.g. Persuade, inform, pitch, train..." /></div>
+        <div class="field-wrap" style="margin-bottom:0"><label class="field-lbl">Key message (optional)</label><input type="text" id="msg-in" placeholder="e.g. We should adopt solar energy by 2027" /></div>
       </div>
 
-      <!-- Bullets pane -->
       <div id="pane-bullets" class="tab-pane">
-        <div class="field-wrap">
-          <label class="field-lbl">Presentation title</label>
-          <input type="text" id="bul-title" placeholder="Enter a title for your presentation" />
-        </div>
-        <div class="field-wrap" style="margin-bottom:0">
-          <label class="field-lbl">Your slide outline (one item per line) *</label>
-          <textarea id="bul-in" rows="6" placeholder="1. Introduction&#10;2. The problem we face&#10;3. Our proposed solution&#10;4. Market opportunity&#10;5. Implementation roadmap&#10;6. Expected outcomes&#10;7. Q&amp;A"></textarea>
-        </div>
+        <div class="field-wrap"><label class="field-lbl">Presentation title</label><input type="text" id="bul-title" placeholder="Enter a title" /></div>
+        <div class="field-wrap" style="margin-bottom:0"><label class="field-lbl">Your slide outline *</label><textarea id="bul-in" rows="6" placeholder="1. Introduction&#10;2. The problem&#10;3. Our solution&#10;4. Market opportunity&#10;5. Next steps"></textarea></div>
       </div>
 
-      <!-- Notes pane -->
       <div id="pane-notes" class="tab-pane">
-        <div class="field-wrap">
-          <label class="field-lbl">Your notes or raw content *</label>
-          <textarea id="notes-in" rows="7" placeholder="Paste any raw text, notes, or content here. Claude will organise it into a structured presentation."></textarea>
-        </div>
-        <div class="field-wrap" style="margin-bottom:0">
-          <label class="field-lbl">Additional instructions</label>
-          <input type="text" id="notes-hint" placeholder="e.g. Focus on data, keep it concise, add a Q&A slide..." />
-        </div>
+        <div class="field-wrap"><label class="field-lbl">Your notes or raw content *</label><textarea id="notes-in" rows="7" placeholder="Paste any raw text or notes here..."></textarea></div>
+        <div class="field-wrap" style="margin-bottom:0"><label class="field-lbl">Additional instructions</label><input type="text" id="notes-hint" placeholder="e.g. Focus on data, keep it concise..." /></div>
       </div>
 
-      <!-- Upload pane -->
       <div id="pane-upload" class="tab-pane">
-        <div class="upload-zone" id="drop-zone"
-          onclick="document.getElementById('file-in').click()"
-          ondragover="dragOver(event)"
-          ondragleave="dragLeave()"
-          ondrop="dropFile(event)">
+        <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-in').click()" ondragover="dragOver(event)" ondragleave="dragLeave()" ondrop="dropFile(event)">
           <input type="file" id="file-in" accept=".pdf,.txt,.docx,.md" onchange="fileSelected(this)" />
           <div class="up-icon">📂</div>
           <p class="up-title">Drop a file or click to browse</p>
           <p class="up-sub">Supported: PDF, TXT, DOCX, Markdown</p>
           <div id="file-pill-wrap"></div>
         </div>
-        <div class="field-wrap" style="margin-bottom:0">
-          <label class="field-lbl">Additional instructions (optional)</label>
-          <input type="text" id="upload-hint" placeholder="e.g. Summarise key points, focus on section 3..." />
-        </div>
+        <div class="field-wrap" style="margin-bottom:0"><label class="field-lbl">Additional instructions (optional)</label><input type="text" id="upload-hint" placeholder="e.g. Summarise key points..." /></div>
       </div>
 
       <button class="gen-btn" id="gen-btn" onclick="generateOutline()">
@@ -618,296 +230,135 @@
       </button>
     </div>
 
-    <!-- Outline -->
     <div id="outline-wrap" class="outline-wrap" style="display:none">
       <div class="outline-hdr">
         <span class="outline-hdr-title" id="outline-lbl">Slide outline</span>
         <span class="badge" id="outline-badge">8 slides</span>
       </div>
-      <div class="outline-body" id="outline-body">
-        <div class="center-state">
-          <div class="spinner"></div>
-          <p class="state-txt">Building your outline...</p>
-        </div>
-      </div>
+      <div class="outline-body" id="outline-body"></div>
     </div>
 
-    <!-- Export -->
     <div id="export-wrap" class="export-card" style="display:none">
       <p class="export-title">Choose export format</p>
       <div class="export-opts">
-        <div class="exp-opt pptx selected" onclick="setExport('pptx',this)" id="eo-pptx">
-          <div class="exp-icon">📊</div>
-          <div class="exp-name">PowerPoint</div>
-          <div class="exp-desc">.pptx file</div>
-        </div>
-        <div class="exp-opt pdf" onclick="setExport('pdf',this)" id="eo-pdf">
-          <div class="exp-icon">📄</div>
-          <div class="exp-name">PDF</div>
-          <div class="exp-desc">.pdf file</div>
-        </div>
-        <div class="exp-opt both" onclick="setExport('both',this)" id="eo-both">
-          <div class="exp-icon">📦</div>
-          <div class="exp-name">Both</div>
-          <div class="exp-desc">pptx + pdf</div>
-        </div>
+        <div class="exp-opt pptx selected" onclick="setExport('pptx',this)"><div class="exp-icon">📊</div><div class="exp-name">PowerPoint</div><div class="exp-desc">.pptx file</div></div>
+        <div class="exp-opt pdf" onclick="setExport('pdf',this)"><div class="exp-icon">📄</div><div class="exp-name">PDF</div><div class="exp-desc">.pdf file</div></div>
+        <div class="exp-opt both" onclick="setExport('both',this)"><div class="exp-icon">📦</div><div class="exp-name">Both</div><div class="exp-desc">pptx + pdf</div></div>
       </div>
       <button class="build-btn pptx" id="build-btn" onclick="buildPresentation()">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11L12 2M12 2H7M12 2V7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Build PowerPoint file
       </button>
     </div>
-
   </main>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  // ── STATE ──
-  let cat = null;
-  let style = 'professional';
-  let slideCount = 8;
-  let activeTab = 'topic';
-  let exportFmt = 'pptx';
-  let outline = null;
-  let uploadedFileName = '';
-  let uploadedContent = '';
+  let cat=null, style='professional', slideCount=8, activeTab='topic';
+  let exportFmt='pptx', outline=null, uploadedFileName='', uploadedContent='';
+  const typeColors={title:'#1A9E8F',agenda:'#1A9E8F',content:'#0E7A6E',data:'#D95B2A',quote:'#B04520',cta:'#D95B2A',conclusion:'#1A9E8F',intro:'#0E7A6E'};
 
-  // ── YOUR ANTHROPIC API KEY ──
-  // Replace the value below with your actual key from console.anthropic.com
-  const ANTHROPIC_API_KEY = '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';
+  function setCat(c,el){cat=c;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active')}
+  function setStyle(s,el){style=s;document.querySelectorAll('.style-card').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')}
+  function adjCount(d){slideCount=Math.max(3,Math.min(20,slideCount+d));document.getElementById('cnt').textContent=slideCount}
+  function switchTab(t,el){activeTab=t;document.querySelectorAll('.itab').forEach(b=>b.classList.remove('active'));document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));el.classList.add('active');document.getElementById('pane-'+t).classList.add('active')}
+  function dragOver(e){e.preventDefault();document.getElementById('drop-zone').classList.add('drag')}
+  function dragLeave(){document.getElementById('drop-zone').classList.remove('drag')}
+  function dropFile(e){e.preventDefault();document.getElementById('drop-zone').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processFile(f)}
+  function fileSelected(inp){if(inp.files[0])processFile(inp.files[0])}
+  function processFile(f){uploadedFileName=f.name;const r=new FileReader();r.onload=ev=>{uploadedContent=ev.target.result.substring(0,6000);document.getElementById('file-pill-wrap').innerHTML=`<div class="file-pill">📎 ${f.name}<button onclick="clearFile(event)">×</button></div>`};r.readAsText(f)}
+  function clearFile(e){e.stopPropagation();uploadedFileName='';uploadedContent='';document.getElementById('file-pill-wrap').innerHTML='';document.getElementById('file-in').value=''}
 
-  const typeColors = {
-    title: '#1A9E8F', agenda: '#1A9E8F', content: '#0E7A6E',
-    data: '#D95B2A', quote: '#B04520', cta: '#D95B2A', conclusion: '#1A9E8F', intro: '#0E7A6E'
-  };
-
-  // ── SIDEBAR CONTROLS ──
-  function setCat(c, el) {
-    cat = c;
-    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-    el.classList.add('active');
-  }
-
-  function setStyle(s, el) {
-    style = s;
-    document.querySelectorAll('.style-card').forEach(c => c.classList.remove('selected'));
+  function setExport(fmt,el){
+    exportFmt=fmt;
+    document.querySelectorAll('.exp-opt').forEach(o=>o.classList.remove('selected'));
     el.classList.add('selected');
+    const btn=document.getElementById('build-btn');
+    const labels={pptx:'Build PowerPoint file',pdf:'Build PDF file',both:'Build both files'};
+    btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11L12 2M12 2H7M12 2V7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>${labels[fmt]}`;
+    btn.className='build-btn '+fmt;
   }
 
-  function adjCount(d) {
-    slideCount = Math.max(3, Math.min(20, slideCount + d));
-    document.getElementById('cnt').textContent = slideCount;
-  }
-
-  // ── TABS ──
-  function switchTab(t, el) {
-    activeTab = t;
-    document.querySelectorAll('.itab').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-    el.classList.add('active');
-    document.getElementById('pane-' + t).classList.add('active');
-  }
-
-  // ── FILE UPLOAD ──
-  function dragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag'); }
-  function dragLeave() { document.getElementById('drop-zone').classList.remove('drag'); }
-  function dropFile(e) {
-    e.preventDefault();
-    document.getElementById('drop-zone').classList.remove('drag');
-    const f = e.dataTransfer.files[0];
-    if (f) processFile(f);
-  }
-  function fileSelected(inp) { if (inp.files[0]) processFile(inp.files[0]); }
-
-  function processFile(f) {
-    uploadedFileName = f.name;
-    const r = new FileReader();
-    r.onload = ev => {
-      uploadedContent = ev.target.result.substring(0, 6000);
-      document.getElementById('file-pill-wrap').innerHTML =
-        `<div class="file-pill">📎 ${f.name}<button onclick="clearFile(event)">×</button></div>`;
-    };
-    r.readAsText(f);
-  }
-
-  function clearFile(e) {
-    e.stopPropagation();
-    uploadedFileName = ''; uploadedContent = '';
-    document.getElementById('file-pill-wrap').innerHTML = '';
-    document.getElementById('file-in').value = '';
-  }
-
-  // ── EXPORT FORMAT ──
-  function setExport(fmt, el) {
-    exportFmt = fmt;
-    document.querySelectorAll('.exp-opt').forEach(o => o.classList.remove('selected'));
-    el.classList.add('selected');
-    const btn = document.getElementById('build-btn');
-    const labels = { pptx: 'Build PowerPoint file', pdf: 'Build PDF file', both: 'Build both files' };
-    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11L12 2M12 2H7M12 2V7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>${labels[fmt]}`;
-    btn.className = 'build-btn ' + fmt;
-  }
-
-  // ── BUILD USER PROMPT ──
-  function getUserPrompt() {
-    const catLabel = cat ? cat.charAt(0).toUpperCase() + cat.slice(1) : 'General';
-    const styleMap = {
-      professional: 'dark navy blue corporate',
-      teal: 'teal (#1A9E8F) and white, with orange (#D95B2A) accents',
-      warm: 'warm orange (#D95B2A) and terracotta',
-      minimal: 'clean black and white minimalist',
-      berry: 'elegant berry (#6D2E46) and cream',
-      forest: 'natural forest green (#2C5F2D)'
-    };
-
-    if (activeTab === 'topic') {
-      const t = document.getElementById('topic-in').value.trim();
-      if (!t) return null;
-      const a = document.getElementById('audience-in').value.trim();
-      const g = document.getElementById('goal-in').value.trim();
-      const m = document.getElementById('msg-in').value.trim();
-      return `Category: ${catLabel}\nTopic: ${t}${a ? '\nAudience: ' + a : ''}${g ? '\nGoal: ' + g : ''}${m ? '\nKey message: ' + m : ''}\nStyle: ${styleMap[style]}`;
-    } else if (activeTab === 'bullets') {
-      const b = document.getElementById('bul-in').value.trim();
-      if (!b) return null;
-      const t = document.getElementById('bul-title').value.trim();
-      return `Category: ${catLabel}\n${t ? 'Title: ' + t + '\n' : ''}Outline:\n${b}\nStyle: ${styleMap[style]}`;
-    } else if (activeTab === 'notes') {
-      const n = document.getElementById('notes-in').value.trim();
-      if (!n) return null;
-      const h = document.getElementById('notes-hint').value.trim();
-      return `Category: ${catLabel}\nNotes:\n${n}${h ? '\nInstructions: ' + h : ''}\nStyle: ${styleMap[style]}`;
-    } else {
-      if (!uploadedContent) return null;
-      const h = document.getElementById('upload-hint').value.trim();
-      return `Category: ${catLabel}\nFile: ${uploadedFileName}\nContent:\n${uploadedContent}${h ? '\nInstructions: ' + h : ''}\nStyle: ${styleMap[style]}`;
+  function getUserInput(){
+    const catLabel=cat?cat.charAt(0).toUpperCase()+cat.slice(1):'General';
+    const styleMap={professional:'dark navy blue corporate',teal:'teal and white with orange accents',warm:'warm orange and terracotta',minimal:'clean black and white minimalist',berry:'elegant berry and cream',forest:'natural forest green'};
+    if(activeTab==='topic'){
+      const t=document.getElementById('topic-in').value.trim();if(!t)return null;
+      const a=document.getElementById('audience-in').value.trim(),g=document.getElementById('goal-in').value.trim(),m=document.getElementById('msg-in').value.trim();
+      return `Category: ${catLabel}\nTopic: ${t}${a?'\nAudience: '+a:''}${g?'\nGoal: '+g:''}${m?'\nKey message: '+m:''}\nStyle: ${styleMap[style]}`;
+    }else if(activeTab==='bullets'){
+      const b=document.getElementById('bul-in').value.trim();if(!b)return null;
+      const t=document.getElementById('bul-title').value.trim();
+      return `Category: ${catLabel}\n${t?'Title: '+t+'\n':''}Outline:\n${b}\nStyle: ${styleMap[style]}`;
+    }else if(activeTab==='notes'){
+      const n=document.getElementById('notes-in').value.trim();if(!n)return null;
+      const h=document.getElementById('notes-hint').value.trim();
+      return `Category: ${catLabel}\nNotes:\n${n}${h?'\nInstructions: '+h:''}\nStyle: ${styleMap[style]}`;
+    }else{
+      if(!uploadedContent)return null;
+      const h=document.getElementById('upload-hint').value.trim();
+      return `Category: ${catLabel}\nFile: ${uploadedFileName}\nContent:\n${uploadedContent}${h?'\nInstructions: '+h:''}\nStyle: ${styleMap[style]}`;
     }
   }
 
-  // ── GENERATE OUTLINE ──
-  async function generateOutline() {
-    const input = getUserPrompt();
-    if (!input) { showToast('Please fill in the required field first'); return; }
-
-    const btn = document.getElementById('gen-btn');
-    btn.disabled = true;
-    btn.innerHTML = '<div class="spinner" style="width:15px;height:15px;border-width:2px;border-color:rgba(255,255,255,.3);border-top-color:white"></div> Generating...';
-
-    document.getElementById('outline-wrap').style.display = 'block';
-    document.getElementById('export-wrap').style.display = 'none';
-    document.getElementById('outline-body').innerHTML = '<div class="center-state"><div class="spinner"></div><p class="state-txt">Building your outline...</p></div>';
-
-    const prompt = `You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide outline.
-
-${input}
-
-Return ONLY a raw JSON array with exactly ${slideCount} objects. Each object:
-- "title": short slide title (3-7 words)
-- "type": one of "title","agenda","content","data","quote","cta","conclusion"
-- "bullets": 2-4 concise bullets (5-10 words each)
-- "speakerNote": one sentence of guidance
-
-No markdown, no explanation, raw JSON array only.`;
-
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': ANTHROPIC_API_KEY,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-access': 'true'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 1000,
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-
-      const data = await res.json();
-      const text = data.content.map(b => b.text || '').join('');
-      const clean = text.replace(/```json|```/g, '').trim();
-      outline = JSON.parse(clean);
+  async function generateOutline(){
+    const input=getUserInput();
+    if(!input){showToast('Please fill in the required field first');return}
+    const btn=document.getElementById('gen-btn');
+    btn.disabled=true;
+    btn.innerHTML='<div class="spinner" style="width:15px;height:15px;border-width:2px;border-color:rgba(255,255,255,.3);border-top-color:white"></div> Generating...';
+    document.getElementById('outline-wrap').style.display='block';
+    document.getElementById('export-wrap').style.display='none';
+    document.getElementById('outline-body').innerHTML='<div class="center-state"><div class="spinner"></div><p class="state-txt">Building your outline...</p></div>';
+    try{
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'outline',input,slideCount})});
+      const data=await res.json();
+      if(!res.ok)throw new Error(data.error||'API error');
+      outline=data.outline;
       renderOutline(outline);
-    } catch (e) {
-      document.getElementById('outline-body').innerHTML =
-        '<div class="center-state"><p class="state-txt">Something went wrong — check your API key and try again</p></div>';
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.6 5.4L13 7L8.6 8.6L7 13L5.4 8.6L1 7L5.4 5.4Z" fill="white"/></svg> Regenerate outline';
+    }catch(e){
+      document.getElementById('outline-body').innerHTML='<div class="center-state"><p class="state-txt">Something went wrong — please try again</p></div>';
+    }finally{
+      btn.disabled=false;
+      btn.innerHTML='<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1L8.6 5.4L13 7L8.6 8.6L7 13L5.4 8.6L1 7L5.4 5.4Z" fill="white"/></svg> Regenerate outline';
     }
   }
 
-  // ── RENDER OUTLINE ──
-  function renderOutline(data) {
-    document.getElementById('outline-badge').textContent = data.length + ' slides';
-    document.getElementById('outline-lbl').textContent = data[0]?.title || 'Slide outline';
-
-    const html = data.map((s, i) => {
-      const col = typeColors[s.type] || '#1A9E8F';
-      return `<div class="slide-row">
-        <div class="snum">${i + 1}</div>
-        <div class="sinfo">
-          <div class="stitle">${s.title}</div>
-          <div class="sdesc">${(s.bullets || []).slice(0, 2).join(' · ')}</div>
-        </div>
-        <div class="stype" style="background:${col}18;color:${col}">${s.type}</div>
-      </div>`;
+  function renderOutline(data){
+    document.getElementById('outline-badge').textContent=data.length+' slides';
+    document.getElementById('outline-lbl').textContent=data[0]?.title||'Slide outline';
+    const html=data.map((s,i)=>{
+      const col=typeColors[s.type]||'#1A9E8F';
+      return `<div class="slide-row"><div class="snum">${i+1}</div><div class="sinfo"><div class="stitle">${s.title}</div><div class="sdesc">${(s.bullets||[]).slice(0,2).join(' · ')}</div></div><div class="stype" style="background:${col}18;color:${col}">${s.type}</div></div>`;
     }).join('');
-
-    document.getElementById('outline-body').innerHTML = html;
-    document.getElementById('export-wrap').style.display = 'block';
+    document.getElementById('outline-body').innerHTML=html;
+    document.getElementById('export-wrap').style.display='block';
   }
 
-  // ── BUILD PRESENTATION ──
-  // NOTE: File generation (pptx/pdf) requires a backend.
-  // For now this shows what would be sent to your backend API.
-  function buildPresentation() {
-    if (!outline) return;
-    const payload = {
-      title: outline[0]?.title || 'Presentation',
-      category: cat || 'general',
-      style: style,
-      format: exportFmt,
-      slideCount: outline.length,
-      outline: outline
-    };
-
+  async function buildPresentation(){
+    if(!outline)return;
+    const payload={action:'pptx',title:outline[0]?.title||'Presentation',style,format:exportFmt,outline};
     showToast('Building your file, please wait...');
-    fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Server error');
-      return res.blob();
-    })
-    .then(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = (payload.title || 'presentation') + '.pptx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+    document.getElementById('build-btn').disabled=true;
+    try{
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      if(!res.ok)throw new Error('Server error');
+      const blob=await res.blob();
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download=(payload.title||'presentation')+'.pptx';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
       showToast('Download started! ✅');
-    })
-    .catch(() => {
+    }catch(e){
       showToast('Something went wrong — please try again');
-    });
+    }finally{
+      document.getElementById('build-btn').disabled=false;
+    }
   }
 
-  // ── TOAST ──
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 3500);
-  }
+  function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500)}
 </script>
 </body>
 </html>

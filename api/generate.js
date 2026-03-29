@@ -1,183 +1,97 @@
 const PptxGenJS = require("pptxgenjs");
 
-// ── STYLE THEMES ──
 const themes = {
-  professional: {
-    titleBg: "1E2761", titleText: "FFFFFF",
-    slideBg: "FFFFFF", slideText: "1A2320",
-    accent: "4472C4", subText: "666666"
-  },
-  teal: {
-    titleBg: "1A9E8F", titleText: "FFFFFF",
-    slideBg: "FFFFFF", slideText: "1A2320",
-    accent: "D95B2A", subText: "4A5553"
-  },
-  warm: {
-    titleBg: "D95B2A", titleText: "FFFFFF",
-    slideBg: "FAFAF8", slideText: "1A2320",
-    accent: "B04520", subText: "6B4C3B"
-  },
-  minimal: {
-    titleBg: "1A2320", titleText: "FFFFFF",
-    slideBg: "FFFFFF", slideText: "1A2320",
-    accent: "1A2320", subText: "888888"
-  },
-  berry: {
-    titleBg: "6D2E46", titleText: "FFFFFF",
-    slideBg: "FAF7F4", slideText: "1A2320",
-    accent: "A26769", subText: "6D4C55"
-  },
-  forest: {
-    titleBg: "2C5F2D", titleText: "FFFFFF",
-    slideBg: "FAFAF8", slideText: "1A2320",
-    accent: "97BC62", subText: "4A6B3A"
-  }
+  professional: { titleBg: "1E2761", titleText: "FFFFFF", slideBg: "FFFFFF", slideText: "1A2320", accent: "4472C4", subText: "666666" },
+  teal: { titleBg: "1A9E8F", titleText: "FFFFFF", slideBg: "FFFFFF", slideText: "1A2320", accent: "D95B2A", subText: "4A5553" },
+  warm: { titleBg: "D95B2A", titleText: "FFFFFF", slideBg: "FAFAF8", slideText: "1A2320", accent: "B04520", subText: "6B4C3B" },
+  minimal: { titleBg: "1A2320", titleText: "FFFFFF", slideBg: "FFFFFF", slideText: "1A2320", accent: "1A2320", subText: "888888" },
+  berry: { titleBg: "6D2E46", titleText: "FFFFFF", slideBg: "FAF7F4", slideText: "1A2320", accent: "A26769", subText: "6D4C55" },
+  forest: { titleBg: "2C5F2D", titleText: "FFFFFF", slideBg: "FAFAF8", slideText: "1A2320", accent: "97BC62", subText: "4A6B3A" }
 };
 
 module.exports = async function handler(req, res) {
-
-  // Allow requests from any origin (CORS)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle preflight
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+  if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
   try {
-    const { title, outline, style, format } = req.body;
+    const { action, input, slideCount, style, title, outline } = req.body;
+    const apiKey = process.env.ANTHROPIC_API_KEY;
 
-    // Get theme colours
-    const theme = themes[style] || themes.professional;
+    // ── GENERATE OUTLINE ──
+    if (action === "outline") {
+      const prompt = `You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide outline.\n\n${input}\n\nReturn ONLY a raw JSON array with exactly ${slideCount} objects. Each object:\n- "title": short slide title (3-7 words)\n- "type": one of "title","agenda","content","data","quote","cta","conclusion"\n- "bullets": 2-4 concise bullets (5-10 words each)\n- "speakerNote": one sentence of guidance\n\nNo markdown, no explanation, raw JSON array only.`;
 
-    // ── BUILD POWERPOINT ──
-    const pres = new PptxGenJS();
-    pres.layout = "LAYOUT_16x9";
-    pres.title = title || "Presentation";
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{ role: "user", content: prompt }]
+        })
+      });
 
-    outline.forEach((slide, index) => {
-      const s = pres.addSlide();
+      const data = await response.json();
+      if (!response.ok) return res.status(response.status).json({ error: data.error?.message || "API error" });
 
-      const isTitleSlide = slide.type === "title" || index === 0;
-      const isConclusion = slide.type === "conclusion" || slide.type === "cta";
-      const isDark = isTitleSlide || isConclusion;
+      const text = data.content.map(b => b.text || "").join("");
+      const clean = text.replace(/```json|```/g, "").trim();
+      const outlineData = JSON.parse(clean);
+      return res.status(200).json({ outline: outlineData });
+    }
 
-      // Background
-      s.background = { color: isDark ? theme.titleBg : theme.slideBg };
+    // ── GENERATE PPTX ──
+    if (action === "pptx") {
+      const theme = themes[style] || themes.professional;
+      const pres = new PptxGenJS();
+      pres.layout = "LAYOUT_16x9";
+      pres.title = title || "Presentation";
 
-      if (isDark) {
-        // ── DARK SLIDE (title / conclusion) ──
+      outline.forEach((slide, index) => {
+        const s = pres.addSlide();
+        const isDark = slide.type === "title" || slide.type === "conclusion" || slide.type === "cta" || index === 0;
+        s.background = { color: isDark ? theme.titleBg : theme.slideBg };
 
-        // Accent bar on left
-        s.addShape(pres.shapes.RECTANGLE, {
-          x: 0, y: 0, w: 0.08, h: 5.625,
-          fill: { color: theme.accent },
-          line: { color: theme.accent }
-        });
-
-        // Slide number (top right)
-        s.addText(`${index + 1}`, {
-          x: 9, y: 0.2, w: 0.8, h: 0.3,
-          fontSize: 9, color: "FFFFFF", opacity: 0.4,
-          align: "right"
-        });
-
-        // Main title
-        s.addText(slide.title, {
-          x: 0.6, y: 1.8, w: 8.8, h: 1.4,
-          fontSize: 38, fontFace: "Calibri",
-          bold: true, color: theme.titleText,
-          align: "left"
-        });
-
-        // Bullets as subtitle
-        if (slide.bullets && slide.bullets.length > 0) {
-          s.addText(slide.bullets[0], {
-            x: 0.6, y: 3.4, w: 7.5, h: 0.6,
-            fontSize: 16, fontFace: "Calibri",
-            color: theme.titleText, opacity: 0.75,
-            align: "left"
-          });
+        if (isDark) {
+          s.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 0.08, h: 5.625, fill: { color: theme.accent }, line: { color: theme.accent } });
+          s.addText(slide.title, { x: 0.6, y: 1.8, w: 8.8, h: 1.4, fontSize: 38, fontFace: "Calibri", bold: true, color: theme.titleText, align: "left" });
+          if (slide.bullets && slide.bullets.length > 0) {
+            s.addText(slide.bullets[0], { x: 0.6, y: 3.4, w: 7.5, h: 0.6, fontSize: 16, fontFace: "Calibri", color: theme.titleText, align: "left" });
+          }
+        } else {
+          s.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: theme.accent }, line: { color: theme.accent } });
+          s.addText(slide.title, { x: 0.5, y: 0.25, w: 8.5, h: 0.75, fontSize: 26, fontFace: "Calibri", bold: true, color: theme.slideText, align: "left", margin: 0 });
+          s.addShape(pres.shapes.RECTANGLE, { x: 0.5, y: 1.05, w: 1.2, h: 0.04, fill: { color: theme.accent }, line: { color: theme.accent } });
+          if (slide.bullets && slide.bullets.length > 0) {
+            const bulletItems = slide.bullets.map((b, i) => ({
+              text: b,
+              options: { bullet: true, fontSize: 15, fontFace: "Calibri", color: theme.slideText, paraSpaceAfter: 8, breakLine: i < slide.bullets.length - 1 }
+            }));
+            s.addText(bulletItems, { x: 0.5, y: 1.3, w: 8.8, h: 3.8, valign: "top" });
+          }
+          if (slide.speakerNote) s.addNotes(slide.speakerNote);
         }
+      });
 
-      } else {
-        // ── LIGHT SLIDE (content) ──
+      const buffer = await pres.write({ outputType: "nodebuffer" });
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
+      res.setHeader("Content-Disposition", `attachment; filename="${(title || "presentation").replace(/[^a-z0-9]/gi, "_")}.pptx"`);
+      res.setHeader("Content-Length", buffer.length);
+      return res.status(200).send(buffer);
+    }
 
-        // Top accent bar
-        s.addShape(pres.shapes.RECTANGLE, {
-          x: 0, y: 0, w: 10, h: 0.06,
-          fill: { color: theme.accent },
-          line: { color: theme.accent }
-        });
-
-        // Slide number
-        s.addText(`${index + 1} / ${outline.length}`, {
-          x: 8.5, y: 0.15, w: 1.3, h: 0.25,
-          fontSize: 8, color: theme.subText,
-          align: "right"
-        });
-
-        // Slide title
-        s.addText(slide.title, {
-          x: 0.5, y: 0.25, w: 8.5, h: 0.75,
-          fontSize: 26, fontFace: "Calibri",
-          bold: true, color: theme.slideText,
-          align: "left", margin: 0
-        });
-
-        // Divider line
-        s.addShape(pres.shapes.RECTANGLE, {
-          x: 0.5, y: 1.05, w: 1.2, h: 0.04,
-          fill: { color: theme.accent },
-          line: { color: theme.accent }
-        });
-
-        // Bullet points
-        if (slide.bullets && slide.bullets.length > 0) {
-          const bulletItems = slide.bullets.map((b, i) => ({
-            text: b,
-            options: {
-              bullet: true,
-              fontSize: 15,
-              fontFace: "Calibri",
-              color: slide.type === "data" && i === 0 ? theme.accent : theme.slideText,
-              bold: slide.type === "data" && i === 0,
-              paraSpaceAfter: 8,
-              breakLine: i < slide.bullets.length - 1
-            }
-          }));
-
-          s.addText(bulletItems, {
-            x: 0.5, y: 1.3, w: 8.8, h: 3.8,
-            valign: "top"
-          });
-        }
-
-        // Speaker note
-        if (slide.speakerNote) {
-          s.addNotes(slide.speakerNote);
-        }
-      }
-    });
-
-    // ── WRITE FILE TO BUFFER ──
-    const buffer = await pres.write({ outputType: "nodebuffer" });
-
-    // Send the file back
-    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
-    res.setHeader("Content-Disposition", `attachment; filename="${(title || "presentation").replace(/[^a-z0-9]/gi, "_")}.pptx"`);
-    res.setHeader("Content-Length", buffer.length);
-
-    return res.status(200).send(buffer);
+    return res.status(400).json({ error: "Invalid action" });
 
   } catch (err) {
-    console.error("Generation error:", err);
-    return res.status(500).json({ error: "Failed to generate file", detail: err.message });
+    console.error("Error:", err);
+    return res.status(500).json({ error: err.message });
   }
 };
