@@ -704,7 +704,7 @@
 
   async function buildPresentation(){
     if(!outline)return;
-    const payload={action:'pptx',title:outline[0]?.title||'Presentation',style,format:exportFmt,outline};
+    const payload={action:'pptx',title:outline[0]?.title||'Presentation',style,format:exportFmt,outline,slideImages};
     showToast('Building your file, please wait...');
     document.getElementById('build-btn').disabled=true;
     try{

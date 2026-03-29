@@ -51,6 +51,7 @@ module.exports = async function handler(req, res) {
     // ── GENERATE PPTX ──
     if (action === "pptx") {
       const theme = themes[style] || themes.professional;
+      const slideImages = req.body.slideImages || {};
       const pres = new PptxGenJS();
       pres.layout = "LAYOUT_16x9";
       pres.title = title || "Presentation";
@@ -58,9 +59,21 @@ module.exports = async function handler(req, res) {
       outline.forEach((slide, index) => {
         const s = pres.addSlide();
         const isDark = slide.type === "title" || slide.type === "conclusion" || slide.type === "cta" || index === 0;
+        const imageData = slideImages[index];
         s.background = { color: isDark ? theme.titleBg : theme.slideBg };
 
         if (isDark) {
+          // Add background image with overlay if exists
+          if (imageData) {
+            try {
+              // If it's a URL (picsum), use path; if base64, use data
+              if (imageData.startsWith('data:')) {
+                s.addImage({ data: imageData, x: 0, y: 0, w: 10, h: 5.625, transparency: 70 });
+              } else {
+                s.addImage({ path: imageData, x: 0, y: 0, w: 10, h: 5.625, transparency: 70 });
+              }
+            } catch(e) { console.log('Image error:', e.message); }
+          }
           s.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 0.08, h: 5.625, fill: { color: theme.accent }, line: { color: theme.accent } });
           s.addText(slide.title, { x: 0.6, y: 1.8, w: 8.8, h: 1.4, fontSize: 38, fontFace: "Calibri", bold: true, color: theme.titleText, align: "left" });
           if (slide.bullets && slide.bullets.length > 0) {
@@ -68,14 +81,37 @@ module.exports = async function handler(req, res) {
           }
         } else {
           s.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: theme.accent }, line: { color: theme.accent } });
-          s.addText(slide.title, { x: 0.5, y: 0.25, w: 8.5, h: 0.75, fontSize: 26, fontFace: "Calibri", bold: true, color: theme.slideText, align: "left", margin: 0 });
-          s.addShape(pres.shapes.RECTANGLE, { x: 0.5, y: 1.05, w: 1.2, h: 0.04, fill: { color: theme.accent }, line: { color: theme.accent } });
-          if (slide.bullets && slide.bullets.length > 0) {
-            const bulletItems = slide.bullets.map((b, i) => ({
-              text: b,
-              options: { bullet: true, fontSize: 15, fontFace: "Calibri", color: theme.slideText, paraSpaceAfter: 8, breakLine: i < slide.bullets.length - 1 }
-            }));
-            s.addText(bulletItems, { x: 0.5, y: 1.3, w: 8.8, h: 3.8, valign: "top" });
+
+          if (imageData) {
+            // Image on right half, text on left
+            const textWidth = 5.8;
+            s.addText(slide.title, { x: 0.5, y: 0.25, w: textWidth, h: 0.75, fontSize: 22, fontFace: "Calibri", bold: true, color: theme.slideText, align: "left", margin: 0 });
+            s.addShape(pres.shapes.RECTANGLE, { x: 0.5, y: 1.05, w: 1.2, h: 0.04, fill: { color: theme.accent }, line: { color: theme.accent } });
+            if (slide.bullets && slide.bullets.length > 0) {
+              const bulletItems = slide.bullets.map((b, i) => ({
+                text: b,
+                options: { bullet: true, fontSize: 13, fontFace: "Calibri", color: theme.slideText, paraSpaceAfter: 6, breakLine: i < slide.bullets.length - 1 }
+              }));
+              s.addText(bulletItems, { x: 0.5, y: 1.3, w: textWidth, h: 3.8, valign: "top" });
+            }
+            try {
+              if (imageData.startsWith('data:')) {
+                s.addImage({ data: imageData, x: 6.4, y: 0.06, w: 3.6, h: 5.565, sizing: { type: 'cover', w: 3.6, h: 5.565 } });
+              } else {
+                s.addImage({ path: imageData, x: 6.4, y: 0.06, w: 3.6, h: 5.565, sizing: { type: 'cover', w: 3.6, h: 5.565 } });
+              }
+            } catch(e) { console.log('Image error:', e.message); }
+          } else {
+            // No image — full width layout
+            s.addText(slide.title, { x: 0.5, y: 0.25, w: 8.5, h: 0.75, fontSize: 26, fontFace: "Calibri", bold: true, color: theme.slideText, align: "left", margin: 0 });
+            s.addShape(pres.shapes.RECTANGLE, { x: 0.5, y: 1.05, w: 1.2, h: 0.04, fill: { color: theme.accent }, line: { color: theme.accent } });
+            if (slide.bullets && slide.bullets.length > 0) {
+              const bulletItems = slide.bullets.map((b, i) => ({
+                text: b,
+                options: { bullet: true, fontSize: 15, fontFace: "Calibri", color: theme.slideText, paraSpaceAfter: 8, breakLine: i < slide.bullets.length - 1 }
+              }));
+              s.addText(bulletItems, { x: 0.5, y: 1.3, w: 8.8, h: 3.8, valign: "top" });
+            }
           }
           if (slide.speakerNote) s.addNotes(slide.speakerNote);
         }
