@@ -369,6 +369,24 @@
         <div class="exp-opt pdf" onclick="setExport('pdf',this)"><div class="exp-icon">📄</div><div class="exp-name">PDF</div><div class="exp-desc">.pdf file</div></div>
         <div class="exp-opt both" onclick="setExport('both',this)"><div class="exp-icon">📦</div><div class="exp-name">Both</div><div class="exp-desc">pptx + pdf</div></div>
       </div>
+
+      <!-- PDF orientation (only shown when PDF is selected) -->
+      <div id="orientation-row" style="display:none;margin-bottom:1rem;">
+        <p style="font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:8px">PDF orientation</p>
+        <div style="display:flex;gap:8px">
+          <div id="ori-landscape" onclick="setOrientation('landscape',this)" style="flex:1;border:2px solid var(--teal);border-radius:9px;padding:10px;cursor:pointer;text-align:center;background:var(--teal-light)">
+            <div style="font-size:18px;margin-bottom:3px">🖥</div>
+            <div style="font-size:12px;font-weight:600;color:var(--teal)">Landscape</div>
+            <div style="font-size:10px;color:var(--ink-3)">16:9 widescreen</div>
+          </div>
+          <div id="ori-portrait" onclick="setOrientation('portrait',this)" style="flex:1;border:1px solid var(--border);border-radius:9px;padding:10px;cursor:pointer;text-align:center;background:var(--surface)">
+            <div style="font-size:18px;margin-bottom:3px">📱</div>
+            <div style="font-size:12px;font-weight:600;color:var(--ink-2)">Portrait</div>
+            <div style="font-size:10px;color:var(--ink-3)">A4 vertical</div>
+          </div>
+        </div>
+      </div>
+
       <button class="build-btn pptx" id="build-btn" onclick="buildPresentation()">
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11L12 2M12 2H7M12 2V7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
         Build PowerPoint file
@@ -381,7 +399,7 @@
 
 <script>
   let cat=null, style='professional', slideCount=8, activeTab='topic';
-  let exportFmt='pptx', outline=null, uploadedFileName='', uploadedContent='';
+  let exportFmt='pptx', orientation='landscape', outline=null, uploadedFileName='', uploadedContent='';
   let expandedIndex=null, previewIndex=0;
   let slideImages={}; // stores image data URLs per slide index
 
@@ -406,6 +424,18 @@
   function processFile(f){uploadedFileName=f.name;const r=new FileReader();r.onload=ev=>{uploadedContent=ev.target.result.substring(0,6000);document.getElementById('file-pill-wrap').innerHTML=`<div class="file-pill">📎 ${f.name}<button onclick="clearFile(event)">×</button></div>`};r.readAsText(f)}
   function clearFile(e){e.stopPropagation();uploadedFileName='';uploadedContent='';document.getElementById('file-pill-wrap').innerHTML='';document.getElementById('file-in').value=''}
 
+  function setOrientation(ori, el) {
+    orientation = ori;
+    document.querySelectorAll('#ori-landscape, #ori-portrait').forEach(o => {
+      o.style.border = '1px solid var(--border)';
+      o.style.background = 'var(--surface)';
+      o.querySelector('div:nth-child(2)').style.color = 'var(--ink-2)';
+    });
+    el.style.border = '2px solid var(--teal)';
+    el.style.background = 'var(--teal-light)';
+    el.querySelector('div:nth-child(2)').style.color = 'var(--teal)';
+  }
+
   function setExport(fmt,el){
     exportFmt=fmt;
     document.querySelectorAll('.exp-opt').forEach(o=>o.classList.remove('selected'));
@@ -414,6 +444,8 @@
     const labels={pptx:'Build PowerPoint file',pdf:'Build PDF file',both:'Build both files'};
     btn.innerHTML=`<svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 11L12 2M12 2H7M12 2V7" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>${labels[fmt]}`;
     btn.className='build-btn '+fmt;
+    // Show orientation only for PDF or both
+    document.getElementById('orientation-row').style.display = (fmt==='pdf'||fmt==='both') ? 'block' : 'none';
   }
 
   function getUserInput(){
@@ -704,7 +736,7 @@
 
   async function buildPresentation(){
     if(!outline)return;
-    const payload={action:'pptx',title:outline[0]?.title||'Presentation',style,format:exportFmt,outline,slideImages};
+    const payload={action:'pptx',title:outline[0]?.title||'Presentation',style,format:exportFmt,orientation,outline,slideImages};
     showToast('Building your file, please wait...');
     document.getElementById('build-btn').disabled=true;
     try{
@@ -713,7 +745,9 @@
       const blob=await res.blob();
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');
-      a.href=url;a.download=(payload.title||'presentation')+'.pptx';
+      a.href=url;
+      const ext = exportFmt==='pdf' ? '.pdf' : exportFmt==='both' ? '.zip' : '.pptx';
+      a.download=(payload.title||'presentation').replace(/[^a-z0-9]/gi,'_')+ext;
       document.body.appendChild(a);a.click();document.body.removeChild(a);
       showToast('Download started! ✅');
     }catch(e){showToast('Something went wrong — please try again');}
