@@ -15,6 +15,8 @@
   }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); min-height: 100vh; color: var(--ink); }
   .app { display: grid; grid-template-columns: 272px 1fr; min-height: 100vh; }
+
+  /* SIDEBAR */
   .sidebar { background: var(--ink); padding: 1.5rem 1rem; display: flex; flex-direction: column; gap: 1.5rem; overflow-y: auto; position: sticky; top: 0; height: 100vh; }
   .logo-wrap { padding-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,.08); }
   .logo-lockup { display: flex; align-items: center; gap: 10px; }
@@ -40,6 +42,8 @@
   .cnt-btn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid rgba(255,255,255,.15); background: transparent; cursor: pointer; font-size: 16px; color: rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center; font-family: 'DM Sans', sans-serif; transition: all .15s; }
   .cnt-btn:hover { border-color: var(--teal); color: var(--teal); }
   .cnt-val { font-size: 17px; font-weight: 600; color: white; min-width: 24px; text-align: center; }
+
+  /* MAIN */
   .main { padding: 2rem 2.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
   .page-title { font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -.02em; margin-bottom: 4px; }
   .page-sub { font-size: 13px; color: var(--ink-2); }
@@ -68,18 +72,55 @@
   .gen-btn:hover { background: var(--teal-dark); }
   .gen-btn:active { transform: scale(.99); }
   .gen-btn:disabled { background: var(--border); color: var(--ink-3); cursor: not-allowed; transform: none; }
+
+  /* OUTLINE */
   .outline-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; box-shadow: 0 1px 4px rgba(26,35,32,.04); }
   .outline-hdr { padding: 12px 1.5rem; border-bottom: 1px solid var(--border); background: var(--bg); display: flex; align-items: center; justify-content: space-between; }
   .outline-hdr-title { font-size: 13px; font-weight: 600; color: var(--ink); }
   .badge { font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--teal-light); color: var(--teal-dark); border: 1px solid var(--teal-mid); }
-  .outline-body { padding: .75rem 1.5rem; }
-  .slide-row { display: flex; gap: 12px; align-items: flex-start; padding: 9px 0; border-bottom: 1px solid var(--border); }
-  .slide-row:last-child { border-bottom: none; }
-  .snum { width: 22px; height: 22px; border-radius: 50%; background: var(--teal); color: white; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
-  .sinfo { flex: 1; }
-  .stitle { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; }
-  .sdesc { font-size: 11px; color: var(--ink-2); line-height: 1.5; }
-  .stype { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; flex-shrink: 0; align-self: flex-start; margin-top: 3px; }
+  .outline-body { padding: .5rem 1rem; }
+
+  /* SLIDE ROWS */
+  .slide-row { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; overflow: hidden; transition: box-shadow .15s; }
+  .slide-row:last-child { margin-bottom: 0; }
+  .slide-row:hover { box-shadow: 0 2px 8px rgba(26,35,32,.08); }
+  .slide-row.expanded { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(26,158,143,.1); }
+
+  .slide-summary { display: flex; gap: 10px; align-items: center; padding: 10px 12px; cursor: pointer; }
+  .snum { width: 22px; height: 22px; border-radius: 50%; background: var(--teal); color: white; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sinfo { flex: 1; min-width: 0; }
+  .stitle { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sdesc { font-size: 11px; color: var(--ink-2); line-height: 1.5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stype { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 99px; flex-shrink: 0; }
+  .slide-actions { display: flex; gap: 5px; flex-shrink: 0; }
+
+  .icon-btn { width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; transition: all .12s; color: var(--ink-2); }
+  .icon-btn:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-light); }
+  .icon-btn.regen { border-color: var(--orange-light); color: var(--orange); }
+  .icon-btn.regen:hover { background: var(--orange-light); border-color: var(--orange); }
+  .icon-btn.spinning { animation: spin .6s linear infinite; pointer-events: none; opacity: .6; }
+
+  /* SLIDE EDITOR */
+  .slide-editor { border-top: 1px solid var(--border); padding: 14px; background: var(--bg); display: none; }
+  .slide-row.expanded .slide-editor { display: block; }
+
+  .editor-field { margin-bottom: 10px; }
+  .editor-lbl { font-size: 11px; font-weight: 600; color: var(--ink-3); text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 5px; }
+  .editor-input { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); outline: none; transition: border-color .15s; }
+  .editor-input:focus { border-color: var(--teal); }
+  .editor-textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); outline: none; resize: vertical; line-height: 1.6; min-height: 80px; transition: border-color .15s; }
+  .editor-textarea:focus { border-color: var(--teal); }
+
+  .editor-btns { display: flex; gap: 8px; margin-top: 12px; }
+  .save-btn { flex: 1; padding: 8px; border-radius: 8px; background: var(--teal); color: white; border: none; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: background .15s; }
+  .save-btn:hover { background: var(--teal-dark); }
+  .cancel-btn { padding: 8px 16px; border-radius: 8px; background: transparent; color: var(--ink-2); border: 1px solid var(--border); cursor: pointer; font-size: 13px; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+  .cancel-btn:hover { background: var(--surface); }
+  .regen-btn { padding: 8px 14px; border-radius: 8px; background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange); cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: all .15s; display: flex; align-items: center; gap: 5px; }
+  .regen-btn:hover { background: var(--orange); color: white; }
+  .regen-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* EXPORT */
   .export-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(26,35,32,.04); }
   .export-title { font-size: 14px; font-weight: 600; color: var(--ink); margin-bottom: 1rem; }
   .export-opts { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
@@ -100,6 +141,8 @@
   .build-btn.both { background: #6A5ACD; color: white; }
   .build-btn.both:hover { background: #5848B0; }
   .build-btn:disabled { background: var(--border); color: var(--ink-3); cursor: not-allowed; transform: none; }
+
+  /* STATES */
   .center-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; gap: 12px; }
   .spinner { width: 30px; height: 30px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin .8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -178,6 +221,7 @@
       <h1 class="page-title">Create a presentation</h1>
       <p class="page-sub">Pick a category, describe your topic, and export in seconds</p>
     </div>
+
     <div class="card">
       <div class="inp-tabs">
         <button class="itab active" onclick="switchTab('topic',this)">
@@ -258,6 +302,8 @@
 <script>
   let cat=null, style='professional', slideCount=8, activeTab='topic';
   let exportFmt='pptx', outline=null, uploadedFileName='', uploadedContent='';
+  let expandedIndex = null;
+
   const typeColors={title:'#1A9E8F',agenda:'#1A9E8F',content:'#0E7A6E',data:'#D95B2A',quote:'#B04520',cta:'#D95B2A',conclusion:'#1A9E8F',intro:'#0E7A6E'};
 
   function setCat(c,el){cat=c;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active')}
@@ -331,10 +377,102 @@
     document.getElementById('outline-lbl').textContent=data[0]?.title||'Slide outline';
     const html=data.map((s,i)=>{
       const col=typeColors[s.type]||'#1A9E8F';
-      return `<div class="slide-row"><div class="snum">${i+1}</div><div class="sinfo"><div class="stitle">${s.title}</div><div class="sdesc">${(s.bullets||[]).slice(0,2).join(' · ')}</div></div><div class="stype" style="background:${col}18;color:${col}">${s.type}</div></div>`;
+      const bulletsText=(s.bullets||[]).join('\n');
+      return `
+        <div class="slide-row" id="slide-row-${i}">
+          <div class="slide-summary" onclick="toggleExpand(${i})">
+            <div class="snum">${i+1}</div>
+            <div class="sinfo">
+              <div class="stitle" id="stitle-${i}">${s.title}</div>
+              <div class="sdesc" id="sdesc-${i}">${(s.bullets||[]).slice(0,2).join(' · ')}</div>
+            </div>
+            <div class="stype" style="background:${col}18;color:${col}">${s.type}</div>
+            <div class="slide-actions" onclick="event.stopPropagation()">
+              <button class="icon-btn" title="Edit slide" onclick="toggleExpand(${i})">✏️</button>
+              <button class="icon-btn regen" title="Regenerate this slide" onclick="regenSlide(${i}, this)">↻</button>
+            </div>
+          </div>
+          <div class="slide-editor">
+            <div class="editor-field">
+              <label class="editor-lbl">Slide title</label>
+              <input class="editor-input" id="edit-title-${i}" value="${s.title.replace(/"/g,'&quot;')}" />
+            </div>
+            <div class="editor-field">
+              <label class="editor-lbl">Bullet points (one per line)</label>
+              <textarea class="editor-textarea" id="edit-bullets-${i}">${bulletsText}</textarea>
+            </div>
+            <div class="editor-field">
+              <label class="editor-lbl">Speaker note</label>
+              <input class="editor-input" id="edit-note-${i}" value="${(s.speakerNote||'').replace(/"/g,'&quot;')}" />
+            </div>
+            <div class="editor-btns">
+              <button class="regen-btn" onclick="regenSlide(${i}, this)" id="regen-btn-${i}">↻ Regenerate</button>
+              <button class="cancel-btn" onclick="toggleExpand(${i})">Cancel</button>
+              <button class="save-btn" onclick="saveSlide(${i})">✓ Save changes</button>
+            </div>
+          </div>
+        </div>`;
     }).join('');
     document.getElementById('outline-body').innerHTML=html;
     document.getElementById('export-wrap').style.display='block';
+    expandedIndex=null;
+  }
+
+  function toggleExpand(i){
+    const row=document.getElementById('slide-row-'+i);
+    if(expandedIndex===i){
+      row.classList.remove('expanded');
+      expandedIndex=null;
+    }else{
+      if(expandedIndex!==null){
+        document.getElementById('slide-row-'+expandedIndex).classList.remove('expanded');
+      }
+      row.classList.add('expanded');
+      expandedIndex=i;
+      document.getElementById('edit-title-'+i).focus();
+    }
+  }
+
+  function saveSlide(i){
+    const newTitle=document.getElementById('edit-title-'+i).value.trim();
+    const newBullets=document.getElementById('edit-bullets-'+i).value.trim().split('\n').filter(b=>b.trim());
+    const newNote=document.getElementById('edit-note-'+i).value.trim();
+    if(!newTitle){showToast('Title cannot be empty');return}
+    outline[i].title=newTitle;
+    outline[i].bullets=newBullets;
+    outline[i].speakerNote=newNote;
+    document.getElementById('stitle-'+i).textContent=newTitle;
+    document.getElementById('sdesc-'+i).textContent=newBullets.slice(0,2).join(' · ');
+    document.getElementById('slide-row-'+i).classList.remove('expanded');
+    expandedIndex=null;
+    showToast('Slide saved! ✓');
+  }
+
+  async function regenSlide(i, btn){
+    const originalHTML=btn.innerHTML;
+    btn.disabled=true;
+    btn.innerHTML='↻ Regenerating...';
+    const context=outline.map((s,idx)=>idx===i?`[SLIDE ${idx+1} - REGENERATE THIS ONE]: ${s.title}`:`[SLIDE ${idx+1}]: ${s.title}`).join('\n');
+    const prompt=`You are a presentation expert. Here is the full slide outline:\n${context}\n\nRegenerate ONLY slide ${i+1} ("${outline[i].title}") with better content that fits naturally with the other slides.\n\nReturn ONLY a raw JSON object (no markdown) with:\n- "title": improved slide title (3-7 words)\n- "type": one of "title","agenda","content","data","quote","cta","conclusion"\n- "bullets": 2-4 improved bullet points\n- "speakerNote": one sentence of guidance`;
+    try{
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'outline',input:prompt,slideCount:1})});
+      const data=await res.json();
+      if(!res.ok)throw new Error('Failed');
+      const newSlide=Array.isArray(data.outline)?data.outline[0]:data.outline;
+      outline[i]=newSlide;
+      const col=typeColors[newSlide.type]||'#1A9E8F';
+      document.getElementById('stitle-'+i).textContent=newSlide.title;
+      document.getElementById('sdesc-'+i).textContent=(newSlide.bullets||[]).slice(0,2).join(' · ');
+      document.getElementById('edit-title-'+i).value=newSlide.title;
+      document.getElementById('edit-bullets-'+i).value=(newSlide.bullets||[]).join('\n');
+      document.getElementById('edit-note-'+i).value=newSlide.speakerNote||'';
+      showToast('Slide regenerated! ✓');
+    }catch(e){
+      showToast('Regeneration failed — please try again');
+    }finally{
+      btn.disabled=false;
+      btn.innerHTML=originalHTML;
+    }
   }
 
   async function buildPresentation(){
