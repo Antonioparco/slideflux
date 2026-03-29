@@ -586,21 +586,21 @@
     let canvasHTML='';
     if(isDark){
       canvasHTML=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${t.titleBg};--preview-accent:${t.accent}">
+        ${hasImage?`<img src="${slideImages[previewIndex]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.25;" />`:''}
         <div class="accent-bar"></div>
         <div class="slide-num">${previewIndex+1}</div>
         <div class="slide-main-title">${s.title}</div>
         <div class="slide-subtitle">${(s.bullets||[])[0]||''}</div>
-        ${hasImage?`<img src="${slideImages[previewIndex]}" style="position:absolute;right:0;top:0;bottom:0;width:35%;object-fit:cover;opacity:.3;" />`:''}
       </div>`;
     }else{
       const bullets=(s.bullets||[]).map(b=>`<div class="bullet-item"><div class="bullet-dot"></div><div class="bullet-text">${b}</div></div>`).join('');
       canvasHTML=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${t.lightBg};--preview-accent:${t.accent};--preview-text:${t.text}">
+        ${hasImage?`<img src="${slideImages[previewIndex]}" style="position:absolute;right:0;top:0;bottom:0;width:38%;height:100%;object-fit:cover;" />`:''}
         <div class="accent-top"></div>
         <div class="slide-num">${previewIndex+1} / ${outline.length}</div>
-        <div class="slide-title">${s.title}</div>
+        <div class="slide-title" style="${hasImage?'right:42%':''}">${s.title}</div>
         <div class="accent-line"></div>
-        <div class="slide-bullets" style="${hasImage?'right:38%':''}">${bullets}</div>
-        ${hasImage?`<img src="${slideImages[previewIndex]}" style="position:absolute;right:0;top:0;bottom:0;width:35%;object-fit:cover;border-radius:0 0 0 0;" />`:''}
+        <div class="slide-bullets" style="${hasImage?'right:42%':''}">${bullets}</div>
       </div>`;
     }
 
@@ -652,16 +652,27 @@
 
     try{
       // Ask Claude for a keyword
-      const prompt=`For a presentation slide titled "${s.title}" with bullets: ${(s.bullets||[]).join(', ')}\n\nSuggest ONE short, specific search keyword (2-4 words) for finding a relevant professional stock photo. Return ONLY the keyword, nothing else.`;
+      const prompt=`For a presentation slide titled "${s.title}" with bullets: ${(s.bullets||[]).join(', ')}\n\nSuggest ONE short, specific Unsplash search keyword (2-4 words max) for a relevant professional stock photo. Return ONLY the keyword, nothing else. Examples: "team meeting office", "solar panels field", "data analytics dashboard"`;
       const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'outline',input:prompt,slideCount:1})});
       const data=await res.json();
       const keyword=data.outline?.[0]?.title||s.title;
 
-      // Fetch from Unsplash source (free, no API key needed)
-      const imageUrl=`https://source.unsplash.com/800x450/?${encodeURIComponent(keyword)}&sig=${Date.now()}`;
+      // Use Unsplash with proper random seed to get different images each time
+      const seed=Math.floor(Math.random()*1000);
+      const imageUrl=`https://picsum.photos/seed/${seed}/800/450`;
+      
+      // Pre-load the image to check it works
+      await new Promise((resolve,reject)=>{
+        const img=new Image();
+        img.onload=resolve;
+        img.onerror=reject;
+        img.src=imageUrl;
+      });
+
       slideImages[i]=imageUrl;
+      outline[i].imageKeyword=keyword;
       renderPreview();
-      showToast('Image found! ✓');
+      showToast(`Image found for "${keyword}" ✓`);
     }catch(e){
       showToast('Could not find image — try uploading your own');
       renderPreview();
