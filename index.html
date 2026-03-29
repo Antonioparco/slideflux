@@ -48,7 +48,7 @@
   .page-title { font-size: 22px; font-weight: 600; color: var(--ink); letter-spacing: -.02em; margin-bottom: 4px; }
   .page-sub { font-size: 13px; color: var(--ink-2); }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; box-shadow: 0 1px 4px rgba(26,35,32,.04); }
-  .inp-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: .875rem; }
+  .inp-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: .875rem; flex-wrap: wrap; }
   .itab { padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 500; border: none; cursor: pointer; font-family: 'DM Sans', sans-serif; background: transparent; color: var(--ink-2); display: flex; align-items: center; gap: 6px; transition: all .12s; }
   .itab.active { background: var(--teal-light); color: var(--teal-dark); }
   .itab:hover:not(.active) { background: var(--bg); }
@@ -108,8 +108,8 @@
   .editor-input:focus { border-color: var(--teal); }
   .editor-textarea { width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--ink); background: var(--surface); outline: none; resize: vertical; line-height: 1.6; min-height: 80px; transition: border-color .15s; }
   .editor-textarea:focus { border-color: var(--teal); }
-  .editor-btns { display: flex; gap: 8px; margin-top: 12px; }
-  .save-btn { flex: 1; padding: 8px; border-radius: 8px; background: var(--teal); color: white; border: none; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: background .15s; }
+  .editor-btns { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .save-btn { flex: 1; padding: 8px; border-radius: 8px; background: var(--teal); color: white; border: none; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif; transition: background .15s; min-width: 100px; }
   .save-btn:hover { background: var(--teal-dark); }
   .cancel-btn { padding: 8px 16px; border-radius: 8px; background: transparent; color: var(--ink-2); border: 1px solid var(--border); cursor: pointer; font-size: 13px; font-family: 'DM Sans', sans-serif; transition: all .15s; }
   .cancel-btn:hover { background: var(--surface); }
@@ -142,7 +142,7 @@
   /* PREVIEW PANEL */
   .preview-overlay { position: fixed; inset: 0; background: rgba(26,35,32,.4); z-index: 200; opacity: 0; pointer-events: none; transition: opacity .3s; }
   .preview-overlay.open { opacity: 1; pointer-events: all; }
-  .preview-panel { position: fixed; top: 0; right: 0; height: 100vh; width: 480px; max-width: 95vw; background: var(--ink); z-index: 201; transform: translateX(100%); transition: transform .35s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; box-shadow: -8px 0 32px rgba(0,0,0,.3); }
+  .preview-panel { position: fixed; top: 0; right: 0; height: 100vh; width: 500px; max-width: 95vw; background: var(--ink); z-index: 201; transform: translateX(100%); transition: transform .35s cubic-bezier(.4,0,.2,1); display: flex; flex-direction: column; box-shadow: -8px 0 32px rgba(0,0,0,.3); }
   .preview-panel.open { transform: translateX(0); }
   .preview-panel-hdr { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,.1); flex-shrink: 0; }
   .preview-panel-title { font-size: 13px; font-weight: 600; color: white; }
@@ -153,20 +153,16 @@
   .nav-count { font-size: 12px; color: rgba(255,255,255,.5); min-width: 40px; text-align: center; }
   .close-btn { width: 28px; height: 28px; border-radius: 7px; border: 1px solid rgba(255,255,255,.15); background: transparent; cursor: pointer; color: rgba(255,255,255,.7); font-size: 16px; display: flex; align-items: center; justify-content: center; transition: all .12s; }
   .close-btn:hover { border-color: #ff6b6b; color: #ff6b6b; }
-  .preview-body { flex: 1; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
+  .preview-body { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; overflow-y: auto; }
 
   /* SLIDE CANVAS */
   .slide-canvas { width: 100%; aspect-ratio: 16/9; border-radius: 10px; overflow: hidden; position: relative; box-shadow: 0 4px 20px rgba(0,0,0,.4); }
   .slide-canvas-inner { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; }
-
-  /* dark slide */
   .slide-dark { background: var(--preview-bg, #1E2761); }
   .slide-dark .accent-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 1.5%; background: var(--preview-accent, #4472C4); }
   .slide-dark .slide-main-title { position: absolute; left: 8%; top: 32%; right: 5%; font-size: clamp(14px,3.5vw,22px); font-weight: 700; color: white; line-height: 1.2; }
   .slide-dark .slide-subtitle { position: absolute; left: 8%; top: 58%; right: 5%; font-size: clamp(9px,1.8vw,13px); color: rgba(255,255,255,.75); line-height: 1.4; }
   .slide-dark .slide-num { position: absolute; top: 4%; right: 3%; font-size: 9px; color: rgba(255,255,255,.4); }
-
-  /* light slide */
   .slide-light { background: var(--preview-bg, #FFFFFF); }
   .slide-light .accent-top { position: absolute; left: 0; top: 0; right: 0; height: 1.2%; background: var(--preview-accent, #4472C4); }
   .slide-light .slide-title { position: absolute; left: 5%; top: 8%; right: 5%; font-size: clamp(11px,2.2vw,16px); font-weight: 700; color: var(--preview-text, #1A2320); }
@@ -177,7 +173,28 @@
   .slide-light .bullet-text { font-size: clamp(8px,1.4vw,11px); color: var(--preview-text, #1A2320); line-height: 1.4; }
   .slide-light .slide-num { position: absolute; top: 4%; right: 3%; font-size: 9px; color: #aaa; }
 
-  /* preview meta */
+  /* IMAGE SECTION */
+  .image-section { background: rgba(255,255,255,.06); border-radius: 10px; overflow: hidden; }
+  .image-section-hdr { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .image-section-title { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.7); }
+  .image-btns { display: flex; gap: 6px; }
+  .img-action-btn { padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; border: 1px solid rgba(255,255,255,.15); background: transparent; color: rgba(255,255,255,.7); transition: all .12s; display: flex; align-items: center; gap: 4px; }
+  .img-action-btn:hover { border-color: var(--teal); color: var(--teal); }
+  .img-action-btn.suggest { border-color: #6A5ACD50; color: #A89FE8; }
+  .img-action-btn.suggest:hover { border-color: #6A5ACD; color: #A89FE8; background: rgba(106,90,205,.15); }
+  .img-action-btn.upload { border-color: var(--teal-mid); color: var(--teal); }
+  .img-action-btn.upload:hover { background: rgba(26,158,143,.15); }
+  .img-action-btn.remove { border-color: rgba(255,100,100,.3); color: #ff8080; }
+  .img-action-btn.remove:hover { background: rgba(255,100,100,.1); }
+  .img-action-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .image-preview-area { padding: 10px 14px; }
+  .slide-image { width: 100%; border-radius: 8px; object-fit: cover; max-height: 160px; display: block; }
+  .image-loading { display: flex; align-items: center; gap: 8px; padding: 16px 0; color: rgba(255,255,255,.5); font-size: 12px; }
+  .image-empty { padding: 16px; text-align: center; color: rgba(255,255,255,.3); font-size: 12px; line-height: 1.6; }
+  .image-keyword { font-size: 10px; color: rgba(255,255,255,.35); margin-top: 6px; font-style: italic; }
+  .hidden-upload { display: none; }
+
+  /* META */
   .preview-meta { background: rgba(255,255,255,.06); border-radius: 10px; padding: 12px 14px; }
   .preview-meta-title { font-size: 13px; font-weight: 600; color: white; margin-bottom: 6px; }
   .preview-meta-bullets { list-style: none; display: flex; flex-direction: column; gap: 4px; }
@@ -188,6 +205,7 @@
   /* STATES */
   .center-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem; gap: 12px; }
   .spinner { width: 30px; height: 30px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin .8s linear infinite; }
+  .spinner-sm { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.2); border-top-color: rgba(255,255,255,.8); border-radius: 50%; animation: spin .8s linear infinite; flex-shrink: 0; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .state-txt { font-size: 13px; color: var(--ink-2); }
   .toast { position: fixed; bottom: 20px; right: 20px; background: var(--ink); color: white; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 500; opacity: 0; transition: opacity .3s; pointer-events: none; z-index: 300; max-width: 300px; }
@@ -211,6 +229,9 @@
   </div>
   <div class="preview-body" id="preview-body"></div>
 </div>
+
+<!-- Hidden file input for image upload -->
+<input type="file" class="hidden-upload" id="img-upload-input" accept="image/*" onchange="handleImageUpload(this)" />
 
 <div class="app">
   <aside class="sidebar">
@@ -287,13 +308,13 @@
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2h8M2 5h6M2 8h4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>Topic
         </button>
         <button class="itab" onclick="switchTab('bullets',this)">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="2" cy="3" r="1" fill="currentColor"/><circle cx="2" cy="6" r="1" fill="currentColor"/><circle cx="2" cy="9" r="1" fill="currentColor"/><path d="M4.5 3h5.5M4.5 6h5.5M4.5 9h5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Bullet outline
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="2" cy="3" r="1" fill="currentColor"/><circle cx="2" cy="6" r="1" fill="currentColor"/><circle cx="2" cy="9" r="1" fill="currentColor"/><path d="M4.5 3h5.5M4.5 6h5.5M4.5 9h5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Outline
         </button>
         <button class="itab" onclick="switchTab('notes',this)">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1" width="9" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4h5M3.5 6.5h5M3.5 9h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>Free-form notes
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1" width="9" height="10" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4h5M3.5 6.5h5M3.5 9h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/></svg>Notes
         </button>
         <button class="itab" onclick="switchTab('upload',this)">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 8V3M4 5l2-2 2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 9.5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Upload file
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 8V3M4 5l2-2 2 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 9.5h8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>Upload
         </button>
       </div>
 
@@ -362,16 +383,16 @@
   let cat=null, style='professional', slideCount=8, activeTab='topic';
   let exportFmt='pptx', outline=null, uploadedFileName='', uploadedContent='';
   let expandedIndex=null, previewIndex=0;
+  let slideImages={}; // stores image data URLs per slide index
 
   const typeColors={title:'#1A9E8F',agenda:'#1A9E8F',content:'#0E7A6E',data:'#D95B2A',quote:'#B04520',cta:'#D95B2A',conclusion:'#1A9E8F',intro:'#0E7A6E'};
-
-  const themes = {
-    professional: { titleBg:'#1E2761', lightBg:'#FFFFFF', accent:'#4472C4', text:'#1A2320' },
-    teal:         { titleBg:'#1A9E8F', lightBg:'#FFFFFF', accent:'#D95B2A', text:'#1A2320' },
-    warm:         { titleBg:'#D95B2A', lightBg:'#FAFAF8', accent:'#B04520', text:'#1A2320' },
-    minimal:      { titleBg:'#1A2320', lightBg:'#FFFFFF', accent:'#1A2320', text:'#1A2320' },
-    berry:        { titleBg:'#6D2E46', lightBg:'#FAF7F4', accent:'#A26769', text:'#1A2320' },
-    forest:       { titleBg:'#2C5F2D', lightBg:'#FAFAF8', accent:'#97BC62', text:'#1A2320' }
+  const themes={
+    professional:{titleBg:'#1E2761',lightBg:'#FFFFFF',accent:'#4472C4',text:'#1A2320'},
+    teal:{titleBg:'#1A9E8F',lightBg:'#FFFFFF',accent:'#D95B2A',text:'#1A2320'},
+    warm:{titleBg:'#D95B2A',lightBg:'#FAFAF8',accent:'#B04520',text:'#1A2320'},
+    minimal:{titleBg:'#1A2320',lightBg:'#FFFFFF',accent:'#1A2320',text:'#1A2320'},
+    berry:{titleBg:'#6D2E46',lightBg:'#FAF7F4',accent:'#A26769',text:'#1A2320'},
+    forest:{titleBg:'#2C5F2D',lightBg:'#FAFAF8',accent:'#97BC62',text:'#1A2320'}
   };
 
   function setCat(c,el){cat=c;document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));el.classList.add('active')}
@@ -426,6 +447,7 @@
     document.getElementById('outline-wrap').style.display='block';
     document.getElementById('export-wrap').style.display='none';
     document.getElementById('outline-body').innerHTML='<div class="center-state"><div class="spinner"></div><p class="state-txt">Building your outline...</p></div>';
+    slideImages={};
     try{
       const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'outline',input,slideCount})});
       const data=await res.json();
@@ -507,6 +529,7 @@
     document.getElementById('sdesc-'+i).textContent=newBullets.slice(0,2).join(' · ');
     document.getElementById('slide-row-'+i).classList.remove('expanded');
     expandedIndex=null;
+    if(previewIndex===i && document.getElementById('preview-panel').classList.contains('open')) renderPreview();
     showToast('Slide saved! ✓');
   }
 
@@ -525,6 +548,7 @@
       document.getElementById('edit-title-'+i).value=newSlide.title;
       document.getElementById('edit-bullets-'+i).value=(newSlide.bullets||[]).join('\n');
       document.getElementById('edit-note-'+i).value=newSlide.speakerNote||'';
+      if(previewIndex===i && document.getElementById('preview-panel').classList.contains('open')) renderPreview();
       showToast('Slide regenerated! ✓');
     }catch(e){showToast('Regeneration failed — please try again');}
     finally{btn.disabled=false;btn.innerHTML=orig;}
@@ -553,6 +577,7 @@
     const s=outline[previewIndex];
     const t=themes[style]||themes.professional;
     const isDark=s.type==='title'||s.type==='conclusion'||s.type==='cta'||previewIndex===0;
+    const hasImage=!!slideImages[previewIndex];
 
     document.getElementById('nav-count').textContent=`${previewIndex+1} / ${outline.length}`;
     document.getElementById('nav-prev').disabled=previewIndex===0;
@@ -560,35 +585,110 @@
 
     let canvasHTML='';
     if(isDark){
-      canvasHTML=`
-        <div class="slide-canvas-inner slide-dark" style="--preview-bg:${t.titleBg};--preview-accent:${t.accent}">
-          <div class="accent-bar"></div>
-          <div class="slide-num">${previewIndex+1}</div>
-          <div class="slide-main-title">${s.title}</div>
-          <div class="slide-subtitle">${(s.bullets||[])[0]||''}</div>
-        </div>`;
+      canvasHTML=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${t.titleBg};--preview-accent:${t.accent}">
+        <div class="accent-bar"></div>
+        <div class="slide-num">${previewIndex+1}</div>
+        <div class="slide-main-title">${s.title}</div>
+        <div class="slide-subtitle">${(s.bullets||[])[0]||''}</div>
+        ${hasImage?`<img src="${slideImages[previewIndex]}" style="position:absolute;right:0;top:0;bottom:0;width:35%;object-fit:cover;opacity:.3;" />`:''}
+      </div>`;
     }else{
       const bullets=(s.bullets||[]).map(b=>`<div class="bullet-item"><div class="bullet-dot"></div><div class="bullet-text">${b}</div></div>`).join('');
-      canvasHTML=`
-        <div class="slide-canvas-inner slide-light" style="--preview-bg:${t.lightBg};--preview-accent:${t.accent};--preview-text:${t.text}">
-          <div class="accent-top"></div>
-          <div class="slide-num">${previewIndex+1} / ${outline.length}</div>
-          <div class="slide-title">${s.title}</div>
-          <div class="accent-line"></div>
-          <div class="slide-bullets">${bullets}</div>
-        </div>`;
+      canvasHTML=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${t.lightBg};--preview-accent:${t.accent};--preview-text:${t.text}">
+        <div class="accent-top"></div>
+        <div class="slide-num">${previewIndex+1} / ${outline.length}</div>
+        <div class="slide-title">${s.title}</div>
+        <div class="accent-line"></div>
+        <div class="slide-bullets" style="${hasImage?'right:38%':''}">${bullets}</div>
+        ${hasImage?`<img src="${slideImages[previewIndex]}" style="position:absolute;right:0;top:0;bottom:0;width:35%;object-fit:cover;border-radius:0 0 0 0;" />`:''}
+      </div>`;
     }
 
     const bulletsMeta=(s.bullets||[]).map(b=>`<li>${b}</li>`).join('');
     const noteHTML=s.speakerNote?`<div class="preview-note">🎤 ${s.speakerNote}</div>`:'';
 
+    const imageArea=hasImage
+      ?`<div class="image-section">
+          <div class="image-section-hdr">
+            <span class="image-section-title">🖼 Slide image</span>
+            <div class="image-btns">
+              <button class="img-action-btn suggest" onclick="suggestImage(${previewIndex})">✦ New suggestion</button>
+              <button class="img-action-btn upload" onclick="triggerUpload(${previewIndex})">⬆ Upload</button>
+              <button class="img-action-btn remove" onclick="removeImage(${previewIndex})">✕ Remove</button>
+            </div>
+          </div>
+          <div class="image-preview-area">
+            <img class="slide-image" src="${slideImages[previewIndex]}" alt="Slide image" />
+          </div>
+        </div>`
+      :`<div class="image-section">
+          <div class="image-section-hdr">
+            <span class="image-section-title">🖼 Add an image</span>
+            <div class="image-btns">
+              <button class="img-action-btn suggest" onclick="suggestImage(${previewIndex})">✦ Suggest image</button>
+              <button class="img-action-btn upload" onclick="triggerUpload(${previewIndex})">⬆ Upload your own</button>
+            </div>
+          </div>
+          <div class="image-preview-area">
+            <div class="image-empty">No image yet.<br>Click "Suggest image" to get an AI suggestion<br>or upload your own photo.</div>
+          </div>
+        </div>`;
+
     document.getElementById('preview-body').innerHTML=`
       <div class="slide-canvas">${canvasHTML}</div>
+      ${imageArea}
       <div class="preview-meta">
         <div class="preview-meta-title">${s.title}</div>
         <ul class="preview-meta-bullets">${bulletsMeta}</ul>
         ${noteHTML}
       </div>`;
+  }
+
+  // ── IMAGE FUNCTIONS ──
+  async function suggestImage(i){
+    const s=outline[i];
+    const area=document.querySelector('.image-preview-area');
+    if(area) area.innerHTML='<div class="image-loading"><div class="spinner-sm"></div> Finding the best image for this slide...</div>';
+
+    try{
+      // Ask Claude for a keyword
+      const prompt=`For a presentation slide titled "${s.title}" with bullets: ${(s.bullets||[]).join(', ')}\n\nSuggest ONE short, specific search keyword (2-4 words) for finding a relevant professional stock photo. Return ONLY the keyword, nothing else.`;
+      const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'outline',input:prompt,slideCount:1})});
+      const data=await res.json();
+      const keyword=data.outline?.[0]?.title||s.title;
+
+      // Fetch from Unsplash source (free, no API key needed)
+      const imageUrl=`https://source.unsplash.com/800x450/?${encodeURIComponent(keyword)}&sig=${Date.now()}`;
+      slideImages[i]=imageUrl;
+      renderPreview();
+      showToast('Image found! ✓');
+    }catch(e){
+      showToast('Could not find image — try uploading your own');
+      renderPreview();
+    }
+  }
+
+  function triggerUpload(i){
+    previewIndex=i;
+    document.getElementById('img-upload-input').click();
+  }
+
+  function handleImageUpload(inp){
+    if(!inp.files[0])return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      slideImages[previewIndex]=ev.target.result;
+      renderPreview();
+      showToast('Image uploaded! ✓');
+    };
+    r.readAsDataURL(inp.files[0]);
+    inp.value='';
+  }
+
+  function removeImage(i){
+    delete slideImages[i];
+    renderPreview();
+    showToast('Image removed');
   }
 
   async function buildPresentation(){
@@ -610,8 +710,6 @@
   }
 
   function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500)}
-
-  // close preview with Escape key
   document.addEventListener('keydown',e=>{if(e.key==='Escape')closePreview()});
 </script>
 </body>
