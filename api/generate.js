@@ -1,228 +1,192 @@
 const PptxGenJS = require("pptxgenjs");
 
-const themes = {
-  professional: { titleBg: "1E2761", titleText: "FFFFFF", slideBg: "FFFFFF", slideText: "1A2320", accent: "4472C4", subText: "666666" },
-  teal:         { titleBg: "1A9E8F", titleText: "FFFFFF", slideBg: "FFFFFF", slideText: "1A2320", accent: "D95B2A", subText: "4A5553" },
-  warm:         { titleBg: "D95B2A", titleText: "FFFFFF", slideBg: "FAFAF8", slideText: "1A2320", accent: "B04520", subText: "6B4C3B" },
-  minimal:      { titleBg: "1A2320", titleText: "FFFFFF", slideBg: "FFFFFF", slideText: "1A2320", accent: "1A2320", subText: "888888" },
-  berry:        { titleBg: "6D2E46", titleText: "FFFFFF", slideBg: "FAF7F4", slideText: "1A2320", accent: "A26769", subText: "6D4C55" },
-  forest:       { titleBg: "2C5F2D", titleText: "FFFFFF", slideBg: "FAFAF8", slideText: "1A2320", accent: "97BC62", subText: "4A6B3A" }
+const THEMES = {
+  professional:{titleBg:"1E2761",titleText:"FFFFFF",slideBg:"FFFFFF",slideText:"1A2320",accent:"4472C4"},
+  teal:{titleBg:"1A9E8F",titleText:"FFFFFF",slideBg:"FFFFFF",slideText:"1A2320",accent:"D95B2A"},
+  warm:{titleBg:"D95B2A",titleText:"FFFFFF",slideBg:"FAFAF8",slideText:"1A2320",accent:"B04520"},
+  minimal:{titleBg:"1A2320",titleText:"FFFFFF",slideBg:"FFFFFF",slideText:"1A2320",accent:"1A2320"},
+  berry:{titleBg:"6D2E46",titleText:"FFFFFF",slideBg:"FAF7F4",slideText:"1A2320",accent:"A26769"},
+  forest:{titleBg:"2C5F2D",titleText:"FFFFFF",slideBg:"FAFAF8",slideText:"1A2320",accent:"97BC62"}
 };
 
-async function fetchImageAsBase64(url) {
-  try {
-    const res = await fetch(url);
-    const buffer = await res.arrayBuffer();
-    const base64 = Buffer.from(buffer).toString('base64');
-    const contentType = res.headers.get('content-type') || 'image/jpeg';
-    return `${contentType};base64,${base64}`;
-  } catch (e) { return null; }
+async function fetchAsBase64(url){
+  try{
+    const res=await fetch(url);
+    const buf=await res.arrayBuffer();
+    const ct=res.headers.get('content-type')||'image/jpeg';
+    return ct+';base64,'+Buffer.from(buf).toString('base64');
+  }catch(e){return null;}
 }
 
-async function prepareImage(imageData) {
-  if (!imageData) return null;
-  if (imageData.startsWith('data:')) return imageData.replace('data:', '');
-  const b64 = await fetchImageAsBase64(imageData);
-  return b64;
+async function prepImg(d){
+  if(!d)return null;
+  if(d.startsWith('data:'))return d.replace('data:','');
+  return await fetchAsBase64(d);
 }
 
-async function buildPptx(outline, style, slideImages) {
-  const theme = themes[style] || themes.professional;
-  const pres = new PptxGenJS();
-  pres.layout = "LAYOUT_16x9";
-
-  for (let index = 0; index < outline.length; index++) {
-    const slide = outline[index];
-    const s = pres.addSlide();
-    const isDark = slide.type === "title" || slide.type === "conclusion" || slide.type === "cta" || index === 0;
-    const imageData = await prepareImage(slideImages?.[index]);
-
-    s.background = { color: isDark ? theme.titleBg : theme.slideBg };
-
-    if (isDark) {
-      if (imageData) { try { s.addImage({ data: imageData, x: 0, y: 0, w: 10, h: 5.625, transparency: 70 }); } catch(e) {} }
-      s.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 0.08, h: 5.625, fill: { color: theme.accent }, line: { color: theme.accent } });
-      s.addText(slide.title, { x: 0.6, y: 1.8, w: 8.8, h: 1.4, fontSize: 38, fontFace: "Calibri", bold: true, color: theme.titleText, align: "left" });
-      if (slide.bullets?.[0]) s.addText(slide.bullets[0], { x: 0.6, y: 3.4, w: 7.5, h: 0.6, fontSize: 16, fontFace: "Calibri", color: theme.titleText, align: "left" });
-    } else {
-      s.addShape(pres.shapes.RECTANGLE, { x: 0, y: 0, w: 10, h: 0.06, fill: { color: theme.accent }, line: { color: theme.accent } });
-      if (imageData) {
-        s.addText(slide.title, { x: 0.5, y: 0.25, w: 5.8, h: 0.75, fontSize: 22, fontFace: "Calibri", bold: true, color: theme.slideText, align: "left", margin: 0 });
-        s.addShape(pres.shapes.RECTANGLE, { x: 0.5, y: 1.05, w: 1.2, h: 0.04, fill: { color: theme.accent }, line: { color: theme.accent } });
-        if (slide.bullets?.length) {
-          s.addText(slide.bullets.map((b,i)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:i<slide.bullets.length-1}})), { x: 0.5, y: 1.3, w: 5.8, h: 3.8, valign: "top" });
-        }
-        try { s.addImage({ data: imageData, x: 6.4, y: 0.06, w: 3.6, h: 5.565, sizing: { type: 'cover', w: 3.6, h: 5.565 } }); } catch(e) {}
-      } else {
-        s.addText(slide.title, { x: 0.5, y: 0.25, w: 8.5, h: 0.75, fontSize: 26, fontFace: "Calibri", bold: true, color: theme.slideText, align: "left", margin: 0 });
-        s.addShape(pres.shapes.RECTANGLE, { x: 0.5, y: 1.05, w: 1.2, h: 0.04, fill: { color: theme.accent }, line: { color: theme.accent } });
-        if (slide.bullets?.length) {
-          s.addText(slide.bullets.map((b,i)=>({text:b,options:{bullet:true,fontSize:15,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:8,breakLine:i<slide.bullets.length-1}})), { x: 0.5, y: 1.3, w: 8.8, h: 3.8, valign: "top" });
-        }
-      }
-      if (slide.speakerNote) s.addNotes(slide.speakerNote);
-    }
+function getTheme(style,brandOn,brandColors){
+  if(brandOn&&brandColors){
+    return{
+      titleBg:brandColors.primary.replace('#',''),
+      titleText:'FFFFFF',
+      slideBg:'FFFFFF',
+      slideText:brandColors.text.replace('#',''),
+      accent:brandColors.accent.replace('#','')
+    };
   }
-  return await pres.write({ outputType: "nodebuffer" });
+  return THEMES[style]||THEMES.professional;
 }
 
-function hexToRgb(hex) {
-  const r = parseInt(hex.slice(0,2),16), g = parseInt(hex.slice(2,4),16), b = parseInt(hex.slice(4,6),16);
-  return `rgb(${r},${g},${b})`;
-}
-
-async function buildPdfBuffer(outline, style, slideImages, orientation) {
-  const theme = themes[style] || themes.professional;
-  const isLandscape = orientation !== 'portrait';
-
-  let slidesHtml = '';
-  for (let i = 0; i < outline.length; i++) {
-    const slide = outline[i];
-    const isDark = slide.type === 'title' || slide.type === 'conclusion' || slide.type === 'cta' || i === 0;
-    let imageData = slideImages?.[i] || null;
-    if (imageData && !imageData.startsWith('data:')) {
-      const b64 = await fetchImageAsBase64(imageData);
-      if (b64) imageData = 'data:' + b64;
-    }
-
-    const bg = isDark ? hexToRgb(theme.titleBg) : hexToRgb(theme.slideBg);
-    const accentColor = hexToRgb(theme.accent);
-    const titleColor = isDark ? '#fff' : hexToRgb(theme.slideText);
-    const bulletColor = hexToRgb(theme.slideText);
-    const fs = isLandscape ? { title: isDark?'32px':'20px', bullet: '13px', sub: '14px' } : { title: isDark?'24px':'16px', bullet: '11px', sub: '11px' };
-
-    const imgStyle = isDark
-      ? 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.2'
-      : 'position:absolute;right:0;top:0;bottom:0;width:38%;object-fit:cover;height:100%';
-    const contentRight = imageData && !isDark ? '42%' : '4%';
-
-    const bulletsHtml = (slide.bullets||[]).map(b =>
-      `<li style="margin-bottom:5px;font-size:${fs.bullet};color:${bulletColor};line-height:1.5">${b}</li>`
-    ).join('');
-
-    const darkContent = `
-      ${imageData ? `<img src="${imageData}" style="${imgStyle}" />` : ''}
-      <div style="position:absolute;left:0;top:0;bottom:0;width:5px;background:${accentColor}"></div>
-      <div style="position:absolute;left:4%;top:35%;right:4%">
-        <div style="font-size:${fs.title};font-weight:700;color:#fff;line-height:1.25;margin-bottom:12px">${slide.title}</div>
-        <div style="font-size:${fs.sub};color:rgba(255,255,255,0.75)">${(slide.bullets||[])[0]||''}</div>
-      </div>
-      <div style="position:absolute;top:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.35)">${i+1}</div>`;
-
-    const lightContent = `
-      ${imageData ? `<img src="${imageData}" style="${imgStyle}" />` : ''}
-      <div style="position:absolute;top:0;left:0;right:0;height:4px;background:${accentColor}"></div>
-      <div style="position:absolute;top:12px;left:4%;right:${contentRight};font-size:${fs.title};font-weight:700;color:${titleColor};line-height:1.25">${slide.title}</div>
-      <div style="position:absolute;top:42px;left:4%;width:50px;height:3px;background:${accentColor};border-radius:2px"></div>
-      <div style="position:absolute;top:54px;left:4%;right:${contentRight};bottom:8px;overflow:hidden">
-        <ul style="margin:0;padding-left:18px;list-style-type:disc">${bulletsHtml}</ul>
-      </div>
-      <div style="position:absolute;top:6px;right:10px;font-size:8px;color:#bbb">${i+1} / ${outline.length}</div>`;
-
-    const slideStyle = isLandscape
-      ? 'width:257mm;height:144mm;margin:15mm auto;page-break-after:always;'
-      : 'width:190mm;height:107mm;margin:10mm auto;page-break-after:always;';
-
-    slidesHtml += `<div style="${slideStyle}position:relative;background:${bg};border-radius:4px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,0.15)">${isDark ? darkContent : lightContent}</div>`;
+async function addLogo(s,pres,logoImgData,logoPos,logoWhiteBg,isCover){
+  if(!logoImgData)return;
+  const isBottom=logoPos==='bottom-left';
+  if(logoWhiteBg){
+    const barH=isCover?1.1:0.55;
+    const y=isBottom?5.625-barH:0;
+    s.addShape(pres.shapes.RECTANGLE,{x:0,y,w:10,h:barH,fill:{color:'FFFFFF'},line:{color:'FFFFFF'}});
   }
-
-  const pageSize = isLandscape ? 'A4 landscape' : 'A4 portrait';
-  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <style>
-    @page { size: ${pageSize}; margin: 0; }
-    * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background: #d0d0d0; font-family: Arial, Helvetica, sans-serif; }
-    @media print { body { background: white; } div { box-shadow: none !important; } }
-  </style>
-  </head><body>${slidesHtml}</body></html>`;
-
-  // Use puppeteer if available, otherwise fall back to html
-  try {
-    const puppeteer = require('puppeteer-core');
-    const chromium = require('@sparticuz/chromium');
-    const browser = await puppeteer.launch({
-      args: chromium.args,
-      defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
-      headless: chromium.headless,
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      landscape: isLandscape,
-      printBackground: true,
-      margin: { top: '0', right: '0', bottom: '0', left: '0' }
-    });
-    await browser.close();
-    return { buffer: Buffer.from(pdfBuffer), isPdf: true };
-  } catch (e) {
-    // Puppeteer not available — return HTML that user can print to PDF
-    console.log('Puppeteer not available, returning printable HTML:', e.message);
-    return { buffer: Buffer.from(html, 'utf8'), isPdf: false };
-  }
+  const w=isCover?1.6:0.8,h=isCover?0.65:0.32;
+  const x=0.2;
+  const y=isBottom?(5.625-h-0.1):0.1;
+  try{s.addImage({data:logoImgData,x,y,w,h,sizing:{type:'contain',w,h}});}catch(e){}
 }
 
-module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+module.exports=async function handler(req,res){
+  res.setHeader("Access-Control-Allow-Origin","*");
+  res.setHeader("Access-Control-Allow-Methods","POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers","Content-Type");
+  if(req.method==="OPTIONS")return res.status(200).end();
+  if(req.method!=="POST")return res.status(405).json({error:"Method not allowed"});
 
-  try {
-    const { action, input, slideCount, style, title, outline, format, orientation, slideImages } = req.body;
-    const apiKey = process.env.ANTHROPIC_API_KEY;
-    const safeName = (title || "presentation").replace(/[^a-z0-9]/gi, "_");
+  try{
+    const{action,input,slideCount,style,title,outline,format,slideImages,slideTemplates,logoData,logoPos,logoWhiteBg,brandOn,brandColors}=req.body;
+    const apiKey=process.env.ANTHROPIC_API_KEY;
 
     // ── OUTLINE ──
-    if (action === "outline") {
-      const prompt = `You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide outline.\n\n${input}\n\nReturn ONLY a raw JSON array with exactly ${slideCount} objects. Each object:\n- "title": short slide title (3-7 words)\n- "type": one of "title","agenda","content","data","quote","cta","conclusion"\n- "bullets": 2-4 concise bullets (5-10 words each)\n- "speakerNote": one sentence of guidance\n\nNo markdown, no explanation, raw JSON array only.`;
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
-        body: JSON.stringify({ model: "claude-sonnet-4-20250514", max_tokens: 1000, messages: [{ role: "user", content: prompt }] })
-      });
-      const data = await response.json();
-      if (!response.ok) return res.status(response.status).json({ error: data.error?.message || "API error" });
-      const text = data.content.map(b => b.text || "").join("");
-      const clean = text.replace(/```json|```/g, "").trim();
-      return res.status(200).json({ outline: JSON.parse(clean) });
+    if(action==="outline"){
+      const prompt=`You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide outline.\n\n${input}\n\nReturn ONLY a raw JSON array with exactly ${slideCount} objects. Each object:\n- "title": short slide title (3-7 words)\n- "type": one of "title","agenda","content","data","quote","cta","conclusion"\n- "bullets": 2-4 concise bullets (5-10 words each)\n- "speakerNote": one sentence of guidance\n\nNo markdown, no explanation, raw JSON array only.`;
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})});
+      const d=await r.json();
+      if(!r.ok)return res.status(r.status).json({error:d.error?.message||"API error"});
+      const text=d.content.map(b=>b.text||"").join("");
+      const clean=text.replace(/```json|```/g,"").trim();
+      return res.status(200).json({outline:JSON.parse(clean)});
     }
 
     // ── PPTX ──
-    if (action === "pptx" && format === "pptx") {
-      const buffer = await buildPptx(outline, style, slideImages);
-      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
-      res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pptx"`);
-      return res.status(200).send(buffer);
-    }
+    if(action==="pptx"){
+      const theme=getTheme(style,brandOn,brandColors);
+      const pres=new PptxGenJS();
+      pres.layout="LAYOUT_16x9";
+      pres.title=title||"Presentation";
 
-    // ── PDF ──
-    if (action === "pptx" && format === "pdf") {
-      const { buffer, isPdf } = await buildPdfBuffer(outline, style, slideImages, orientation);
-      if (isPdf) {
-        res.setHeader("Content-Type", "application/pdf");
-        res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pdf"`);
-      } else {
-        res.setHeader("Content-Type", "text/html; charset=utf-8");
-        res.setHeader("Content-Disposition", `attachment; filename="${safeName}_print.html"`);
+      // Prepare logo once
+      let logoImg=null;
+      if(logoData){
+        logoImg=logoData.startsWith('data:')?logoData.replace('data:',''):await fetchAsBase64(logoData);
       }
+
+      for(let i=0;i<outline.length;i++){
+        const slide=outline[i];
+        const s=pres.addSlide();
+        const isDark=slide.type==="title"||slide.type==="conclusion"||slide.type==="cta"||i===0;
+        const imgData=await prepImg(slideImages?.[i]);
+        const tpl=slideTemplates?.[i];
+        const isCover=i===0;
+
+        s.background={color:isDark?theme.titleBg:theme.slideBg};
+
+        if(isDark){
+          if(imgData){try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,transparency:70});}catch(e){}}
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.08,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,isCover);
+          s.addText(slide.title,{x:0.6,y:1.8,w:8.8,h:1.4,fontSize:36,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});
+          if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.6,y:3.4,w:7.5,h:0.6,fontSize:15,fontFace:"Calibri",color:theme.titleText,align:"left"});
+
+        } else if(tpl==='3images'){
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          s.addText(slide.title,{x:0.5,y:0.2,w:9,h:0.65,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+          const imgW=2.8,imgH=3.2,imgY=1.1,gap=0.2;
+          for(let k=0;k<3;k++){
+            const imgX=0.5+k*(imgW+gap);
+            if(imgData&&k===0){try{s.addImage({data:imgData,x:imgX,y:imgY,w:imgW,h:imgH,sizing:{type:'cover',w:imgW,h:imgH}});}catch(e){s.addShape(pres.shapes.RECTANGLE,{x:imgX,y:imgY,w:imgW,h:imgH,fill:{color:theme.accent},line:{color:theme.accent}});}}
+            else{s.addShape(pres.shapes.RECTANGLE,{x:imgX,y:imgY,w:imgW,h:imgH,fill:{color:'E8E8E8'},line:{color:'CCCCCC'}});s.addText('Image '+(k+1),{x:imgX,y:imgY+imgH/2-0.2,w:imgW,h:0.4,fontSize:11,color:'888888',align:'center'});}
+            if(slide.bullets?.[k])s.addText(slide.bullets[k],{x:imgX,y:imgY+imgH+0.05,w:imgW,h:0.35,fontSize:10,color:theme.slideText,align:'center'});
+          }
+
+        } else if(tpl==='4icons'){
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          s.addText(slide.title,{x:0.5,y:0.2,w:9,h:0.65,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+          const icons=['★','◆','●','▲'];
+          const cellW=2.2,cellX=[0.4,2.8,5.2,7.6];
+          for(let k=0;k<4;k++){
+            s.addShape(pres.shapes.ROUNDED_RECTANGLE,{x:cellX[k],y:1.1,w:cellW,h:cellW,fill:{color:theme.accent+'22'},line:{color:theme.accent},rectRadius:0.1});
+            s.addText(icons[k],{x:cellX[k],y:1.4,w:cellW,h:0.8,fontSize:28,color:theme.accent,align:'center'});
+            s.addText((slide.bullets?.[k]||'Point '+(k+1)),{x:cellX[k]-0.1,y:2.5,w:cellW+0.2,h:0.7,fontSize:11,fontFace:"Calibri",bold:true,color:theme.slideText,align:'center'});
+            if(slide.bullets?.[k+4])s.addText(slide.bullets[k+4],{x:cellX[k]-0.1,y:3.3,w:cellW+0.2,h:0.5,fontSize:9,color:'666666',align:'center'});
+          }
+
+        } else if(tpl==='fullbleed'){
+          if(imgData){try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,sizing:{type:'cover',w:10,h:5.625}});}catch(e){}}
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:3.2,w:10,h:2.425,fill:{color:'000000'},line:{color:'000000'}});
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:3.2,w:10,h:2.425,fill:{color:'000000',transparency:40},line:{color:'000000',transparency:40}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          s.addText(slide.title,{x:0.5,y:3.3,w:9,h:1.0,fontSize:28,fontFace:"Calibri",bold:true,color:'FFFFFF',align:'left'});
+          if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.5,y:4.4,w:9,h:0.6,fontSize:14,color:'FFFFFFCC',align:'left'});
+
+        } else if(tpl==='two-col'){
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          s.addText(slide.title,{x:0.5,y:0.2,w:9,h:0.7,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+          s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:1.0,w:0.9,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
+          s.addShape(pres.shapes.RECTANGLE,{x:5,y:1.1,w:0.04,h:4.3,fill:{color:theme.accent+'44'},line:{color:theme.accent+'44'}});
+          const half=Math.ceil((slide.bullets||[]).length/2);
+          const col1=(slide.bullets||[]).slice(0,half);
+          const col2=(slide.bullets||[]).slice(half);
+          if(col1.length)s.addText(col1.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<col1.length-1}})),{x:0.5,y:1.15,w:4.3,h:4.2,valign:'top'});
+          if(col2.length)s.addText(col2.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<col2.length-1}})),{x:5.2,y:1.15,w:4.3,h:4.2,valign:'top'});
+
+        } else if(tpl==='stat'){
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          s.addText(slide.title,{x:0.5,y:0.2,w:9,h:0.7,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"center",margin:0});
+          const stat=(slide.bullets||[])[0]||'100%';
+          s.addText(stat,{x:1,y:1.5,w:8,h:2.2,fontSize:72,fontFace:"Calibri",bold:true,color:theme.accent,align:'center'});
+          const rest=(slide.bullets||[]).slice(1);
+          if(rest.length)s.addText(rest.join('  ·  '),{x:1,y:3.9,w:8,h:0.8,fontSize:14,color:'666666',align:'center'});
+
+        } else {
+          // Default: bullets left, image right
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          if(imgData){
+            s.addText(slide.title,{x:0.5,y:0.2,w:5.8,h:0.75,fontSize:20,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+            s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:1.0,w:1.0,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
+            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.2,w:5.8,h:4.0,valign:'top'});
+            try{s.addImage({data:imgData,x:6.4,y:0.06,w:3.6,h:5.565,sizing:{type:'cover',w:3.6,h:5.565}});}catch(e){}
+          } else {
+            s.addText(slide.title,{x:0.5,y:0.2,w:9,h:0.75,fontSize:24,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+            s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:1.0,w:1.1,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
+            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:14,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:7,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.2,w:9,h:4.0,valign:'top'});
+          }
+          if(slide.speakerNote)s.addNotes(slide.speakerNote);
+        }
+      }
+
+      const buffer=await pres.write({outputType:"nodebuffer"});
+      const safeName=(title||"presentation").replace(/[^a-z0-9]/gi,"_");
+      res.setHeader("Content-Type","application/vnd.openxmlformats-officedocument.presentationml.presentation");
+      res.setHeader("Content-Disposition",`attachment; filename="${safeName}.pptx"`);
+      res.setHeader("Content-Length",buffer.length);
       return res.status(200).send(buffer);
     }
 
-    // ── BOTH ──
-    if (action === "pptx" && format === "both") {
-      const buffer = await buildPptx(outline, style, slideImages);
-      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.presentationml.presentation");
-      res.setHeader("Content-Disposition", `attachment; filename="${safeName}.pptx"`);
-      return res.status(200).send(buffer);
-    }
+    return res.status(400).json({error:"Invalid action"});
 
-    return res.status(400).json({ error: "Invalid action" });
-
-  } catch (err) {
-    console.error("Error:", err);
-    return res.status(500).json({ error: err.message });
+  }catch(err){
+    console.error("Error:",err);
+    return res.status(500).json({error:err.message});
   }
 };
