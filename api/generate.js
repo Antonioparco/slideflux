@@ -37,18 +37,24 @@ function getTheme(style,brandOn,brandColors){
   return THEMES[style]||THEMES.professional;
 }
 
+// Add logo with contain sizing to prevent stretching
 async function addLogo(s,pres,logoImgData,logoPos,logoWhiteBg,isCover){
   if(!logoImgData)return;
   const isBottom=logoPos==='bottom-left';
+  // Logo dimensions - smaller on content slides to avoid overlapping text
+  const w=isCover?1.8:0.65;
+  const h=isCover?0.72:0.26;
+  const x=0.25;
+  const y=isBottom?(5.625-h-0.12):0.12;
   if(logoWhiteBg){
-    const barH=isCover?1.1:0.55;
-    const y=isBottom?5.625-barH:0;
-    s.addShape(pres.shapes.RECTANGLE,{x:0,y,w:10,h:barH,fill:{color:'FFFFFF'},line:{color:'FFFFFF'}});
+    const barH=isCover?1.0:0.5;
+    const barY=isBottom?5.625-barH:0;
+    s.addShape(pres.shapes.RECTANGLE,{x:0,y:barY,w:10,h:barH,fill:{color:'FFFFFF'},line:{color:'FFFFFF'}});
   }
-  const w=isCover?1.6:0.8,h=isCover?0.65:0.32;
-  const x=0.2;
-  const y=isBottom?(5.625-h-0.1):0.1;
-  try{s.addImage({data:logoImgData,x,y,w,h,sizing:{type:'contain',w,h}});}catch(e){}
+  // Use contain to prevent stretching
+  try{
+    s.addImage({data:logoImgData,x,y,w,h,sizing:{type:'contain',w,h}});
+  }catch(e){}
 }
 
 module.exports=async function handler(req,res){
@@ -61,18 +67,18 @@ module.exports=async function handler(req,res){
   try{
     const{
       action,input,slideCount,style,title,outline,format,
-      slideImages,slotImages,slideIcons,slideTemplates,
+      slideImages,slotImages,slideIcons,slideTemplates,slideDarkBg,
       logoData,logoPos,logoWhiteBg,brandOn,brandColors
     }=req.body;
     const apiKey=process.env.ANTHROPIC_API_KEY;
 
     // ── OUTLINE ──
     if(action==="outline"){
-      const prompt=`You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide outline.\n\n${input}\n\nReturn ONLY a raw JSON array with exactly ${slideCount} objects. Each object:\n- "title": short slide title (3-7 words)\n- "type": one of "title","agenda","content","data","quote","cta","conclusion"\n- "bullets": 2-4 concise bullets (5-10 words each)\n- "speakerNote": one sentence of guidance\n\nNo markdown, no explanation, raw JSON array only.`;
+      const prompt=`You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide outline.\n\n${input}\n\nIMPORTANT: If the input contains document content or notes, read it carefully and adapt the actual content into slides — do NOT just summarise in generic bullet points. Extract key facts, data, arguments and insights and use them as the slide content.\n\nReturn ONLY a raw JSON array with exactly ${slideCount} objects. Each object:\n- "title": short slide title (3-7 words)\n- "type": one of "title","agenda","content","data","quote","cta","conclusion"\n- "bullets": 2-4 content-rich bullets using actual information from the input (5-12 words each)\n- "speakerNote": one sentence of guidance\n\nNo markdown, no explanation, raw JSON array only.`;
       const r=await fetch("https://api.anthropic.com/v1/messages",{
         method:"POST",
         headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
-        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:prompt}]})
+        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,messages:[{role:"user",content:prompt}]})
       });
       const d=await r.json();
       if(!r.ok)return res.status(r.status).json({error:d.error?.message||"API error"});
@@ -86,6 +92,7 @@ module.exports=async function handler(req,res){
       const pres=new PptxGenJS();
       pres.layout="LAYOUT_16x9";
       pres.title=title||"Presentation";
+      const lastIdx=outline.length-1;
 
       // Prepare logo once
       let logoImg=null;
@@ -96,29 +103,53 @@ module.exports=async function handler(req,res){
       for(let i=0;i<outline.length;i++){
         const slide=outline[i];
         const s=pres.addSlide();
-        const isDark=slide.type==="title"||slide.type==="conclusion"||slide.type==="cta"||i===0;
+        const isCover=i===0;
+        const isLast=i===lastIdx;
+        const isSpecialSlide=isCover||isLast;
+        // Per-slide dark background toggle
+        const forceDark=slideDarkBg?.[i];
+        const forceLight=forceDark===false;
+        const defaultDark=slide.type==="title"||slide.type==="conclusion"||slide.type==="cta"||isCover||isLast;
+        const isDark=forceDark===true?true:forceLight?false:defaultDark;
+
         const imgData=await prepImg(slideImages?.[i]);
         const tpl=slideTemplates?.[i]||'default';
-        const isCover=i===0;
         const slots=slotImages?.[i]||{};
         const icons=slideIcons?.[i]||{};
 
         s.background={color:isDark?theme.titleBg:theme.slideBg};
 
-        // ── DARK SLIDE ──
-        if(isDark){
+        // ── COVER / LAST SLIDE ──
+        if(isSpecialSlide){
+          if(tpl==='circle-right'&&imgData){
+            // Circle image on right
+            s.addShape(pres.shapes.OVAL,{x:6.2,y:0.3,w:3.4,h:5.0,fill:{color:'FFFFFF',transparency:90},line:{color:'FFFFFF',transparency:50}});
+            try{s.addImage({data:imgData,x:6.5,y:0.5,w:3.0,h:4.6,sizing:{type:'cover',w:3.0,h:4.6}});}catch(e){}
+          }else if(imgData){
+            try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,sizing:{type:'cover',w:10,h:5.625},transparency:isDark?60:0});}catch(e){}
+          }
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.1,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,true);
+          s.addText(slide.title,{x:0.6,y:1.6,w:tpl==='circle-right'?5.5:9,h:1.6,fontSize:38,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});
+          if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.6,y:3.4,w:tpl==='circle-right'?5.5:8,h:0.7,fontSize:16,fontFace:"Calibri",color:theme.titleText,align:"left"});
+
+        // ── DARK CONTENT SLIDE ──
+        }else if(isDark){
           if(imgData){try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,transparency:70});}catch(e){}}
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.08,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
-          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,isCover);
-          s.addText(slide.title,{x:0.6,y:1.8,w:8.8,h:1.4,fontSize:36,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});
-          if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.6,y:3.4,w:7.5,h:0.6,fontSize:15,fontFace:"Calibri",color:theme.titleText,align:"left"});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          s.addText(slide.title,{x:0.6,y:1.6,w:8.8,h:1.4,fontSize:34,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});
+          if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.6,y:3.2,w:7.5,h:0.7,fontSize:15,fontFace:"Calibri",color:theme.titleText,align:"left"});
 
         // ── 3 IMAGES ──
-        } else if(tpl==='3images'){
+        }else if(tpl==='3images'){
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
           await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
-          s.addText(slide.title,{x:0.5,y:0.15,w:9,h:0.65,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
-          const imgW=2.9,imgH=3.2,imgY=1.0,gap=0.15;
+          // Title at top
+          const logoOffset=logoImg?0.45:0;
+          s.addText(slide.title,{x:0.4,y:0.15+logoOffset,w:9.2,h:0.55,fontSize:20,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+          // 3 rectangular images side by side
+          const imgW=3.0,imgH=2.8,imgY=0.95+logoOffset,gap=0.18;
           for(let k=0;k<3;k++){
             const imgX=0.3+k*(imgW+gap);
             const kImg=await prepImg(slots[k]);
@@ -129,86 +160,111 @@ module.exports=async function handler(req,res){
               s.addShape(pres.shapes.RECTANGLE,{x:imgX,y:imgY,w:imgW,h:imgH,fill:{color:theme.accent+'22'},line:{color:theme.accent}});
               s.addText('Image '+(k+1),{x:imgX,y:imgY+imgH/2-0.2,w:imgW,h:0.4,fontSize:11,color:theme.accent,align:'center'});
             }
-            if(slide.bullets?.[k])s.addText(slide.bullets[k],{x:imgX,y:imgY+imgH+0.05,w:imgW,h:0.35,fontSize:9,color:theme.slideText,align:'center'});
+            // Title under image (bold)
+            const textY=imgY+imgH+0.1;
+            const bulletTitle=slide.bullets?.[k*2]||'';
+            const bulletDesc=slide.bullets?.[k*2+1]||slide.bullets?.[k]||'';
+            if(bulletTitle)s.addText(bulletTitle,{x:imgX,y:textY,w:imgW,h:0.3,fontSize:10,fontFace:"Calibri",bold:true,color:theme.slideText,align:'left'});
+            if(bulletDesc)s.addText(bulletDesc,{x:imgX,y:textY+0.3,w:imgW,h:0.35,fontSize:9,fontFace:"Calibri",color:'666666',align:'left'});
           }
 
         // ── 2 or 4 ICONS ──
-        } else if(tpl==='2icons'||tpl==='4icons'){
+        }else if(tpl==='2icons'||tpl==='4icons'){
           const count=tpl==='2icons'?2:4;
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
           await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
-          s.addText(slide.title,{x:0.5,y:0.15,w:9,h:0.65,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
-          const cellW=count===2?3.6:2.0;
-          const startX=count===2?0.8:0.4;
-          const gapX=count===2?1.2:0.4;
-          const circleR=count===2?0.7:0.55;
+          const logoOffset=logoImg?0.35:0;
+          s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:9,h:0.6,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+          const cellW=count===2?3.8:1.9;
+          const startX=count===2?0.8:0.35;
+          const gapX=count===2?1.0:0.35;
+          const circleR=count===2?0.75:0.58;
           for(let k=0;k<count;k++){
             const cx=startX+k*(cellW+gapX);
             const ccx=cx+(cellW-circleR*2)/2;
-            s.addShape(pres.shapes.OVAL,{x:ccx,y:1.1,w:circleR*2,h:circleR*2,fill:{color:theme.accent+'33'},line:{color:theme.accent}});
+            const circleY=1.0+logoOffset;
+            // Circle outline only, primary colour
+            s.addShape(pres.shapes.OVAL,{x:ccx,y:circleY,w:circleR*2,h:circleR*2,
+              fill:{color:'FFFFFF',transparency:100},
+              line:{color:theme.accent,width:1.5}
+            });
             const iconInfo=icons[k];
             const slotImg=await prepImg(slots[k]);
             if(iconInfo){
               try{
                 const svgRes=await fetch(iconInfo.svg);
                 const svgText=await svgRes.text();
-                const svgB64='image/svg+xml;base64,'+Buffer.from(svgText).toString('base64');
-                const iSz=circleR;
-                s.addImage({data:svgB64,x:ccx+(circleR*2-iSz)/2,y:1.1+(circleR*2-iSz)/2,w:iSz,h:iSz});
+                // Colour the icon with accent colour
+                const colouredSvg=svgText.replace(/fill="[^"]*"/g,`fill="#${theme.accent}"`).replace(/currentColor/g,`#${theme.accent}`);
+                const svgB64='image/svg+xml;base64,'+Buffer.from(colouredSvg).toString('base64');
+                const iSz=circleR*0.9;
+                s.addImage({data:svgB64,x:ccx+(circleR*2-iSz)/2,y:circleY+(circleR*2-iSz)/2,w:iSz,h:iSz});
               }catch(e){}
             }else if(slotImg){
-              try{const iSz=circleR;s.addImage({data:slotImg,x:ccx+(circleR*2-iSz)/2,y:1.1+(circleR*2-iSz)/2,w:iSz,h:iSz,sizing:{type:'contain',w:iSz,h:iSz}});}catch(e){}
+              try{const iSz=circleR*0.9;s.addImage({data:slotImg,x:ccx+(circleR*2-iSz)/2,y:circleY+(circleR*2-iSz)/2,w:iSz,h:iSz,sizing:{type:'contain',w:iSz,h:iSz}});}catch(e){}
             }
-            const byY=1.1+circleR*2+0.15;
-            s.addText((slide.bullets?.[k]||'Point '+(k+1)),{x:cx,y:byY,w:cellW,h:0.45,fontSize:count===2?14:11,fontFace:"Calibri",bold:true,color:theme.slideText,align:'center'});
-            if(slide.bullets?.[k+count])s.addText(slide.bullets[k+count],{x:cx,y:byY+0.45,w:cellW,h:0.45,fontSize:9,color:'666666',align:'center'});
+            const byY=circleY+circleR*2+0.18;
+            s.addText((slide.bullets?.[k]||'Point '+(k+1)),{x:cx,y:byY,w:cellW,h:0.4,fontSize:count===2?14:11,fontFace:"Calibri",bold:true,color:theme.slideText,align:'center'});
+            if(slide.bullets?.[k+count])s.addText(slide.bullets[k+count],{x:cx,y:byY+0.4,w:cellW,h:0.45,fontSize:9,color:'666666',align:'center'});
           }
 
         // ── FULL BLEED ──
-        } else if(tpl==='fullbleed'){
+        }else if(tpl==='fullbleed'){
           if(imgData){try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,sizing:{type:'cover',w:10,h:5.625}});}catch(e){}}
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:3.3,w:10,h:2.325,fill:{color:'000000'},line:{color:'000000'}});
-          s.addShape(pres.shapes.RECTANGLE,{x:0,y:3.3,w:10,h:2.325,fill:{color:'000000',transparency:45},line:{color:'000000',transparency:45}});
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:3.3,w:10,h:2.325,fill:{color:'000000',transparency:40},line:{color:'000000',transparency:40}});
           await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
           s.addText(slide.title,{x:0.5,y:3.4,w:9,h:1.0,fontSize:26,fontFace:"Calibri",bold:true,color:'FFFFFF',align:'left'});
           if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.5,y:4.5,w:9,h:0.6,fontSize:13,color:'FFFFFFCC',align:'left'});
 
         // ── TWO COLUMNS ──
-        } else if(tpl==='two-col'){
+        }else if(tpl==='two-col'){
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
           await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
-          s.addText(slide.title,{x:0.5,y:0.15,w:9,h:0.7,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
-          s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:0.95,w:0.9,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
-          s.addShape(pres.shapes.RECTANGLE,{x:5,y:1.0,w:0.04,h:4.4,fill:{color:theme.accent+'44'},line:{color:theme.accent+'44'}});
+          const logoOffset=logoImg?0.35:0;
+          s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:9,h:0.65,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+          s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:0.9+logoOffset,w:0.9,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
+          s.addShape(pres.shapes.RECTANGLE,{x:5,y:1.0+logoOffset,w:0.04,h:4.3,fill:{color:theme.accent+'44'},line:{color:theme.accent+'44'}});
           const half=Math.ceil((slide.bullets||[]).length/2);
           const col1=slide.bullets?.slice(0,half)||[];
           const col2=slide.bullets?.slice(half)||[];
-          if(col1.length)s.addText(col1.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<col1.length-1}})),{x:0.5,y:1.1,w:4.3,h:4.2,valign:'top'});
-          if(col2.length)s.addText(col2.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<col2.length-1}})),{x:5.2,y:1.1,w:4.3,h:4.2,valign:'top'});
+          const textY=1.05+logoOffset;
+          if(col1.length)s.addText(col1.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<col1.length-1}})),{x:0.5,y:textY,w:4.3,h:4.3,valign:'top'});
+          if(col2.length)s.addText(col2.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<col2.length-1}})),{x:5.2,y:textY,w:4.3,h:4.3,valign:'top'});
 
         // ── BIG STAT ──
-        } else if(tpl==='stat'){
+        }else if(tpl==='stat'){
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
           await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
-          s.addText(slide.title,{x:0.5,y:0.15,w:9,h:0.7,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"center",margin:0});
+          const logoOffset=logoImg?0.35:0;
+          s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:9,h:0.65,fontSize:22,fontFace:"Calibri",bold:true,color:theme.slideText,align:"center",margin:0});
           const stat=(slide.bullets||[])[0]||'100%';
-          s.addText(stat,{x:1,y:1.5,w:8,h:2.2,fontSize:72,fontFace:"Calibri",bold:true,color:theme.accent,align:'center'});
+          // Smaller stat text — was 72, now 48
+          s.addText(stat,{x:1,y:1.1+logoOffset,w:8,h:1.6,fontSize:48,fontFace:"Calibri",bold:true,color:theme.accent,align:'center'});
           const rest=(slide.bullets||[]).slice(1);
-          if(rest.length)s.addText(rest.join('  ·  '),{x:1,y:3.9,w:8,h:0.8,fontSize:13,color:'666666',align:'center'});
+          if(rest.length)s.addText(rest.join('  ·  '),{x:1,y:2.8+logoOffset,w:8,h:0.6,fontSize:13,color:'666666',align:'center'});
+          // Image strip at bottom max ~250px (≈1.3in at 192dpi)
+          const statImg=await prepImg(slideImages?.[i]);
+          if(statImg){
+            try{s.addImage({data:statImg,x:0,y:4.3,w:10,h:1.325,sizing:{type:'cover',w:10,h:1.325}});}catch(e){}
+            // Semi-transparent overlay so it doesn't overpower
+            s.addShape(pres.shapes.RECTANGLE,{x:0,y:4.3,w:10,h:1.325,fill:{color:theme.slideBg,transparency:30},line:{color:theme.slideBg,transparency:30}});
+          }
 
         // ── DEFAULT (bullets + optional image) ──
-        } else {
+        }else{
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
           await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          const logoOffset=logoImg?0.35:0;
           if(imgData){
-            s.addText(slide.title,{x:0.5,y:0.15,w:5.8,h:0.75,fontSize:20,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
-            s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:1.0,w:1.0,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
-            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.1,w:5.8,h:4.1,valign:'top'});
+            s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:5.6,h:0.7,fontSize:20,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+            s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:0.95+logoOffset,w:1.0,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
+            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.1+logoOffset,w:5.6,h:4.2,valign:'top'});
             try{s.addImage({data:imgData,x:6.4,y:0.06,w:3.6,h:5.565,sizing:{type:'cover',w:3.6,h:5.565}});}catch(e){}
           }else{
-            s.addText(slide.title,{x:0.5,y:0.15,w:9,h:0.75,fontSize:24,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
-            s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:1.0,w:1.1,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
-            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:14,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:7,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.1,w:9,h:4.1,valign:'top'});
+            s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:9,h:0.7,fontSize:24,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+            s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:0.95+logoOffset,w:1.1,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
+            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:14,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:7,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.1+logoOffset,w:9,h:4.2,valign:'top'});
           }
           if(slide.speakerNote)s.addNotes(slide.speakerNote);
         }

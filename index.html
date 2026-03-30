@@ -263,13 +263,20 @@ textarea{resize:vertical;line-height:1.6}
 /* TEMPLATE PICKER IN PREVIEW */
 .tpl-picker{background:rgba(255,255,255,.05);border-radius:9px;padding:10px 13px}
 .tpl-picker-title{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
-.tpl-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
-.tpl-scroll::-webkit-scrollbar{height:3px}
-.tpl-scroll::-webkit-scrollbar-track{background:rgba(255,255,255,.05)}
-.tpl-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.2);border-radius:2px}
-.tpl-chip{flex-shrink:0;padding:5px 10px;border-radius:99px;border:1px solid rgba(255,255,255,.12);background:transparent;color:rgba(255,255,255,.55);font-size:11px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap;display:flex;align-items:center;gap:4px}
-.tpl-chip:hover{border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.85)}
-.tpl-chip.active{border-color:var(--teal);background:rgba(26,158,143,.15);color:var(--teal)}
+.tpl-grid-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tpl-thumb{border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:5px;cursor:pointer;background:rgba(255,255,255,.03);transition:all .12s;text-align:center}
+.tpl-thumb:hover{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.06)}
+.tpl-thumb.active{border-color:var(--teal);border-width:1.5px;background:rgba(26,158,143,.15)}
+.tpl-thumb-name{font-size:9px;font-weight:600;color:rgba(255,255,255,.5);margin-top:4px;font-family:'DM Sans',sans-serif}
+.tpl-thumb.active .tpl-thumb-name{color:var(--teal)}
+.tpl-wf{width:100%;aspect-ratio:16/9;border-radius:3px;overflow:hidden;position:relative;background:#2a3530}
+
+/* DARK/LIGHT TOGGLE PER SLIDE */
+.dark-toggle-row{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border-radius:7px;padding:6px 10px}
+.dark-toggle-label{font-size:11px;color:rgba(255,255,255,.55);flex:1}
+.dark-toggle-btn{padding:3px 8px;border-radius:5px;border:1px solid rgba(255,255,255,.15);background:transparent;color:rgba(255,255,255,.5);font-size:10px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s}
+.dark-toggle-btn.active-dark{border-color:#6D8EFF;background:rgba(109,142,255,.15);color:#9FB3FF}
+.dark-toggle-btn.active-light{border-color:var(--teal);background:rgba(26,158,143,.15);color:var(--teal)}
 
 /* MULTI-SLOT IMAGE SECTIONS */
 .slot-grid{display:grid;gap:8px;padding:10px 13px}
@@ -575,21 +582,21 @@ let expandedIndex=null,previewIndex=0;
 let slideImages={},slideTemplates={};
 let logoData=null,logoPos='top-left',logoWhiteBg=false;
 let brandOn=false,brandColors={primary:'#1A9E8F',secondary:'#0E7A6E',accent:'#D95B2A',text:'#1A2320'};
-// Per-slide per-slot images: slotImages[slideIndex][slotKey] = dataURL
-let slotImages={};
-// Per-slide icon selections: slideIcons[slideIndex][slotIndex] = {name, svg}
-let slideIcons={};
-// Icon search state
+let slotImages={},slideIcons={},slideDarkBg={};
 let iconSearchSlide=null,iconSearchSlot=null;
 
+const COVER_TEMPLATES=[
+  {id:'default',     label:'Full Bleed',   thumb:'fullbleed'},
+  {id:'circle-right',label:'Circle Right', thumb:'circle'}
+];
 const TEMPLATES=[
-  {id:'default',label:'Bullets + Image',icon:'📝'},
-  {id:'two-col',label:'Two Columns',icon:'▌▐'},
-  {id:'fullbleed',label:'Full Bleed',icon:'🌅'},
-  {id:'stat',label:'Big Stat',icon:'📊'},
-  {id:'3images',label:'3 Images',icon:'🖼'},
-  {id:'2icons',label:'2 Icons',icon:'◈'},
-  {id:'4icons',label:'4 Icons',icon:'⬡'}
+  {id:'default',  label:'Bullets',     thumb:'bullets'},
+  {id:'two-col',  label:'Two Columns', thumb:'twocol'},
+  {id:'fullbleed',label:'Full Bleed',  thumb:'fullbleed'},
+  {id:'stat',     label:'Big Stat',    thumb:'stat'},
+  {id:'3images',  label:'3 Images',    thumb:'3img'},
+  {id:'2icons',   label:'2 Icons',     thumb:'2ico'},
+  {id:'4icons',   label:'4 Icons',     thumb:'4ico'}
 ];
 
 const typeColors={title:'#1A9E8F',agenda:'#1A9E8F',content:'#0E7A6E',data:'#D95B2A',quote:'#B04520',cta:'#D95B2A',conclusion:'#1A9E8F',intro:'#0E7A6E'};
@@ -712,7 +719,7 @@ async function generateOutline(){
   document.getElementById('outline-wrap').style.display='block';
   document.getElementById('export-wrap').style.display='none';
   document.getElementById('outline-body').innerHTML='<div class="center-state"><div class="spinner"></div><p class="state-txt">Building your outline...</p></div>';
-  slideImages={};slideTemplates={};slotImages={};slideIcons={};
+  slideImages={};slideTemplates={};slotImages={};slideIcons={};slideDarkBg={};
   try{
     const res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'outline',input,slideCount})});
     const data=await res.json();
@@ -814,10 +821,15 @@ function navigatePreview(d){previewIndex=Math.max(0,Math.min(outline.length-1,pr
 function renderPreview(){
   if(!outline)return;
   const s=outline[previewIndex],t=getTheme();
-  const isDark=s.type==='title'||s.type==='conclusion'||s.type==='cta'||previewIndex===0;
-  const hasImg=!!slideImages[previewIndex];
-  const tpl=slideTemplates[previewIndex]||'default';
   const i=previewIndex;
+  const isCover=i===0;
+  const isLast=i===outline.length-1;
+  const isSpecial=isCover||isLast;
+  const defaultDark=s.type==='title'||s.type==='conclusion'||s.type==='cta'||isSpecial;
+  const forceDark=slideDarkBg[i];
+  const isDark=forceDark===true?true:forceDark===false?false:defaultDark;
+  const hasImg=!!slideImages[i];
+  const tpl=slideTemplates[i]||(isSpecial?'default':'default');
 
   document.getElementById('nav-count').textContent=`${i+1} / ${outline.length}`;
   document.getElementById('nav-prev').disabled=i===0;
@@ -837,59 +849,68 @@ function renderPreview(){
 
   // ── SLIDE CANVAS ──
   let canvas='';
-  if(isDark){
-    canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
-      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`:''}
-      <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
-      <div class="slide-num">${i+1}</div>
-      <div class="main-title">${s.title}</div>
-      <div class="sub-txt">${(s.bullets||[])[0]||''}</div>
-    </div>`;
+  if(isSpecial||isDark){
+    // Cover, last, or forced dark slide
+    if(tpl==='circle-right'){
+      canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
+        ${hasImg?`<div style="position:absolute;right:3%;top:5%;width:40%;height:90%;border-radius:50%;overflow:hidden"><img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover" /></div>`:`<div style="position:absolute;right:3%;top:5%;width:40%;height:90%;border-radius:50%;border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:clamp(10px,2vw,14px)">+Image</div>`}
+        <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
+        <div class="main-title" style="right:48%">${s.title}</div>
+        <div class="sub-txt" style="right:48%">${(s.bullets||[])[0]||''}</div>
+      </div>`;
+    } else {
+      canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
+        ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`:''}
+        <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
+        <div class="slide-num">${i+1}</div>
+        <div class="main-title">${s.title}</div>
+        <div class="sub-txt">${(s.bullets||[])[0]||''}</div>
+      </div>`;
+    }
   } else if(tpl==='3images'){
-    const slots=(slotImages[i]||{});
+    const sl=(slotImages[i]||{});
     const imgs=[0,1,2].map(k=>{
-      const src=slots[k];
+      const src=sl[k];
       return src
-        ?`<div style="flex:1;border-radius:4px;overflow:hidden"><img src="${src}" style="width:100%;height:100%;object-fit:cover" /></div>`
-        :`<div style="flex:1;background:${accentC}33;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:clamp(10px,2vw,14px);color:${accentC};font-weight:600">Image ${k+1}</div>`;
+        ?`<div style="flex:1;display:flex;flex-direction:column;gap:0"><div style="flex:1;border-radius:3px;overflow:hidden"><img src="${src}" style="width:100%;height:100%;object-fit:cover" /></div></div>`
+        :`<div style="flex:1;background:${accentC}33;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.5vw,12px);color:${accentC};font-weight:600">+${k+1}</div>`;
     }).join('');
+    const captions=[0,1,2].map(k=>`<div style="flex:1;padding:2px 1px"><div style="font-size:clamp(5px,.85vw,7px);font-weight:700;color:${textC};margin-bottom:1px">${(s.bullets||[])[k*2]||s.bullets?.[k]||''}</div><div style="font-size:clamp(4px,.75vw,6px);color:${textC};opacity:.6">${(s.bullets||[])[k*2+1]||''}</div></div>`).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
-      <div class="sl-title" style="top:6%">${s.title}</div>
-      <div style="position:absolute;left:4%;right:4%;top:22%;height:55%;display:flex;gap:2%">${imgs}</div>
-      <div style="position:absolute;left:4%;right:4%;bottom:3%;display:flex;gap:2%">
-        ${[0,1,2].map(k=>`<div style="flex:1;font-size:clamp(6px,1vw,8px);color:${textC};text-align:center;line-height:1.3">${(s.bullets||[])[k]||''}</div>`).join('')}
-      </div>
+      <div class="sl-title" style="top:5%">${s.title}</div>
+      <div style="position:absolute;left:3%;right:3%;top:20%;height:52%;display:flex;gap:2%">${imgs}</div>
+      <div style="position:absolute;left:3%;right:3%;top:74%;display:flex;gap:2%">${captions}</div>
     </div>`;
   } else if(tpl==='2icons'||tpl==='4icons'){
     const count=tpl==='2icons'?2:4;
     const iconSlots=slideIcons[i]||{};
-    const slots=slotImages[i]||{};
+    const sl2=slotImages[i]||{};
     const cells=Array(count).fill(null).map((_,k)=>{
       const icon=iconSlots[k];
-      const img=slots[k];
+      const img=sl2[k];
       const content=icon
-        ?`<img src="${icon.svg}" style="width:clamp(16px,3vw,24px);height:clamp(16px,3vw,24px);object-fit:contain;filter:invert(1) sepia(1) saturate(5) hue-rotate(120deg)" />`
+        ?`<img src="${icon.svg}" style="width:55%;height:55%;object-fit:contain" />`
         :img
-          ?`<img src="${img}" style="width:clamp(16px,3vw,24px);height:clamp(16px,3vw,24px);object-fit:contain" />`
-          :`<div style="width:clamp(14px,2.5vw,20px);height:clamp(14px,2.5vw,20px);border-radius:50%;background:${accentC};opacity:.5"></div>`;
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:4px">
-        <div style="width:clamp(28px,5vw,44px);height:clamp(28px,5vw,44px);border-radius:50%;background:${accentC}22;display:flex;align-items:center;justify-content:center">${content}</div>
-        <div style="font-size:clamp(5px,.9vw,8px);color:${textC};text-align:center;font-weight:600;line-height:1.3">${(s.bullets||[])[k]||'Point '+(k+1)}</div>
+          ?`<img src="${img}" style="width:55%;height:55%;object-fit:contain" />`
+          :`<div style="width:40%;height:40%;border-radius:50%;border:1px solid ${accentC};opacity:.4"></div>`;
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px">
+        <div style="width:clamp(24px,4.5vw,38px);height:clamp(24px,4.5vw,38px);border-radius:50%;border:1.5px solid ${accentC};display:flex;align-items:center;justify-content:center">${content}</div>
+        <div style="font-size:clamp(4px,.8vw,7px);color:${textC};text-align:center;font-weight:600;line-height:1.2">${(s.bullets||[])[k]||'Point '+(k+1)}</div>
       </div>`;
     }).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
-      <div class="sl-title" style="top:6%">${s.title}</div>
-      <div style="position:absolute;left:3%;right:3%;top:26%;bottom:5%;display:flex;gap:2%">${cells}</div>
+      <div class="sl-title" style="top:5%">${s.title}</div>
+      <div style="position:absolute;left:2%;right:2%;top:24%;bottom:8%;display:flex;gap:1%">${cells}</div>
     </div>`;
   } else if(tpl==='fullbleed'){
     canvas=`<div class="slide-canvas-inner" style="background:${titleBg}">
       ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5" />`:''}
       <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7) 0%,transparent 60%)"></div>
       ${logoBgHTML}${logoHTML}
-      <div style="position:absolute;bottom:12%;left:6%;right:6%;font-size:clamp(13px,3vw,20px);font-weight:700;color:white;line-height:1.2">${s.title}</div>
-      <div style="position:absolute;bottom:6%;left:6%;right:6%;font-size:clamp(7px,1.4vw,10px);color:rgba(255,255,255,.8)">${(s.bullets||[])[0]||''}</div>
+      <div style="position:absolute;bottom:12%;left:6%;right:6%;font-size:clamp(12px,2.8vw,19px);font-weight:700;color:white;line-height:1.2">${s.title}</div>
+      <div style="position:absolute;bottom:5%;left:6%;right:6%;font-size:clamp(7px,1.3vw,10px);color:rgba(255,255,255,.75)">${(s.bullets||[])[0]||''}</div>
     </div>`;
   } else if(tpl==='two-col'){
     const half=Math.ceil((s.bullets||[]).length/2);
@@ -898,17 +919,19 @@ function renderPreview(){
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
       <div class="sl-title">${s.title}</div><div class="acc-line"></div>
-      <div style="position:absolute;left:4%;top:28%;width:44%;bottom:5%;display:flex;flex-direction:column;gap:5px">${col1}</div>
-      <div style="position:absolute;left:52%;top:28%;right:4%;bottom:5%;display:flex;flex-direction:column;gap:5px">${col2}</div>
+      <div style="position:absolute;left:4%;top:28%;width:44%;bottom:5%;display:flex;flex-direction:column;gap:4px">${col1}</div>
+      <div style="position:absolute;left:52%;top:28%;right:4%;bottom:5%;display:flex;flex-direction:column;gap:4px">${col2}</div>
       <div style="position:absolute;top:24%;left:50%;bottom:5%;width:1px;background:${accentC};opacity:.3"></div>
     </div>`;
   } else if(tpl==='stat'){
     const stat=(s.bullets||[])[0]||'100%';
+    const statImg=slideImages[i];
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
       <div class="sl-title">${s.title}</div>
-      <div style="position:absolute;top:35%;left:0;right:0;text-align:center;font-size:clamp(28px,8vw,52px);font-weight:700;color:${accentC};line-height:1">${stat}</div>
-      <div style="position:absolute;top:68%;left:10%;right:10%;text-align:center;font-size:clamp(7px,1.3vw,10px);color:${textC};opacity:.7">${(s.bullets||[]).slice(1).join(' · ')}</div>
+      <div style="position:absolute;top:28%;left:0;right:0;text-align:center;font-size:clamp(20px,6vw,38px);font-weight:700;color:${accentC};line-height:1">${stat}</div>
+      <div style="position:absolute;top:58%;left:10%;right:10%;text-align:center;font-size:clamp(6px,1.1vw,9px);color:${textC};opacity:.7">${(s.bullets||[]).slice(1).join(' · ')}</div>
+      ${statImg?`<img src="${statImg}" style="position:absolute;bottom:0;left:0;right:0;width:100%;height:24%;object-fit:cover;opacity:.7" />`:`<div style="position:absolute;bottom:0;left:0;right:0;height:24%;background:${accentC}22;border-top:1px dashed ${accentC}44;display:flex;align-items:center;justify-content:center;font-size:clamp(7px,1.2vw,9px);color:${accentC};opacity:.6">+ Add image</div>`}
     </div>`;
   } else {
     const bullets=(s.bullets||[]).map(b=>`<div class="b-item"><div class="b-dot"></div><div class="b-txt">${b}</div></div>`).join('');
@@ -923,11 +946,27 @@ function renderPreview(){
   }
 
   // ── TEMPLATE PICKER ──
+  const tplList=isSpecial?COVER_TEMPLATES:TEMPLATES;
+  const thumbs=tplList.map(t=>`
+    <div class="tpl-thumb${tpl===t.id?' active':''}" onclick="setTplFromPreview('${t.id}')">
+      <div class="tpl-wf">${wfSvg(t.thumb,accentC)}</div>
+      <div class="tpl-thumb-name">${t.label}</div>
+    </div>`).join('');
   const tplPicker=`<div class="tpl-picker">
     <div class="tpl-picker-title">Slide layout</div>
-    <div class="tpl-scroll">
-      ${TEMPLATES.map(t=>`<button class="tpl-chip${tpl===t.id?' active':''}" onclick="setTplFromPreview('${t.id}',this)">${t.icon} ${t.label}</button>`).join('')}
-    </div>
+    <div class="tpl-grid-preview">${thumbs}</div>
+  </div>`;
+
+  // ── DARK / LIGHT TOGGLE ──
+  const darkState=slideDarkBg[i];
+  const darkActive=darkState===true?'active-dark':'';
+  const lightActive=darkState===false?'active-light':'';
+  const autoLabel=isDark?'Auto (dark)':'Auto (light)';
+  const darkToggle=`<div class="dark-toggle-row">
+    <span class="dark-toggle-label">Background</span>
+    <button class="dark-toggle-btn ${darkActive}" onclick="setSlideDark(${i},true)">🌙 Dark</button>
+    <button class="dark-toggle-btn" onclick="setSlideDark(${i},null)" style="font-size:9px;color:rgba(255,255,255,.35)">${autoLabel}</button>
+    <button class="dark-toggle-btn ${lightActive}" onclick="setSlideDark(${i},false)">☀️ Light</button>
   </div>`;
 
   // ── MEDIA SECTIONS ──
@@ -988,13 +1027,104 @@ function renderPreview(){
 
   document.getElementById('preview-body').innerHTML=`
     <div class="slide-canvas">${canvas}</div>
+    ${darkToggle}
     ${tplPicker}
     ${mediaSections}
     <div class="preview-meta"><div class="preview-meta-title">${s.title}</div><ul class="preview-meta-bullets">${bulletsMeta}</ul>${noteHTML}</div>`;
 }
 
-function setTplFromPreview(tplId, el){
+// ── WIREFRAME THUMBNAILS ──
+function wfSvg(type, accent){
+  const a=accent||'#1A9E8F';
+  const bg='#2a3530', line='rgba(255,255,255,.25)', txt='rgba(255,255,255,.15)';
+  const templates={
+    bullets:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
+      <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
+      <rect x="8" y="22" width="4" height="4" rx="1" fill="${a}"/><rect x="15" y="23" width="55" height="3" rx="1" fill="${txt}"/>
+      <rect x="8" y="31" width="4" height="4" rx="1" fill="${a}"/><rect x="15" y="32" width="48" height="3" rx="1" fill="${txt}"/>
+      <rect x="8" y="40" width="4" height="4" rx="1" fill="${a}"/><rect x="15" y="41" width="52" height="3" rx="1" fill="${txt}"/>
+      <rect x="85" y="6" width="68" height="78" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
+    </svg>`,
+    twocol:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
+      <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
+      <rect x="8" y="22" width="4" height="3" rx="1" fill="${a}"/><rect x="14" y="23" width="60" height="2" rx="1" fill="${txt}"/>
+      <rect x="8" y="29" width="4" height="3" rx="1" fill="${a}"/><rect x="14" y="30" width="55" height="2" rx="1" fill="${txt}"/>
+      <rect x="8" y="36" width="4" height="3" rx="1" fill="${a}"/><rect x="14" y="37" width="58" height="2" rx="1" fill="${txt}"/>
+      <rect x="79" y="18" width="1" height="65" fill="${a}" opacity=".3"/>
+      <rect x="85" y="22" width="4" height="3" rx="1" fill="${a}"/><rect x="91" y="23" width="60" height="2" rx="1" fill="${txt}"/>
+      <rect x="85" y="29" width="4" height="3" rx="1" fill="${a}"/><rect x="91" y="30" width="55" height="2" rx="1" fill="${txt}"/>
+      <rect x="85" y="36" width="4" height="3" rx="1" fill="${a}"/><rect x="91" y="37" width="58" height="2" rx="1" fill="${txt}"/>
+    </svg>`,
+    fullbleed:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
+      <rect x="0" y="55" width="160" height="35" fill="rgba(0,0,0,.5)"/>
+      <rect x="10" y="60" width="80" height="7" rx="1" fill="${line}"/>
+      <rect x="10" y="72" width="55" height="4" rx="1" fill="${txt}"/>
+    </svg>`,
+    stat:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
+      <rect x="30" y="10" width="100" height="6" rx="1" fill="${line}"/>
+      <rect x="45" y="22" width="70" height="22" rx="2" fill="${a}" opacity=".6"/>
+      <rect x="20" y="50" width="120" height="3" rx="1" fill="${txt}"/>
+      <rect x="0" y="68" width="160" height="22" rx="0" fill="rgba(255,255,255,.06)" stroke="${line}" stroke-width=".5"/>
+    </svg>`,
+    '3img':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
+      <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
+      <rect x="6" y="22" width="46" height="38" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
+      <rect x="57" y="22" width="46" height="38" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
+      <rect x="108" y="22" width="46" height="38" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
+      <rect x="6" y="63" width="46" height="3" rx="1" fill="${txt}"/><rect x="6" y="69" width="38" height="2" rx="1" fill="${txt}" opacity=".5"/>
+      <rect x="57" y="63" width="46" height="3" rx="1" fill="${txt}"/><rect x="57" y="69" width="38" height="2" rx="1" fill="${txt}" opacity=".5"/>
+      <rect x="108" y="63" width="46" height="3" rx="1" fill="${txt}"/><rect x="108" y="69" width="38" height="2" rx="1" fill="${txt}" opacity=".5"/>
+    </svg>`,
+    '2ico':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
+      <rect x="30" y="8" width="100" height="5" rx="1" fill="${line}"/>
+      <circle cx="55" cy="45" r="18" fill="none" stroke="${a}" stroke-width="1.5"/>
+      <circle cx="105" cy="45" r="18" fill="none" stroke="${a}" stroke-width="1.5"/>
+      <rect x="30" y="70" width="50" height="3" rx="1" fill="${txt}"/>
+      <rect x="80" y="70" width="50" height="3" rx="1" fill="${txt}"/>
+    </svg>`,
+    '4ico':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
+      <rect x="30" y="8" width="100" height="5" rx="1" fill="${line}"/>
+      <circle cx="28" cy="45" r="13" fill="none" stroke="${a}" stroke-width="1.5"/>
+      <circle cx="68" cy="45" r="13" fill="none" stroke="${a}" stroke-width="1.5"/>
+      <circle cx="108" cy="45" r="13" fill="none" stroke="${a}" stroke-width="1.5"/>
+      <circle cx="148" cy="45" r="13" fill="none" stroke="${a}" stroke-width="1.5"/>
+      <rect x="14" y="64" width="28" height="3" rx="1" fill="${txt}"/>
+      <rect x="54" y="64" width="28" height="3" rx="1" fill="${txt}"/>
+      <rect x="94" y="64" width="28" height="3" rx="1" fill="${txt}"/>
+      <rect x="134" y="64" width="28" height="3" rx="1" fill="${txt}"/>
+    </svg>`,
+    circle:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${a}" opacity=".3"/>
+      <rect x="0" y="0" width="2" height="90" fill="${a}"/>
+      <rect x="10" y="28" width="70" height="9" rx="1" fill="rgba(255,255,255,.6)"/>
+      <rect x="10" y="45" width="55" height="5" rx="1" fill="rgba(255,255,255,.35)"/>
+      <circle cx="118" cy="45" r="32" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+    </svg>`
+  };
+  return templates[type]||templates.bullets;
+}
+
+function setTplFromPreview(tplId){
   slideTemplates[previewIndex]=tplId;
+  renderPreview();
+}
+
+function setSlideDark(i, val){
+  if(val===null) delete slideDarkBg[i];
+  else slideDarkBg[i]=val;
   renderPreview();
 }
 
@@ -1101,7 +1231,7 @@ function selectIcon(name,svgUrl){
 // ── BUILD ──
 async function buildPresentation(){
   if(!outline)return;
-  const payload={action:'pptx',title:outline[0]?.title||'Presentation',style,format:exportFmt,orientation,outline,slideImages,slotImages,slideIcons,slideTemplates,logoData,logoPos,logoWhiteBg,brandOn,brandColors};
+  const payload={action:'pptx',title:outline[0]?.title||'Presentation',style,format:exportFmt,orientation,outline,slideImages,slotImages,slideIcons,slideTemplates,slideDarkBg,logoData,logoPos,logoWhiteBg,brandOn,brandColors};
   showToast('Building your file, please wait...');
   document.getElementById('build-btn').disabled=true;
   try{
