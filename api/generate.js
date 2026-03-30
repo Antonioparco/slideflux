@@ -37,23 +37,64 @@ function getTheme(style,brandOn,brandColors){
   return THEMES[style]||THEMES.professional;
 }
 
-// Add logo with contain sizing to prevent stretching
+// Get image dimensions from base64 data
+async function getImgDimensions(dataStr){
+  try{
+    // Extract base64 payload
+    const b64=dataStr.includes(';base64,')?dataStr.split(';base64,')[1]:dataStr.split(',').pop();
+    const buf=Buffer.from(b64,'base64');
+    // PNG: width at bytes 16-19, height at bytes 20-23
+    if(buf[1]===0x50&&buf[2]===0x4E&&buf[3]===0x47){
+      const w=buf.readUInt32BE(16),h=buf.readUInt32BE(20);
+      return{w,h};
+    }
+    // JPEG: scan for SOF marker
+    let i=2;
+    while(i<buf.length-8){
+      if(buf[i]===0xFF&&(buf[i+1]===0xC0||buf[i+1]===0xC2)){
+        const h=buf.readUInt16BE(i+5),w=buf.readUInt16BE(i+7);
+        return{w,h};
+      }
+      i+=(i+2<buf.length?buf.readUInt16BE(i+2)+2:1);
+    }
+  }catch(e){}
+  return null;
+}
+
+// Add logo — calculates true aspect ratio to prevent any stretching
 async function addLogo(s,pres,logoImgData,logoPos,logoWhiteBg,isCover){
   if(!logoImgData)return;
   const isBottom=logoPos==='bottom-left';
-  // Use small box and contain - pptxgenjs contain preserves aspect ratio
-  const maxW=isCover?1.6:0.7;
-  const maxH=isCover?0.6:0.25;
+  const maxW=isCover?1.6:0.72;
+  const maxH=isCover?0.7:0.3;
+
+  // Calculate actual dimensions so we set w and h correctly (no stretching)
+  let finalW=maxW, finalH=maxH;
+  const dims=await getImgDimensions(logoImgData);
+  if(dims&&dims.w>0&&dims.h>0){
+    const ratio=dims.w/dims.h;
+    if(ratio>maxW/maxH){
+      // Wider than box — constrain by width
+      finalW=maxW;
+      finalH=maxW/ratio;
+    } else {
+      // Taller than box — constrain by height
+      finalH=maxH;
+      finalW=maxH*ratio;
+    }
+  }
+
   const x=0.22;
-  const y=isBottom?(5.625-maxH-0.15):0.13;
+  const y=isBottom?(5.625-finalH-0.15):0.13;
+
   if(logoWhiteBg){
-    const barH=isCover?0.9:0.48;
+    const barH=Math.max(finalH+0.15, isCover?0.9:0.48);
     const barY=isBottom?5.625-barH:0;
     s.addShape(pres.shapes.RECTANGLE,{x:0,y:barY,w:10,h:barH,fill:{color:'FFFFFF'},line:{color:'FFFFFF'}});
   }
   try{
-    // contain keeps aspect ratio, never stretches
-    s.addImage({data:logoImgData,x,y,w:maxW,h:maxH,sizing:{type:'contain',w:maxW,h:maxH}});
+    // Use exact calculated dimensions — no sizing property needed
+    s.addImage({data:logoImgData,x,y,w:finalW,h:finalH});
   }catch(e){}
 }
 

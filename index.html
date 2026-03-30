@@ -269,12 +269,12 @@ textarea{resize:vertical;line-height:1.6}
 .sp-label{font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
 /* template grid */
 .sp-tpl{padding:10px 10px}
-.sp-tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:220px}
-.sp-tpl-thumb{border:1px solid var(--border);border-radius:5px;padding:3px;cursor:pointer;background:var(--bg);transition:all .1s;text-align:center}
+.sp-tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;width:270px}
+.sp-tpl-thumb{border:1px solid var(--border);border-radius:5px;padding:3px;cursor:pointer;background:var(--bg);transition:all .1s;text-align:center;display:flex;flex-direction:column}
 .sp-tpl-thumb:hover{border-color:var(--teal);background:var(--teal-light)}
 .sp-tpl-thumb.active{border-color:var(--teal);border-width:1.5px;background:var(--teal-light)}
-.sp-tpl-thumb svg{width:100%;aspect-ratio:16/9;display:block;border-radius:2px}
-.sp-tpl-name{font-size:8px;font-weight:600;color:var(--ink-3);margin-top:2px;font-family:'DM Sans',sans-serif;white-space:nowrap;overflow:hidden}
+.sp-tpl-thumb svg{width:100%;height:52px;display:block;border-radius:2px;flex-shrink:0}
+.sp-tpl-name{font-size:8px;font-weight:600;color:var(--ink-3);margin-top:3px;font-family:'DM Sans',sans-serif;white-space:nowrap;overflow:hidden;text-align:center}
 .sp-tpl-thumb.active .sp-tpl-name{color:var(--teal-dark)}
 /* bg toggle */
 .sp-bg{padding:10px 10px;display:flex;flex-direction:column;gap:6px}
@@ -1145,7 +1145,7 @@ function wfSvg(type, accent){
   const a=accent||'#1A9E8F';
   const bg='#2a3530', line='rgba(255,255,255,.25)', txt='rgba(255,255,255,.15)';
   const templates={
-    bullets:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    bullets:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="0" y="0" width="160" height="2" fill="${a}"/>
       <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
@@ -1154,7 +1154,7 @@ function wfSvg(type, accent){
       <rect x="8" y="40" width="4" height="4" rx="1" fill="${a}"/><rect x="15" y="41" width="52" height="3" rx="1" fill="${txt}"/>
       <rect x="85" y="6" width="68" height="78" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
     </svg>`,
-    twocol:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    twocol:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="0" y="0" width="160" height="2" fill="${a}"/>
       <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
@@ -1166,13 +1166,13 @@ function wfSvg(type, accent){
       <rect x="85" y="29" width="4" height="3" rx="1" fill="${a}"/><rect x="91" y="30" width="55" height="2" rx="1" fill="${txt}"/>
       <rect x="85" y="36" width="4" height="3" rx="1" fill="${a}"/><rect x="91" y="37" width="58" height="2" rx="1" fill="${txt}"/>
     </svg>`,
-    fullbleed:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    fullbleed:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
       <rect x="0" y="55" width="160" height="35" fill="rgba(0,0,0,.5)"/>
       <rect x="10" y="60" width="80" height="7" rx="1" fill="${line}"/>
       <rect x="10" y="72" width="55" height="4" rx="1" fill="${txt}"/>
     </svg>`,
-    stat:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    stat:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="0" y="0" width="160" height="2" fill="${a}"/>
       <rect x="30" y="10" width="100" height="6" rx="1" fill="${line}"/>
@@ -1180,7 +1180,7 @@ function wfSvg(type, accent){
       <rect x="20" y="50" width="120" height="3" rx="1" fill="${txt}"/>
       <rect x="0" y="68" width="160" height="22" rx="0" fill="rgba(255,255,255,.06)" stroke="${line}" stroke-width=".5"/>
     </svg>`,
-    '3img':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    '3img':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="0" y="0" width="160" height="2" fill="${a}"/>
       <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
@@ -1191,7 +1191,7 @@ function wfSvg(type, accent){
       <rect x="57" y="63" width="46" height="3" rx="1" fill="${txt}"/><rect x="57" y="69" width="38" height="2" rx="1" fill="${txt}" opacity=".5"/>
       <rect x="108" y="63" width="46" height="3" rx="1" fill="${txt}"/><rect x="108" y="69" width="38" height="2" rx="1" fill="${txt}" opacity=".5"/>
     </svg>`,
-    '2ico':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    '2ico':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="0" y="0" width="160" height="2" fill="${a}"/>
       <rect x="30" y="8" width="100" height="5" rx="1" fill="${line}"/>
@@ -1200,7 +1200,7 @@ function wfSvg(type, accent){
       <rect x="30" y="70" width="50" height="3" rx="1" fill="${txt}"/>
       <rect x="80" y="70" width="50" height="3" rx="1" fill="${txt}"/>
     </svg>`,
-    '4ico':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    '4ico':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="0" y="0" width="160" height="2" fill="${a}"/>
       <rect x="30" y="8" width="100" height="5" rx="1" fill="${line}"/>
@@ -1213,7 +1213,7 @@ function wfSvg(type, accent){
       <rect x="94" y="64" width="28" height="3" rx="1" fill="${txt}"/>
       <rect x="134" y="64" width="28" height="3" rx="1" fill="${txt}"/>
     </svg>`,
-    quote:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    quote:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="0" y="0" width="160" height="2" fill="${a}"/>
       <text x="12" y="38" font-size="36" fill="${a}" opacity=".5" font-family="Georgia">"</text>
@@ -1223,7 +1223,7 @@ function wfSvg(type, accent){
       <rect x="68" y="60" width="24" height="1" rx=".5" fill="${a}"/>
       <rect x="50" y="65" width="60" height="3" rx="1" fill="${a}" opacity=".4"/>
     </svg>`,
-    timeline:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    timeline:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="0" y="0" width="160" height="2" fill="${a}"/>
       <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
@@ -1240,7 +1240,7 @@ function wfSvg(type, accent){
       <rect x="94" y="62" width="22" height="2" rx="1" fill="${txt}" opacity=".25"/>
       <rect x="134" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
     </svg>`,
-    halfright:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    halfright:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="80" y="0" width="80" height="90" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
       <rect x="79" y="0" width="2" height="90" fill="${a}" opacity=".4"/>
@@ -1248,7 +1248,7 @@ function wfSvg(type, accent){
       <rect x="8" y="26" width="55" height="8" rx="1" fill="${line}"/>
       <rect x="8" y="40" width="42" height="4" rx="1" fill="${txt}"/>
     </svg>`,
-    circle:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+    circle:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
       <circle cx="148" cy="45" r="70" fill="none" stroke="${a}" stroke-width=".5" opacity=".1"/>
       <circle cx="148" cy="45" r="55" fill="none" stroke="${a}" stroke-width=".5" opacity=".15"/>
