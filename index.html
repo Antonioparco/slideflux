@@ -889,6 +889,7 @@ function buildSlideRow(i, data){
       <div class="sinfo" style="flex:1;min-width:0">
         <div class="stitle" id="stitle-${i}">${s.title}</div>
         <div class="sdesc" id="sdesc-${i}">${(s.bullets||[]).slice(0,2).join(' · ')}</div>
+        ${s.paragraph?`<div style="font-size:11px;color:var(--ink-3);margin-top:2px;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.paragraph}</div>`:''}
       </div>
       <div class="stype" style="background:${col}18;color:${col}">${s.type}</div>
       <div style="display:flex;gap:5px" onclick="event.stopPropagation()">
@@ -930,6 +931,7 @@ function buildSlideRow(i, data){
         <div>
           <div class="editor-field"><label class="editor-lbl">Title</label><input class="editor-input" id="edit-title-${i}" value="${s.title.replace(/"/g,'&quot;')}" /></div>
           <div class="editor-field"><label class="editor-lbl">Speaker note</label><input class="editor-input" id="edit-note-${i}" value="${(s.speakerNote||'').replace(/"/g,'&quot;')}" /></div>
+          <div class="editor-field"><label class="editor-lbl">Paragraph (optional, max 50 words)</label><textarea class="editor-textarea" id="edit-para-${i}" style="min-height:55px">${s.paragraph||''}</textarea></div>
         </div>
         <div>
           <div class="editor-field"><label class="editor-lbl">Bullets (one per line)</label><textarea class="editor-textarea" id="edit-bullets-${i}" style="min-height:80px">${(s.bullets||[]).join('\n')}</textarea></div>
@@ -955,7 +957,21 @@ function renderOutline(data){
 function setTplInline(i,tplId){
   slideTemplates[i]=tplId;
   renderOutlineRow(i);
-  if(document.getElementById('preview-panel').classList.contains('open')&&previewIndex===i)renderPreview();
+  if(document.getElementById('preview-panel').classList.contains('open'))renderPreview();
+}
+
+function saveSlide(i){
+  const t=document.getElementById('edit-title-'+i)?.value.trim();
+  const b=document.getElementById('edit-bullets-'+i)?.value.trim().split('\n').filter(x=>x.trim())||[];
+  const n=document.getElementById('edit-note-'+i)?.value.trim()||'';
+  const p=document.getElementById('edit-para-'+i)?.value.trim()||'';
+  if(!t){showToast('Title cannot be empty');return}
+  outline[i].title=t;outline[i].bullets=b;outline[i].speakerNote=n;outline[i].paragraph=p;
+  document.getElementById('stitle-'+i).textContent=t;
+  document.getElementById('sdesc-'+i).textContent=b.slice(0,2).join(' · ');
+  renderOutlineRow(i);
+  if(document.getElementById('preview-panel').classList.contains('open'))renderPreview();
+  showToast('Slide saved ✓');
 }
 
 function renderOutlineRow(i){
@@ -996,8 +1012,155 @@ function toggleExpand(i){
 }
 
 
+function buildSlideCanvas(s,i,tpl,isDark,isSpecial,titleBg,accentC,lightBg,textC,t){
+  const hasImg=!!slideImages[i];
+  const isBottom=logoPos==='bottom-left';
+  const logoStyle=i===0
+    ?`position:absolute;${isBottom?'bottom:5%;':'top:5%;'}left:3%;max-height:13%;max-width:28%;object-fit:contain;z-index:10`
+    :`position:absolute;${isBottom?'bottom:3%;':'top:3%;'}left:2%;max-height:7%;max-width:18%;object-fit:contain;z-index:10`;
+  const logoHTML=logoData?`<img src="${logoData}" style="${logoStyle}" />`:'';
+  const logoBgHTML=logoData&&logoWhiteBg
+    ?`<div style="position:absolute;${isBottom?'bottom:0':'top:0'};left:0;right:0;height:${i===0?'20%':'12%'};background:white;z-index:9;opacity:.95"></div>`:'';
+
+  const bg=isDark?titleBg:lightBg;
+  const titleColor=isDark?'rgba(255,255,255,.95)':textC;
+  const bulletColor=isDark?'rgba(255,255,255,.85)':textC;
+  const accentBar=isDark
+    ?`<div style="position:absolute;left:0;top:0;bottom:0;width:2%;background:${accentC}"></div>`
+    :`<div style="position:absolute;top:0;left:0;right:0;height:1.5%;background:${accentC}"></div>`;
+
+  let canvas='';
+
+  if(isSpecial){
+    const coverTitleColor=isDark?'rgba(255,255,255,.95)':accentC;
+    const coverSubColor=isDark?'rgba(255,255,255,.7)':textC;
+    if(tpl==='half-right'){
+      canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+        ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;width:50%;height:100%;object-fit:cover"/>`:`<div style="position:absolute;right:0;top:0;width:50%;height:100%;background:${accentC}33;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.8vw,13px);color:${accentC}">+Image</div>`}
+        <div style="position:absolute;right:50%;top:0;bottom:0;width:1px;background:${accentC};opacity:.5"></div>
+        ${accentBar}${logoBgHTML}${logoHTML}
+        <div style="position:absolute;left:5%;top:28%;right:53%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
+        <div style="position:absolute;left:5%;top:58%;right:53%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor}">${(s.bullets||[])[0]||''}</div>
+      </div>`;
+    } else if(tpl==='circle-right'){
+      canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+        <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:95%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.08"></div>
+        <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:75%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.14"></div>
+        <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:55%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.22"></div>
+        <div style="position:absolute;right:2%;top:5%;width:46%;height:90%;border-radius:50%;overflow:hidden;border:1.5px solid ${accentC}">
+          ${hasImg?`<img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover"/>`:`<div style="width:100%;height:100%;background:${accentC}22;display:flex;align-items:center;justify-content:center;color:${accentC};font-size:clamp(9px,1.8vw,13px)">+Image</div>`}
+        </div>
+        ${accentBar}${logoBgHTML}${logoHTML}
+        <div style="position:absolute;left:5%;top:28%;right:52%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
+        <div style="position:absolute;left:5%;top:58%;right:52%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor}">${(s.bullets||[])[0]||''}</div>
+      </div>`;
+    } else {
+      canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+        ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:${isDark?.2:.35}"/>`:''}
+        ${accentBar}${logoBgHTML}${logoHTML}
+        <div style="position:absolute;left:8%;top:28%;right:5%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
+        <div style="position:absolute;left:8%;top:56%;right:5%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor}">${(s.bullets||[])[0]||''}</div>
+      </div>`;
+    }
+  } else if(tpl==='3images'){
+    const sl=slotImages[i]||{};
+    const captionColor=isDark?'rgba(255,255,255,.85)':textC;
+    const imgs=[0,1,2].map(k=>{const src=sl[k];return src
+      ?`<div style="flex:1;border-radius:3px;overflow:hidden"><img src="${src}" style="width:100%;height:100%;object-fit:cover"/></div>`
+      :`<div style="flex:1;background:${isDark?accentC+'44':accentC+'22'};border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:clamp(8px,1.4vw,11px);color:${accentC};font-weight:600">+${k+1}</div>`;
+    }).join('');
+    const captions=[0,1,2].map(k=>`<div style="flex:1;padding:0 1px"><div style="font-size:clamp(5px,.85vw,7px);font-weight:700;color:${captionColor}">${(s.bullets||[])[k]||''}</div></div>`).join('');
+    canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+      ${accentBar}${logoBgHTML}${logoHTML}
+      <div style="position:absolute;left:3%;top:5%;right:3%;font-size:clamp(7px,1.5vw,11px);font-weight:700;color:${titleColor}">${s.title}</div>
+      <div style="position:absolute;left:3%;right:3%;top:20%;height:52%;display:flex;gap:2%">${imgs}</div>
+      <div style="position:absolute;left:3%;right:3%;top:74%;display:flex;gap:2%">${captions}</div>
+    </div>`;
+  } else if(tpl==='2icons'||tpl==='4icons'){
+    const count=tpl==='2icons'?2:4;
+    const iconSlots=slideIcons[i]||{},sl2=slotImages[i]||{};
+    const cells=Array(count).fill(null).map((_,k)=>{
+      const icon=iconSlots[k],img=sl2[k];
+      const content=icon?`<img src="${icon.svg}" style="width:55%;height:55%;object-fit:contain;${isDark?'filter:invert(1)':''}"/>`:img?`<img src="${img}" style="width:55%;height:55%;object-fit:contain"/>`:'' ;
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px">
+        <div style="width:clamp(22px,4vw,34px);height:clamp(22px,4vw,34px);border-radius:50%;border:1.5px solid ${accentC};display:flex;align-items:center;justify-content:center">${content}</div>
+        <div style="font-size:clamp(4px,.8vw,7px);color:${bulletColor};text-align:center;font-weight:600;line-height:1.2">${(s.bullets||[])[k]||'Point '+(k+1)}</div>
+      </div>`;
+    }).join('');
+    canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+      ${accentBar}${logoBgHTML}${logoHTML}
+      <div style="position:absolute;left:3%;top:5%;right:3%;font-size:clamp(7px,1.5vw,11px);font-weight:700;color:${titleColor}">${s.title}</div>
+      <div style="position:absolute;left:2%;right:2%;top:24%;bottom:8%;display:flex;gap:1%">${cells}</div>
+    </div>`;
+  } else if(tpl==='fullbleed'){
+    canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55"/>`:''}
+      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 55%)"></div>
+      ${logoBgHTML}${logoHTML}
+      <div style="position:absolute;bottom:14%;left:5%;right:5%;font-size:clamp(11px,2.5vw,18px);font-weight:700;color:white;line-height:1.2">${s.title}</div>
+      <div style="position:absolute;bottom:6%;left:5%;right:5%;font-size:clamp(6px,1.2vw,9px);color:rgba(255,255,255,.8)">${(s.bullets||[])[0]||''}</div>
+    </div>`;
+  } else if(tpl==='two-col'){
+    const half=Math.ceil((s.bullets||[]).length/2);
+    const mkBullets=arr=>arr.map(b=>`<div style="display:flex;gap:3px;align-items:flex-start;margin-bottom:3px"><div style="width:3px;height:3px;border-radius:50%;background:${accentC};flex-shrink:0;margin-top:3px"></div><div style="font-size:clamp(6px,1.1vw,9px);color:${bulletColor};line-height:1.4">${b}</div></div>`).join('');
+    canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+      ${accentBar}${logoBgHTML}${logoHTML}
+      <div style="position:absolute;left:4%;top:6%;right:4%;font-size:clamp(8px,1.6vw,12px);font-weight:700;color:${titleColor}">${s.title}</div>
+      <div style="position:absolute;left:4%;top:22%;width:44%;bottom:5%;display:flex;flex-direction:column;gap:3px">${mkBullets((s.bullets||[]).slice(0,half))}</div>
+      <div style="position:absolute;left:52%;top:22%;right:4%;bottom:5%;display:flex;flex-direction:column;gap:3px">${mkBullets((s.bullets||[]).slice(half))}</div>
+      <div style="position:absolute;top:18%;left:50%;bottom:5%;width:1px;background:${accentC};opacity:.3"></div>
+    </div>`;
+  } else if(tpl==='stat'){
+    const stat=(s.bullets||[])[0]||'100%';
+    const statImg=slideImages[i];
+    canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+      ${accentBar}${logoBgHTML}${logoHTML}
+      <div style="position:absolute;left:3%;top:5%;right:3%;font-size:clamp(8px,1.6vw,12px);font-weight:700;color:${titleColor};text-align:center">${s.title}</div>
+      <div style="position:absolute;top:24%;left:0;right:0;text-align:center;font-size:clamp(18px,5.5vw,36px);font-weight:700;color:${accentC};line-height:1">${stat}</div>
+      <div style="position:absolute;top:54%;left:8%;right:8%;text-align:center;font-size:clamp(6px,1.1vw,9px);color:${bulletColor};opacity:.8">${(s.bullets||[]).slice(1).join(' · ')}</div>
+      ${statImg?`<img src="${statImg}" style="position:absolute;bottom:0;left:0;right:0;width:100%;height:24%;object-fit:cover;opacity:.65"/>`:`<div style="position:absolute;bottom:0;left:0;right:0;height:24%;background:${isDark?accentC+'33':accentC+'15'};display:flex;align-items:center;justify-content:center;font-size:clamp(7px,1.2vw,9px);color:${accentC};opacity:.7">+ Add image</div>`}
+    </div>`;
+  } else if(tpl==='quote'){
+    const quote=(s.bullets||[])[0]||s.title,author=(s.bullets||[])[1]||'';
+    canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+      ${accentBar}${logoBgHTML}${logoHTML}
+      <div style="position:absolute;top:8%;left:6%;font-size:clamp(32px,8vw,56px);color:${accentC};opacity:.45;line-height:1;font-family:Georgia,serif">"</div>
+      <div style="position:absolute;top:18%;left:7%;right:7%;font-size:clamp(9px,1.9vw,14px);color:${bulletColor};text-align:center;line-height:1.6;font-style:italic">${quote}</div>
+      <div style="position:absolute;bottom:16%;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:8px">
+        <div style="width:22px;height:1px;background:${accentC}"></div>
+        <div style="font-size:clamp(7px,1.3vw,10px);color:${accentC};font-weight:600">${author}</div>
+        <div style="width:22px;height:1px;background:${accentC}"></div>
+      </div>
+    </div>`;
+  } else if(tpl==='timeline'){
+    const steps=(s.bullets||[]).slice(0,4);
+    const stepsHTML=steps.map((step,k)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:0 2px">
+      <div style="width:clamp(14px,2.8vw,20px);height:clamp(14px,2.8vw,20px);border-radius:50%;background:${accentC};display:flex;align-items:center;justify-content:center;color:white;font-size:clamp(5px,1vw,8px);font-weight:700;flex-shrink:0">${k+1}</div>
+      <div style="font-size:clamp(5px,.95vw,7px);color:${bulletColor};text-align:center;line-height:1.3">${step}</div>
+    </div>`).join('');
+    canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+      ${accentBar}${logoBgHTML}${logoHTML}
+      <div style="position:absolute;left:3%;top:5%;right:3%;font-size:clamp(8px,1.6vw,12px);font-weight:700;color:${titleColor}">${s.title}</div>
+      <div style="position:absolute;left:4%;right:4%;top:22%;height:1px;background:${accentC};opacity:.35"></div>
+      <div style="position:absolute;left:3%;right:3%;top:26%;bottom:5%;display:flex;gap:0">${stepsHTML}</div>
+    </div>`;
+  } else {
+    // Default: bullets + optional paragraph + optional image right
+    const bullets=(s.bullets||[]).map(b=>`<div style="display:flex;gap:4px;align-items:flex-start;margin-bottom:3px"><div style="width:3px;height:3px;border-radius:50%;background:${accentC};flex-shrink:0;margin-top:3px"></div><div style="font-size:clamp(6px,1.2vw,10px);color:${bulletColor};line-height:1.4">${b}</div></div>`).join('');
+    const paraHTML=s.paragraph?`<div style="font-size:clamp(5px,1vw,8px);color:${bulletColor};opacity:.8;line-height:1.5;margin-top:5px;padding-top:4px;border-top:1px solid ${accentC}30;font-style:italic">${s.paragraph}</div>`:'';
+    canvas=`<div class="slide-canvas-inner" style="background:${bg}">
+      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;bottom:0;width:38%;height:100%;object-fit:cover"/>`:''}
+      ${accentBar}${logoBgHTML}${logoHTML}
+      <div style="position:absolute;left:4%;top:6%;right:${hasImg?'42%':'4%'};font-size:clamp(8px,1.8vw,13px);font-weight:700;color:${titleColor};line-height:1.2">${s.title}</div>
+      <div style="position:absolute;left:4%;top:22%;width:12%;height:1.5%;background:${accentC};border-radius:1px"></div>
+      <div style="position:absolute;left:4%;top:27%;right:${hasImg?'42%':'4%'};bottom:5%">${bullets}${paraHTML}</div>
+      <div style="position:absolute;bottom:2.5%;right:3%;font-size:7px;color:${isDark?'rgba(255,255,255,.25)':'#ccc'}">${i+1}</div>
+    </div>`;
+  }
+  return canvas;
+}
+
 function buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC){
-  // Delegate to the single source of truth
   return buildSlideCanvas(s,i,tpl,isDark,isSpecial,titleBg,accentC,lightBg,textC,null);
 }
 

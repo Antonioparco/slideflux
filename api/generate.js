@@ -74,16 +74,38 @@ module.exports=async function handler(req,res){
 
     // ── OUTLINE ──
     if(action==="outline"){
-      const prompt=`You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide outline.\n\n${input}\n\nIMPORTANT: If the input contains document content or notes, read it carefully and adapt the actual content into slides — do NOT just summarise in generic bullet points. Extract key facts, data, arguments and insights and use them as the slide content.\n\nReturn ONLY a raw JSON array with exactly ${slideCount} objects. Each object:\n- "title": short slide title (3-7 words)\n- "type": one of "title","agenda","content","data","quote","cta","conclusion"\n- "bullets": 2-4 content-rich bullets using actual information from the input (5-12 words each)\n- "speakerNote": one sentence of guidance\n\nNo markdown, no explanation, raw JSON array only.`;
+      const prompt=`You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide presentation outline.
+
+${input}
+
+IMPORTANT RULES:
+- If the input contains document content or notes, read it carefully and adapt the ACTUAL content into slides — do NOT just summarise in generic bullet points. Extract key facts, data, arguments and insights.
+- Mix content types: some slides can have bullet points, others a short paragraph of prose.
+
+Return ONLY a raw JSON array with exactly ${slideCount} objects. No markdown, no code fences, no explanation — just the raw JSON array starting with [ and ending with ].
+
+Each object must have:
+- "title": string — short slide title, 3-7 words
+- "type": string — one of: "title", "agenda", "content", "data", "quote", "cta", "conclusion"
+- "bullets": array of 2-4 strings — concise bullet points using actual content (6-12 words each)
+- "paragraph": string — a single prose paragraph of max 50 words expanding on the slide content (leave empty string "" if not needed)
+- "speakerNote": string — one sentence of speaker guidance`;
+
       const r=await fetch("https://api.anthropic.com/v1/messages",{
         method:"POST",
         headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
-        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1500,messages:[{role:"user",content:prompt}]})
+        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:3000,messages:[{role:"user",content:prompt}]})
       });
       const d=await r.json();
       if(!r.ok)return res.status(r.status).json({error:d.error?.message||"API error"});
       const text=d.content.map(b=>b.text||"").join("");
-      return res.status(200).json({outline:JSON.parse(text.replace(/```json|```/g,"").trim())});
+      // Robust JSON extraction — find the array even if there's surrounding text
+      const cleaned=text.replace(/```json|```/g,"").trim();
+      const jsonStart=cleaned.indexOf('[');
+      const jsonEnd=cleaned.lastIndexOf(']');
+      if(jsonStart===-1||jsonEnd===-1)return res.status(500).json({error:"Invalid outline response"});
+      const parsed=JSON.parse(cleaned.slice(jsonStart,jsonEnd+1));
+      return res.status(200).json({outline:parsed});
     }
 
     // ── PPTX ──
@@ -307,20 +329,26 @@ module.exports=async function handler(req,res){
             if(steps[k])s.addText(steps[k],{x:cx-stepW/2+0.05,y:lineY+0.55,w:stepW-0.1,h:1.8,fontSize:11,fontFace:'Calibri',color:theme.slideText,align:'center',valign:'top'});
           }
 
-        // ── DEFAULT (bullets + optional image) ──
+        // ── DEFAULT (bullets + optional paragraph + optional image) ──
         }else{
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
           await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
           const logoOffset=logoImg?0.35:0;
+          const textColor=isDark?'FFFFFF':theme.slideText;
+          s.background={color:isDark?theme.titleBg:theme.slideBg};
           if(imgData){
-            s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:5.6,h:0.7,fontSize:20,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+            s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:5.6,h:0.7,fontSize:20,fontFace:"Calibri",bold:true,color:textColor,align:"left",margin:0});
             s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:0.95+logoOffset,w:1.0,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
-            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:6,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.1+logoOffset,w:5.6,h:4.2,valign:'top'});
+            const bullH=slide.paragraph?2.4:3.8;
+            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:13,fontFace:"Calibri",color:textColor,paraSpaceAfter:6,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.1+logoOffset,w:5.6,h:bullH,valign:'top'});
+            if(slide.paragraph)s.addText(slide.paragraph,{x:0.5,y:1.1+logoOffset+bullH+0.1,w:5.6,h:0.85,fontSize:11,fontFace:"Calibri",color:textColor,italic:true});
             try{s.addImage({data:imgData,x:6.4,y:0.06,w:3.6,h:5.565,sizing:{type:'cover',w:3.6,h:5.565}});}catch(e){}
           }else{
-            s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:9,h:0.7,fontSize:24,fontFace:"Calibri",bold:true,color:theme.slideText,align:"left",margin:0});
+            s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:9,h:0.7,fontSize:24,fontFace:"Calibri",bold:true,color:textColor,align:"left",margin:0});
             s.addShape(pres.shapes.RECTANGLE,{x:0.5,y:0.95+logoOffset,w:1.1,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
-            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:14,fontFace:"Calibri",color:theme.slideText,paraSpaceAfter:7,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.1+logoOffset,w:9,h:4.2,valign:'top'});
+            const bullH=slide.paragraph?2.6:4.0;
+            if(slide.bullets?.length)s.addText(slide.bullets.map((b,j)=>({text:b,options:{bullet:true,fontSize:14,fontFace:"Calibri",color:textColor,paraSpaceAfter:7,breakLine:j<slide.bullets.length-1}})),{x:0.5,y:1.1+logoOffset,w:9,h:bullH,valign:'top'});
+            if(slide.paragraph)s.addText(slide.paragraph,{x:0.5,y:1.1+logoOffset+bullH+0.15,w:9,h:0.85,fontSize:12,fontFace:"Calibri",color:textColor,italic:true});
           }
           if(slide.speakerNote)s.addNotes(slide.speakerNote);
         }
