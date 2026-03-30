@@ -263,13 +263,13 @@ textarea{resize:vertical;line-height:1.6}
 /* TEMPLATE PICKER IN PREVIEW */
 .tpl-picker{background:rgba(255,255,255,.05);border-radius:9px;padding:10px 13px}
 .tpl-picker-title{font-size:11px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
-.tpl-grid-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.tpl-thumb{border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:5px;cursor:pointer;background:rgba(255,255,255,.03);transition:all .12s;text-align:center}
+.tpl-grid-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.tpl-thumb{border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:4px;cursor:pointer;background:rgba(255,255,255,.03);transition:all .12s;text-align:center}
 .tpl-thumb:hover{border-color:rgba(255,255,255,.25);background:rgba(255,255,255,.06)}
 .tpl-thumb.active{border-color:var(--teal);border-width:1.5px;background:rgba(26,158,143,.15)}
-.tpl-thumb-name{font-size:9px;font-weight:600;color:rgba(255,255,255,.5);margin-top:4px;font-family:'DM Sans',sans-serif}
+.tpl-thumb-name{font-size:8px;font-weight:600;color:rgba(255,255,255,.5);margin-top:3px;font-family:'DM Sans',sans-serif}
 .tpl-thumb.active .tpl-thumb-name{color:var(--teal)}
-.tpl-wf{width:100%;aspect-ratio:16/9;border-radius:3px;overflow:hidden;position:relative;background:#2a3530}
+.tpl-wf{width:100%;aspect-ratio:16/9;border-radius:2px;overflow:hidden;position:relative;background:#2a3530}
 
 /* DARK/LIGHT TOGGLE PER SLIDE */
 .dark-toggle-row{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.05);border-radius:7px;padding:6px 10px}
@@ -586,8 +586,9 @@ let slotImages={},slideIcons={},slideDarkBg={};
 let iconSearchSlide=null,iconSearchSlot=null;
 
 const COVER_TEMPLATES=[
-  {id:'default',     label:'Full Bleed',   thumb:'fullbleed'},
-  {id:'circle-right',label:'Circle Right', thumb:'circle'}
+  {id:'default',      label:'Full Bleed',   thumb:'fullbleed'},
+  {id:'half-right',   label:'Half Image',   thumb:'halfright'},
+  {id:'circle-right', label:'Circle',       thumb:'circle'}
 ];
 const TEMPLATES=[
   {id:'default',  label:'Bullets',     thumb:'bullets'},
@@ -849,24 +850,56 @@ function renderPreview(){
 
   // ── SLIDE CANVAS ──
   let canvas='';
-  if(isSpecial||isDark){
-    // Cover, last, or forced dark slide
-    if(tpl==='circle-right'){
+  if(isSpecial){
+    // Cover, last slide — limited templates
+    if(tpl==='half-right'){
+      // Half image right
       canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
-        ${hasImg?`<div style="position:absolute;right:3%;top:5%;width:40%;height:90%;border-radius:50%;overflow:hidden"><img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover" /></div>`:`<div style="position:absolute;right:3%;top:5%;width:40%;height:90%;border-radius:50%;border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.3);font-size:clamp(10px,2vw,14px)">+Image</div>`}
+        ${hasImg
+          ?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;width:50%;height:100%;object-fit:cover" />`
+          :`<div style="position:absolute;right:0;top:0;width:50%;height:100%;background:${accentC}33;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.8vw,13px);color:${accentC}">+Image</div>`}
+        <div style="position:absolute;right:50%;top:0;bottom:0;width:1px;background:${accentC};opacity:.5"></div>
         <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
-        <div class="main-title" style="right:48%">${s.title}</div>
-        <div class="sub-txt" style="right:48%">${(s.bullets||[])[0]||''}</div>
+        <div class="slide-num">${i+1}</div>
+        <div class="main-title" style="right:53%;left:5%">${s.title}</div>
+        <div class="sub-txt" style="right:53%;left:5%">${(s.bullets||[])[0]||''}</div>
+      </div>`;
+    } else if(tpl==='circle-right'){
+      // Circle with decorative fading rings
+      canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
+        <!-- Decorative fading rings -->
+        <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:95%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.08"></div>
+        <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:80%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.12"></div>
+        <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:65%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.18"></div>
+        <!-- Main circle image -->
+        <div style="position:absolute;right:2%;top:5%;width:46%;height:90%;border-radius:50%;overflow:hidden;border:1.5px solid ${accentC};opacity:.9">
+          ${hasImg
+            ?`<img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover" />`
+            :`<div style="width:100%;height:100%;background:${accentC}22;display:flex;align-items:center;justify-content:center;color:${accentC};font-size:clamp(9px,1.8vw,13px)">+Image</div>`}
+        </div>
+        <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
+        <div class="main-title" style="right:52%;left:5%">${s.title}</div>
+        <div class="sub-txt" style="right:52%;left:5%">${(s.bullets||[])[0]||''}</div>
       </div>`;
     } else {
+      // Full bleed default
       canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
         ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`:''}
         <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
         <div class="slide-num">${i+1}</div>
-        <div class="main-title">${s.title}</div>
-        <div class="sub-txt">${(s.bullets||[])[0]||''}</div>
+        <div class="main-title" style="right:55%;left:5%">${s.title}</div>
+        <div class="sub-txt" style="right:55%;left:5%">${(s.bullets||[])[0]||''}</div>
       </div>`;
     }
+  } else if(isDark){
+    // Forced dark content slide
+    canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
+      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`:''}
+      <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
+      <div class="slide-num">${i+1}</div>
+      <div class="main-title">${s.title}</div>
+      <div class="sub-txt">${(s.bullets||[])[0]||''}</div>
+    </div>`;
   } else if(tpl==='3images'){
     const sl=(slotImages[i]||{});
     const imgs=[0,1,2].map(k=>{
@@ -1106,12 +1139,23 @@ function wfSvg(type, accent){
       <rect x="94" y="64" width="28" height="3" rx="1" fill="${txt}"/>
       <rect x="134" y="64" width="28" height="3" rx="1" fill="${txt}"/>
     </svg>`,
-    circle:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
-      <rect width="160" height="90" fill="${a}" opacity=".3"/>
+    halfright:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="80" y="0" width="80" height="90" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
+      <rect x="79" y="0" width="2" height="90" fill="${a}" opacity=".4"/>
       <rect x="0" y="0" width="2" height="90" fill="${a}"/>
-      <rect x="10" y="28" width="70" height="9" rx="1" fill="rgba(255,255,255,.6)"/>
-      <rect x="10" y="45" width="55" height="5" rx="1" fill="rgba(255,255,255,.35)"/>
-      <circle cx="118" cy="45" r="32" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.3)" stroke-width="1"/>
+      <rect x="8" y="26" width="55" height="8" rx="1" fill="${line}"/>
+      <rect x="8" y="40" width="42" height="4" rx="1" fill="${txt}"/>
+    </svg>`,
+    circle:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <circle cx="148" cy="45" r="70" fill="none" stroke="${a}" stroke-width=".5" opacity=".1"/>
+      <circle cx="148" cy="45" r="55" fill="none" stroke="${a}" stroke-width=".5" opacity=".15"/>
+      <circle cx="148" cy="45" r="40" fill="none" stroke="${a}" stroke-width=".8" opacity=".22"/>
+      <circle cx="148" cy="45" r="26" fill="rgba(255,255,255,.06)" stroke="${a}" stroke-width="1" opacity=".5"/>
+      <rect x="0" y="0" width="2" height="90" fill="${a}"/>
+      <rect x="8" y="26" width="55" height="8" rx="1" fill="${line}"/>
+      <rect x="8" y="40" width="40" height="4" rx="1" fill="${txt}"/>
     </svg>`
   };
   return templates[type]||templates.bullets;

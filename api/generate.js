@@ -41,19 +41,19 @@ function getTheme(style,brandOn,brandColors){
 async function addLogo(s,pres,logoImgData,logoPos,logoWhiteBg,isCover){
   if(!logoImgData)return;
   const isBottom=logoPos==='bottom-left';
-  // Logo dimensions - smaller on content slides to avoid overlapping text
-  const w=isCover?1.8:0.65;
-  const h=isCover?0.72:0.26;
-  const x=0.25;
-  const y=isBottom?(5.625-h-0.12):0.12;
+  // Use small box and contain - pptxgenjs contain preserves aspect ratio
+  const maxW=isCover?1.6:0.7;
+  const maxH=isCover?0.6:0.25;
+  const x=0.22;
+  const y=isBottom?(5.625-maxH-0.15):0.13;
   if(logoWhiteBg){
-    const barH=isCover?1.0:0.5;
+    const barH=isCover?0.9:0.48;
     const barY=isBottom?5.625-barH:0;
     s.addShape(pres.shapes.RECTANGLE,{x:0,y:barY,w:10,h:barH,fill:{color:'FFFFFF'},line:{color:'FFFFFF'}});
   }
-  // Use contain to prevent stretching
   try{
-    s.addImage({data:logoImgData,x,y,w,h,sizing:{type:'contain',w,h}});
+    // contain keeps aspect ratio, never stretches
+    s.addImage({data:logoImgData,x,y,w:maxW,h:maxH,sizing:{type:'contain',w:maxW,h:maxH}});
   }catch(e){}
 }
 
@@ -121,17 +121,37 @@ module.exports=async function handler(req,res){
 
         // ── COVER / LAST SLIDE ──
         if(isSpecialSlide){
-          if(tpl==='circle-right'&&imgData){
-            // Circle image on right
-            s.addShape(pres.shapes.OVAL,{x:6.2,y:0.3,w:3.4,h:5.0,fill:{color:'FFFFFF',transparency:90},line:{color:'FFFFFF',transparency:50}});
-            try{s.addImage({data:imgData,x:6.5,y:0.5,w:3.0,h:4.6,sizing:{type:'cover',w:3.0,h:4.6}});}catch(e){}
-          }else if(imgData){
-            try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,sizing:{type:'cover',w:10,h:5.625},transparency:isDark?60:0});}catch(e){}
+          if(tpl==='half-right'){
+            // Half image right - text constrained to left 50%
+            if(imgData){try{s.addImage({data:imgData,x:5,y:0,w:5,h:5.625,sizing:{type:'cover',w:5,h:5.625}});}catch(e){}}
+            s.addShape(pres.shapes.RECTANGLE,{x:4.98,y:0,w:0.04,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
+            s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.1,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
+            await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,true);
+            s.addText(slide.title,{x:0.5,y:1.6,w:4.3,h:1.5,fontSize:32,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});
+            if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.5,y:3.3,w:4.3,h:0.7,fontSize:14,fontFace:"Calibri",color:theme.titleText,align:"left"});
+          } else if(tpl==='circle-right'){
+            await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,true);
+            // Decorative rings
+            const rings=[{r:4.2,op:'10'},{r:3.4,op:'15'},{r:2.6,op:'22'},{r:1.8,op:'35'}];
+            rings.forEach(({r,op})=>{
+              s.addShape(pres.shapes.OVAL,{x:10-r,y:(5.625-r*2)/2,w:r*2,h:r*2,
+                fill:{color:'FFFFFF',transparency:100},
+                line:{color:theme.accent,width:.5,transparency:parseInt(100-parseInt(op))}
+              });
+            });
+            // Main circle clipped image
+            if(imgData){try{s.addImage({data:imgData,x:5.8,y:0.3,w:4.0,h:5.0,sizing:{type:'cover',w:4.0,h:5.0},rounding:true});}catch(e){}}
+            s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.1,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
+            s.addText(slide.title,{x:0.5,y:1.5,w:5.0,h:1.6,fontSize:32,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});
+            if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.5,y:3.3,w:5.0,h:0.7,fontSize:14,fontFace:"Calibri",color:theme.titleText,align:"left"});
+          } else {
+            // Full bleed default
+            if(imgData){try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,sizing:{type:'cover',w:10,h:5.625},transparency:isDark?60:0});}catch(e){}}
+            s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.1,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
+            await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,true);
+            s.addText(slide.title,{x:0.6,y:1.6,w:8.8,h:1.6,fontSize:38,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});
+            if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.6,y:3.4,w:8.5,h:0.7,fontSize:16,fontFace:"Calibri",color:theme.titleText,align:"left"});
           }
-          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.1,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
-          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,true);
-          s.addText(slide.title,{x:0.6,y:1.6,w:tpl==='circle-right'?5.5:9,h:1.6,fontSize:38,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});
-          if(slide.bullets?.[0])s.addText(slide.bullets[0],{x:0.6,y:3.4,w:tpl==='circle-right'?5.5:8,h:0.7,fontSize:16,fontFace:"Calibri",color:theme.titleText,align:"left"});
 
         // ── DARK CONTENT SLIDE ──
         }else if(isDark){
