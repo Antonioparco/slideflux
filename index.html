@@ -114,7 +114,7 @@ textarea{resize:vertical;line-height:1.6}
 .slide-row:hover{box-shadow:0 2px 8px rgba(26,35,32,.08)}
 .slide-row.expanded{border-color:var(--teal);box-shadow:0 0 0 3px rgba(26,158,143,.1)}
 .slide-summary{display:flex;gap:10px;align-items:center;padding:9px 11px;cursor:pointer}
-.snum{width:20px;height:20px;border-radius:50%;background:var(--teal);color:white;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.snum{width:28px;height:28px;border-radius:50%;background:var(--teal);color:white;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .sinfo{flex:1;min-width:0}
 .stitle{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sdesc{font-size:11px;color:var(--ink-2);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -128,8 +128,7 @@ textarea{resize:vertical;line-height:1.6}
 .icon-btn.preview-btn:hover{background:#F0EEFF;border-color:#6A5ACD}
 
 /* SLIDE EDITOR */
-.slide-editor{border-top:1px solid var(--border);padding:12px;background:var(--bg);display:none}
-.slide-row.expanded .slide-editor{display:block}
+
 .editor-field{margin-bottom:9px}
 .editor-lbl{font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px}
 .editor-input{width:100%;border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:13px;font-family:'DM Sans',sans-serif;color:var(--ink);background:var(--surface);outline:none;transition:border-color .15s}
@@ -190,7 +189,7 @@ textarea{resize:vertical;line-height:1.6}
 .close-btn{width:26px;height:26px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:transparent;cursor:pointer;color:rgba(255,255,255,.7);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .close-btn:hover{border-color:#ff6b6b;color:#ff6b6b}
 .preview-body{flex:1;padding:1.25rem;display:flex;flex-direction:column;gap:.875rem;overflow-y:auto}
-.slide-canvas{width:100%;aspect-ratio:16/9;border-radius:9px;overflow:hidden;position:relative;box-shadow:0 4px 20px rgba(0,0,0,.4);max-height:calc((100vw - 60px) * 9/16)}
+.slide-canvas{width:100%;aspect-ratio:16/9;border-radius:9px;overflow:hidden;position:relative;box-shadow:0 4px 20px rgba(0,0,0,.4);max-height:350px}
 .slide-canvas-inner{width:100%;height:100%;position:relative}
 .slide-dark{background:var(--preview-bg,#1E2761)}
 .slide-dark .acc-bar{position:absolute;left:0;top:0;bottom:0;width:1.5%;background:var(--preview-accent,#4472C4)}
@@ -303,12 +302,11 @@ textarea{resize:vertical;line-height:1.6}
 .sp-slot-preview img{width:100%;height:100%;object-fit:cover}
 /* slide preview */
 .sp-preview{padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0;width:100%}
-.sp-canvas{width:100%;aspect-ratio:16/9;max-height:220px;border-radius:7px;overflow:hidden;position:relative;box-shadow:0 2px 12px rgba(26,35,32,.12);cursor:pointer;flex-shrink:0}
+.sp-canvas{width:100%;aspect-ratio:16/9;border-radius:7px;overflow:hidden;position:relative;box-shadow:0 2px 12px rgba(26,35,32,.12);cursor:pointer;flex-shrink:0}
 .sp-canvas:hover .mini-hover-overlay{opacity:1}
 .mini-hover-overlay{position:absolute;inset:0;background:rgba(26,158,143,.15);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;font-size:11px;font-weight:600;color:var(--teal)}
 /* editor */
-.slide-editor{border-top:1px solid var(--border);padding:14px 16px;background:var(--bg);display:none}
-.slide-row.open .slide-editor{display:block}
+.slide-editor{border-top:1px solid var(--border);padding:14px 16px;background:var(--bg)}
 
 /* TEMPLATE PICKER IN PREVIEW */
 .tpl-picker{background:rgba(255,255,255,.05);border-radius:9px;padding:10px 13px}
@@ -884,7 +882,7 @@ function buildSlideRow(i, data){
   const miniCanvas=buildSlideCanvas(s,i,tpl,isDark,isSpecial,titleBg,accentC,lightBg,textC,t2);
 
   return `<div class="slide-row" id="slide-row-${i}">
-    <div class="slide-summary-bar" onclick="toggleExpand(${i})">
+    <div class="slide-summary-bar">
       <div class="snum">${i+1}</div>
       <div class="sinfo" style="flex:1;min-width:0">
         <div class="stitle" id="stitle-${i}">${s.title}</div>
@@ -895,7 +893,7 @@ function buildSlideRow(i, data){
       <div style="display:flex;gap:5px" onclick="event.stopPropagation()">
         <button class="icon-btn regen" onclick="regenSlide(${i},this)" title="Regenerate" style="width:auto;padding:3px 8px;font-size:11px;border-radius:6px">↻ Redo</button>
       </div>
-      <div class="sp-chevron" id="chev-${i}" style="color:var(--ink-3);font-size:10px;padding-left:4px">▼</div>
+
     </div>
 
     <div class="slide-panel">
@@ -978,37 +976,14 @@ function renderOutlineRow(i){
   if(!outline)return;
   const old=document.getElementById('slide-row-'+i);
   if(!old)return;
-  const wasOpen=old.classList.contains('open');
-  const newHTML=buildSlideRow(i);
-  old.outerHTML=newHTML;
-  const fresh=document.getElementById('slide-row-'+i);
-  if(fresh&&wasOpen){
-    fresh.classList.add('open');
-    const chev=document.getElementById('chev-'+i);
-    if(chev)chev.textContent='▲';
-  }
+  old.outerHTML=buildSlideRow(i);
 }
 
 function toggleExpand(i){
-  const row=document.getElementById('slide-row-'+i);
-  if(!row)return;
-  const isOpen=row.classList.contains('open');
-  // Close all others
-  document.querySelectorAll('.slide-row.open').forEach(r=>{
-    r.classList.remove('open');
-    const chev=r.querySelector('.sp-chevron');
-    if(chev)chev.textContent='▼';
-  });
-  if(!isOpen){
-    row.classList.add('open');
-    const chev=document.getElementById('chev-'+i);
-    if(chev)chev.textContent='▲';
-    expandedIndex=i;
-    const inp=document.getElementById('edit-title-'+i);
-    if(inp)setTimeout(()=>inp.focus(),50);
-  } else {
-    expandedIndex=null;
-  }
+  // Editor always visible - just focus the title input
+  const inp=document.getElementById('edit-title-'+i);
+  if(inp)inp.focus();
+  expandedIndex=i;
 }
 
 
@@ -1305,25 +1280,35 @@ function triggerAIImage(i){
 
 // ── IMAGES ──
 async function suggestImage(i){
-  const area=document.querySelector('.image-preview-area');
-  if(area)area.innerHTML='<div class="image-loading"><div class="spinner-sm"></div> Finding image...</div>';
+  // Show loading in the sp-img-preview area of this slide row
+  const row=document.getElementById('slide-row-'+i);
+  if(row){
+    const prev=row.querySelector('.sp-img-preview');
+    if(prev)prev.innerHTML='<div class="spinner" style="width:16px;height:16px;border-width:2px;margin:auto"></div>';
+  }
   try{
-    const seed=Math.floor(Math.random()*999);
+    const seed=Math.floor(Math.random()*9999)+1;
     const url=`https://picsum.photos/seed/${seed}/800/450`;
     await new Promise((res,rej)=>{const img=new Image();img.onload=res;img.onerror=rej;img.src=url});
-    slideImages[i]=url;renderPreview();showToast('Image found ✓');
-  }catch(e){showToast('Could not find image — upload your own');renderPreview();}
+    slideImages[i]=url;
+    renderOutlineRow(i);
+    renderPreview();
+    showToast('Image added ✓');
+  }catch(e){showToast('Could not load image — try again');}
 }
 
 async function suggestSlotImage(slideIdx,slot){
+  showToast('Finding image...');
   try{
-    const seed=Math.floor(Math.random()*999);
+    const seed=Math.floor(Math.random()*9999)+1;
     const url=`https://picsum.photos/seed/${seed}/600/400`;
     await new Promise((res,rej)=>{const img=new Image();img.onload=res;img.onerror=rej;img.src=url});
     if(!slotImages[slideIdx])slotImages[slideIdx]={};
     slotImages[slideIdx][slot]=url;
-    renderPreview();showToast('Image found ✓');
-  }catch(e){showToast('Could not find image — upload your own');}
+    renderOutlineRow(slideIdx);
+    renderPreview();
+    showToast('Image added ✓');
+  }catch(e){showToast('Could not load image — try again');}
 }
 
 let uploadTarget={type:'main',slideIdx:0,slot:0};
@@ -1347,12 +1332,73 @@ function handleImageUpload(inp){
   r.readAsDataURL(inp.files[0]);inp.value='';
 }
 
-function removeImage(i){delete slideImages[i];renderPreview();showToast('Image removed')}
-function removeSlotImage(slideIdx,slot){if(slotImages[slideIdx])delete slotImages[slideIdx][slot];renderPreview();showToast('Image removed')}
+function removeImage(i){delete slideImages[i];renderOutlineRow(i);renderPreview();showToast('Image removed')}
+function removeSlotImage(slideIdx,slot){if(slotImages[slideIdx])delete slotImages[slideIdx][slot];renderOutlineRow(slideIdx);renderPreview();showToast('Image removed')}
 function removeSlotContent(slideIdx,slot){
   if(slotImages[slideIdx])delete slotImages[slideIdx][slot];
   if(slideIcons[slideIdx])delete slideIcons[slideIdx][slot];
-  renderPreview();showToast('Removed');
+  renderOutlineRow(slideIdx);renderPreview();showToast('Removed');
+}
+
+// ── PREVIEW PANEL ──
+function openPreview(startIndex){
+  previewIndex=startIndex||0;
+  renderAllPreviews(startIndex);
+  document.getElementById('preview-overlay').classList.add('open');
+  document.getElementById('preview-panel').classList.add('open');
+}
+
+function closePreview(){
+  document.getElementById('preview-overlay').classList.remove('open');
+  document.getElementById('preview-panel').classList.remove('open');
+}
+
+function renderPreview(){
+  if(document.getElementById('preview-panel').classList.contains('open')){
+    renderAllPreviews(previewIndex);
+  }
+}
+
+function navigatePreview(d){
+  previewIndex=Math.max(0,Math.min(outline.length-1,previewIndex+d));
+  renderAllPreviews(previewIndex);
+}
+
+function renderAllPreviews(scrollToIndex){
+  if(!outline)return;
+  document.getElementById('preview-panel-title').textContent=`All slides (${outline.length})`;
+  const html=outline.map((_,i)=>{
+    const t=getTheme();
+    const isCover=i===0,isLast=i===outline.length-1,isSpecial=isCover||isLast;
+    const forceDark=slideDarkBg[i];
+    const defaultDark=outline[i].type==='title'||outline[i].type==='conclusion'||outline[i].type==='cta'||isSpecial;
+    const isDark=forceDark===true?true:forceDark===false?false:defaultDark;
+    const tpl=slideTemplates[i]||'default';
+    const titleBg=brandOn?brandColors.primary:'#'+t.titleBg;
+    const accentC=brandOn?brandColors.accent:'#'+t.accent;
+    const lightBg='#'+(t.slideBg||'FFFFFF');
+    const textC='#'+(t.slideText||'1A2320');
+    const canvas=buildSlideCanvas(outline[i],i,tpl,isDark,isSpecial,titleBg,accentC,lightBg,textC,t);
+    const s=outline[i];
+    const bullets=(s.bullets||[]).map(b=>`<li>${b}</li>`).join('');
+    const note=s.speakerNote?`<div class="preview-note">🎤 ${s.speakerNote}</div>`:'';
+    return `<div id="prev-slide-${i}" style="margin-bottom:1.5rem">
+      <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.35);margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Slide ${i+1}</div>
+      <div class="slide-canvas">${canvas}</div>
+      <div class="preview-meta" style="margin-top:6px">
+        <div class="preview-meta-title">${s.title}</div>
+        <ul class="preview-meta-bullets">${bullets}</ul>
+        ${note}
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('preview-body').innerHTML=html;
+  if(scrollToIndex>0){
+    setTimeout(()=>{
+      const el=document.getElementById('prev-slide-'+scrollToIndex);
+      if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    },100);
+  }
 }
 
 // ── ICON SEARCH ──
