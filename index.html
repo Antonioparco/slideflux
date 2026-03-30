@@ -1143,120 +1143,149 @@ function buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC)
 // ── WIREFRAME THUMBNAILS ──
 function wfSvg(type, accent){
   const a=accent||'#1A9E8F';
-  const bg='#2a3530', line='rgba(255,255,255,.25)', txt='rgba(255,255,255,.15)';
+  const bg='#2a3530', line='rgba(255,255,255,.28)', txt='rgba(255,255,255,.18)';
   const templates={
     bullets:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
-      <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
-      <rect x="8" y="22" width="4" height="4" rx="1" fill="${a}"/><rect x="15" y="23" width="55" height="3" rx="1" fill="${txt}"/>
-      <rect x="8" y="31" width="4" height="4" rx="1" fill="${a}"/><rect x="15" y="32" width="48" height="3" rx="1" fill="${txt}"/>
-      <rect x="8" y="40" width="4" height="4" rx="1" fill="${a}"/><rect x="15" y="41" width="52" height="3" rx="1" fill="${txt}"/>
-      <rect x="85" y="6" width="68" height="78" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
+      <rect x="0" y="0" width="160" height="3" fill="${a}"/>
+      <rect x="8" y="12" width="90" height="7" rx="1.5" fill="${line}"/>
+      <rect x="8" y="12" width="25" height="7" rx="1.5" fill="${a}" opacity=".6"/>
+      <rect x="8" y="28" width="6" height="6" rx="1" fill="${a}"/><rect x="18" y="30" width="80" height="4" rx="1" fill="${line}"/>
+      <rect x="8" y="40" width="6" height="6" rx="1" fill="${a}"/><rect x="18" y="42" width="70" height="4" rx="1" fill="${line}"/>
+      <rect x="8" y="52" width="6" height="6" rx="1" fill="${a}"/><rect x="18" y="54" width="75" height="4" rx="1" fill="${line}"/>
+      <rect x="8" y="64" width="6" height="6" rx="1" fill="${a}"/><rect x="18" y="66" width="60" height="4" rx="1" fill="${line}"/>
+      <rect x="108" y="8" width="46" height="76" rx="3" fill="${a}" opacity=".12"/>
     </svg>`,
     twocol:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
-      <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
-      <rect x="8" y="22" width="4" height="3" rx="1" fill="${a}"/><rect x="14" y="23" width="60" height="2" rx="1" fill="${txt}"/>
-      <rect x="8" y="29" width="4" height="3" rx="1" fill="${a}"/><rect x="14" y="30" width="55" height="2" rx="1" fill="${txt}"/>
-      <rect x="8" y="36" width="4" height="3" rx="1" fill="${a}"/><rect x="14" y="37" width="58" height="2" rx="1" fill="${txt}"/>
-      <rect x="79" y="18" width="1" height="65" fill="${a}" opacity=".3"/>
-      <rect x="85" y="22" width="4" height="3" rx="1" fill="${a}"/><rect x="91" y="23" width="60" height="2" rx="1" fill="${txt}"/>
-      <rect x="85" y="29" width="4" height="3" rx="1" fill="${a}"/><rect x="91" y="30" width="55" height="2" rx="1" fill="${txt}"/>
-      <rect x="85" y="36" width="4" height="3" rx="1" fill="${a}"/><rect x="91" y="37" width="58" height="2" rx="1" fill="${txt}"/>
+      <rect x="0" y="0" width="160" height="3" fill="${a}"/>
+      <rect x="8" y="12" width="144" height="7" rx="1.5" fill="${line}"/>
+      <rect x="1" y="26" width="77" height="56" rx="2" fill="${a}" opacity=".08"/>
+      <rect x="82" y="26" width="77" height="56" rx="2" fill="${a}" opacity=".08"/>
+      <rect x="79" y="22" width="2" height="64" fill="${a}" opacity=".5"/>
+      <rect x="10" y="33" width="6" height="5" rx="1" fill="${a}"/><rect x="19" y="34" width="52" height="4" rx="1" fill="${line}"/>
+      <rect x="10" y="43" width="6" height="5" rx="1" fill="${a}"/><rect x="19" y="44" width="46" height="4" rx="1" fill="${line}"/>
+      <rect x="10" y="53" width="6" height="5" rx="1" fill="${a}"/><rect x="19" y="54" width="50" height="4" rx="1" fill="${line}"/>
+      <rect x="10" y="63" width="6" height="5" rx="1" fill="${a}"/><rect x="19" y="64" width="40" height="4" rx="1" fill="${line}"/>
+      <rect x="84" y="33" width="6" height="5" rx="1" fill="${a}"/><rect x="93" y="34" width="52" height="4" rx="1" fill="${line}"/>
+      <rect x="84" y="43" width="6" height="5" rx="1" fill="${a}"/><rect x="93" y="44" width="46" height="4" rx="1" fill="${line}"/>
+      <rect x="84" y="53" width="6" height="5" rx="1" fill="${a}"/><rect x="93" y="54" width="50" height="4" rx="1" fill="${line}"/>
     </svg>`,
     fullbleed:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
-      <rect width="160" height="90" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
-      <rect x="0" y="55" width="160" height="35" fill="rgba(0,0,0,.5)"/>
-      <rect x="10" y="60" width="80" height="7" rx="1" fill="${line}"/>
-      <rect x="10" y="72" width="55" height="4" rx="1" fill="${txt}"/>
+      <rect width="160" height="90" fill="${a}" opacity=".18"/>
+      <rect width="160" height="90" fill="url(#fb)" opacity=".9"/>
+      <defs><linearGradient id="fb" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${bg}" stop-opacity=".2"/><stop offset="60%" stop-color="${bg}" stop-opacity=".6"/><stop offset="100%" stop-color="${bg}" stop-opacity=".95"/></linearGradient></defs>
+      <rect x="0" y="0" width="4" height="90" fill="${a}"/>
+      <rect x="10" y="52" width="110" height="9" rx="2" fill="${line}"/>
+      <rect x="10" y="66" width="80" height="5" rx="1.5" fill="${txt}"/>
+      <rect x="10" y="75" width="60" height="4" rx="1" fill="${txt}" opacity=".6"/>
     </svg>`,
     stat:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
-      <rect x="30" y="10" width="100" height="6" rx="1" fill="${line}"/>
-      <rect x="45" y="22" width="70" height="22" rx="2" fill="${a}" opacity=".6"/>
-      <rect x="20" y="50" width="120" height="3" rx="1" fill="${txt}"/>
-      <rect x="0" y="68" width="160" height="22" rx="0" fill="rgba(255,255,255,.06)" stroke="${line}" stroke-width=".5"/>
+      <rect x="0" y="0" width="160" height="3" fill="${a}"/>
+      <rect x="20" y="10" width="120" height="7" rx="1.5" fill="${line}"/>
+      <rect x="30" y="25" width="100" height="28" rx="3" fill="${a}" opacity=".25"/>
+      <rect x="50" y="30" width="60" height="18" rx="2" fill="${a}" opacity=".5"/>
+      <rect x="25" y="60" width="110" height="5" rx="1.5" fill="${txt}"/>
+      <rect x="0" y="72" width="160" height="18" fill="${a}" opacity=".12"/>
+      <rect x="35" y="76" width="90" height="5" rx="1.5" fill="${txt}"/>
     </svg>`,
     '3img':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
-      <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
-      <rect x="6" y="22" width="46" height="38" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
-      <rect x="57" y="22" width="46" height="38" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
-      <rect x="108" y="22" width="46" height="38" rx="2" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
-      <rect x="6" y="63" width="46" height="3" rx="1" fill="${txt}"/><rect x="6" y="69" width="38" height="2" rx="1" fill="${txt}" opacity=".5"/>
-      <rect x="57" y="63" width="46" height="3" rx="1" fill="${txt}"/><rect x="57" y="69" width="38" height="2" rx="1" fill="${txt}" opacity=".5"/>
-      <rect x="108" y="63" width="46" height="3" rx="1" fill="${txt}"/><rect x="108" y="69" width="38" height="2" rx="1" fill="${txt}" opacity=".5"/>
+      <rect x="0" y="0" width="160" height="3" fill="${a}"/>
+      <rect x="8" y="10" width="90" height="7" rx="1.5" fill="${line}"/>
+      <rect x="5"  y="24" width="46" height="42" rx="3" fill="${a}" opacity=".22"/>
+      <rect x="57" y="24" width="46" height="42" rx="3" fill="${a}" opacity=".22"/>
+      <rect x="109" y="24" width="46" height="42" rx="3" fill="${a}" opacity=".22"/>
+      <rect x="5"  y="24" width="46" height="42" rx="3" fill="none" stroke="${a}" stroke-width="1"/>
+      <rect x="57" y="24" width="46" height="42" rx="3" fill="none" stroke="${a}" stroke-width="1"/>
+      <rect x="109" y="24" width="46" height="42" rx="3" fill="none" stroke="${a}" stroke-width="1"/>
+      <rect x="5"  y="70" width="46" height="5" rx="1" fill="${txt}"/>
+      <rect x="57" y="70" width="46" height="5" rx="1" fill="${txt}"/>
+      <rect x="109" y="70" width="46" height="5" rx="1" fill="${txt}"/>
+      <rect x="5"  y="78" width="36" height="4" rx="1" fill="${txt}" opacity=".5"/>
+      <rect x="57" y="78" width="36" height="4" rx="1" fill="${txt}" opacity=".5"/>
+      <rect x="109" y="78" width="36" height="4" rx="1" fill="${txt}" opacity=".5"/>
     </svg>`,
     '2ico':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
-      <rect x="30" y="8" width="100" height="5" rx="1" fill="${line}"/>
-      <circle cx="55" cy="45" r="18" fill="none" stroke="${a}" stroke-width="1.5"/>
-      <circle cx="105" cy="45" r="18" fill="none" stroke="${a}" stroke-width="1.5"/>
-      <rect x="30" y="70" width="50" height="3" rx="1" fill="${txt}"/>
-      <rect x="80" y="70" width="50" height="3" rx="1" fill="${txt}"/>
+      <rect x="0" y="0" width="160" height="3" fill="${a}"/>
+      <rect x="20" y="10" width="120" height="7" rx="1.5" fill="${line}"/>
+      <circle cx="55" cy="46" r="22" fill="${a}" opacity=".12"/>
+      <circle cx="55" cy="46" r="22" fill="none" stroke="${a}" stroke-width="2"/>
+      <circle cx="105" cy="46" r="22" fill="${a}" opacity=".12"/>
+      <circle cx="105" cy="46" r="22" fill="none" stroke="${a}" stroke-width="2"/>
+      <rect x="22" y="73" width="66" height="5" rx="1.5" fill="${txt}"/>
+      <rect x="72" y="73" width="66" height="5" rx="1.5" fill="${txt}"/>
     </svg>`,
     '4ico':`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
-      <rect x="30" y="8" width="100" height="5" rx="1" fill="${line}"/>
-      <circle cx="28" cy="45" r="13" fill="none" stroke="${a}" stroke-width="1.5"/>
-      <circle cx="68" cy="45" r="13" fill="none" stroke="${a}" stroke-width="1.5"/>
-      <circle cx="108" cy="45" r="13" fill="none" stroke="${a}" stroke-width="1.5"/>
-      <circle cx="148" cy="45" r="13" fill="none" stroke="${a}" stroke-width="1.5"/>
-      <rect x="14" y="64" width="28" height="3" rx="1" fill="${txt}"/>
-      <rect x="54" y="64" width="28" height="3" rx="1" fill="${txt}"/>
-      <rect x="94" y="64" width="28" height="3" rx="1" fill="${txt}"/>
-      <rect x="134" y="64" width="28" height="3" rx="1" fill="${txt}"/>
+      <rect x="0" y="0" width="160" height="3" fill="${a}"/>
+      <rect x="20" y="10" width="120" height="7" rx="1.5" fill="${line}"/>
+      <circle cx="20"  cy="46" r="14" fill="${a}" opacity=".12"/>
+      <circle cx="20"  cy="46" r="14" fill="none" stroke="${a}" stroke-width="2"/>
+      <circle cx="60"  cy="46" r="14" fill="${a}" opacity=".12"/>
+      <circle cx="60"  cy="46" r="14" fill="none" stroke="${a}" stroke-width="2"/>
+      <circle cx="100" cy="46" r="14" fill="${a}" opacity=".12"/>
+      <circle cx="100" cy="46" r="14" fill="none" stroke="${a}" stroke-width="2"/>
+      <circle cx="140" cy="46" r="14" fill="${a}" opacity=".12"/>
+      <circle cx="140" cy="46" r="14" fill="none" stroke="${a}" stroke-width="2"/>
+      <rect x="6"   y="65" width="28" height="5" rx="1" fill="${txt}"/>
+      <rect x="46"  y="65" width="28" height="5" rx="1" fill="${txt}"/>
+      <rect x="86"  y="65" width="28" height="5" rx="1" fill="${txt}"/>
+      <rect x="126" y="65" width="28" height="5" rx="1" fill="${txt}"/>
     </svg>`,
     quote:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
-      <text x="12" y="38" font-size="36" fill="${a}" opacity=".5" font-family="Georgia">"</text>
-      <rect x="25" y="30" width="110" height="3" rx="1" fill="${txt}" opacity=".5"/>
-      <rect x="30" y="38" width="100" height="3" rx="1" fill="${txt}" opacity=".4"/>
-      <rect x="35" y="46" width="90" height="3" rx="1" fill="${txt}" opacity=".3"/>
-      <rect x="68" y="60" width="24" height="1" rx=".5" fill="${a}"/>
-      <rect x="50" y="65" width="60" height="3" rx="1" fill="${a}" opacity=".4"/>
+      <rect x="0" y="0" width="160" height="3" fill="${a}"/>
+      <rect x="12" y="8" width="30" height="30" rx="2" fill="${a}" opacity=".2"/>
+      <rect x="16" y="14" width="22" height="4" rx="1" fill="${a}" opacity=".7"/>
+      <rect x="16" y="22" width="18" height="4" rx="1" fill="${a}" opacity=".5"/>
+      <rect x="18" y="40" width="124" height="6" rx="1.5" fill="${line}"/>
+      <rect x="25" y="51" width="110" height="5" rx="1.5" fill="${line}" opacity=".7"/>
+      <rect x="32" y="62" width="96" height="5" rx="1.5" fill="${line}" opacity=".5"/>
+      <rect x="65" y="74" width="30" height="2" rx="1" fill="${a}"/>
+      <rect x="48" y="80" width="64" height="4" rx="1" fill="${a}" opacity=".4"/>
     </svg>`,
     timeline:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
-      <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
-      <rect x="18" y="44" width="124" height="1" rx=".5" fill="${a}" opacity=".4"/>
-      <circle cx="28" cy="44" r="7" fill="${a}"/>
-      <circle cx="68" cy="44" r="7" fill="${a}"/>
-      <circle cx="108" cy="44" r="7" fill="${a}"/>
-      <circle cx="148" cy="44" r="7" fill="${a}"/>
-      <rect x="14" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
-      <rect x="14" y="62" width="22" height="2" rx="1" fill="${txt}" opacity=".25"/>
-      <rect x="54" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
-      <rect x="54" y="62" width="22" height="2" rx="1" fill="${txt}" opacity=".25"/>
-      <rect x="94" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
-      <rect x="94" y="62" width="22" height="2" rx="1" fill="${txt}" opacity=".25"/>
-      <rect x="134" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
+      <rect x="0" y="0" width="160" height="3" fill="${a}"/>
+      <rect x="8" y="10" width="100" height="7" rx="1.5" fill="${line}"/>
+      <rect x="14" y="38" width="132" height="2" rx="1" fill="${a}" opacity=".4"/>
+      <circle cx="28" cy="39" r="10" fill="${a}"/>
+      <circle cx="68" cy="39" r="10" fill="${a}"/>
+      <circle cx="108" cy="39" r="10" fill="${a}"/>
+      <circle cx="148" cy="39" r="10" fill="${a}"/>
+      <rect x="10" y="55" width="36" height="5" rx="1" fill="${txt}"/>
+      <rect x="12" y="63" width="30" height="4" rx="1" fill="${txt}" opacity=".6"/>
+      <rect x="50" y="55" width="36" height="5" rx="1" fill="${txt}"/>
+      <rect x="52" y="63" width="30" height="4" rx="1" fill="${txt}" opacity=".6"/>
+      <rect x="90" y="55" width="36" height="5" rx="1" fill="${txt}"/>
+      <rect x="92" y="63" width="30" height="4" rx="1" fill="${txt}" opacity=".6"/>
+      <rect x="130" y="55" width="26" height="5" rx="1" fill="${txt}"/>
     </svg>`,
     halfright:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <rect x="80" y="0" width="80" height="90" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
-      <rect x="79" y="0" width="2" height="90" fill="${a}" opacity=".4"/>
-      <rect x="0" y="0" width="2" height="90" fill="${a}"/>
-      <rect x="8" y="26" width="55" height="8" rx="1" fill="${line}"/>
-      <rect x="8" y="40" width="42" height="4" rx="1" fill="${txt}"/>
+      <rect x="80" y="0" width="80" height="90" fill="${a}" opacity=".18"/>
+      <rect x="79" y="0" width="3" height="90" fill="${a}"/>
+      <rect x="0" y="0" width="3" height="90" fill="${a}"/>
+      <rect x="8" y="20" width="60" height="10" rx="2" fill="${line}"/>
+      <rect x="8" y="35" width="50" height="6" rx="1.5" fill="${txt}"/>
+      <rect x="8" y="46" width="55" height="5" rx="1.5" fill="${txt}" opacity=".7"/>
+      <rect x="8" y="56" width="45" height="5" rx="1.5" fill="${txt}" opacity=".5"/>
+      <rect x="88" y="8" width="64" height="74" rx="2" fill="${a}" opacity=".15"/>
     </svg>`,
     circle:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" width="100%" height="52" preserveAspectRatio="xMidYMid meet">
       <rect width="160" height="90" fill="${bg}"/>
-      <circle cx="148" cy="45" r="70" fill="none" stroke="${a}" stroke-width=".5" opacity=".1"/>
-      <circle cx="148" cy="45" r="55" fill="none" stroke="${a}" stroke-width=".5" opacity=".15"/>
-      <circle cx="148" cy="45" r="40" fill="none" stroke="${a}" stroke-width=".8" opacity=".22"/>
-      <circle cx="148" cy="45" r="26" fill="rgba(255,255,255,.06)" stroke="${a}" stroke-width="1" opacity=".5"/>
-      <rect x="0" y="0" width="2" height="90" fill="${a}"/>
-      <rect x="8" y="26" width="55" height="8" rx="1" fill="${line}"/>
-      <rect x="8" y="40" width="40" height="4" rx="1" fill="${txt}"/>
+      <circle cx="148" cy="45" r="75" fill="${a}" opacity=".05"/>
+      <circle cx="148" cy="45" r="58" fill="${a}" opacity=".08"/>
+      <circle cx="148" cy="45" r="42" fill="${a}" opacity=".12"/>
+      <circle cx="148" cy="45" r="28" fill="${a}" opacity=".2"/>
+      <rect x="0" y="0" width="3" height="90" fill="${a}"/>
+      <rect x="8" y="20" width="60" height="10" rx="2" fill="${line}"/>
+      <rect x="8" y="36" width="50" height="5" rx="1.5" fill="${txt}"/>
+      <rect x="8" y="46" width="55" height="5" rx="1.5" fill="${txt}" opacity=".7"/>
+      <rect x="8" y="56" width="40" height="5" rx="1.5" fill="${txt}" opacity=".5"/>
     </svg>`
   };
   return templates[type]||templates.bullets;
