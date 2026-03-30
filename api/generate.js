@@ -155,7 +155,7 @@ module.exports=async function handler(req,res){
 
         // ── DARK CONTENT SLIDE ──
         }else if(isDark){
-          if(imgData){try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,transparency:70});}catch(e){}}
+          if(imgData){try{s.addImage({data:imgData,x:0,y:0,w:10,h:5.625,sizing:{type:'cover',w:10,h:5.625},transparency:70});}catch(e){}}
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:0.08,h:5.625,fill:{color:theme.accent},line:{color:theme.accent}});
           await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
           s.addText(slide.title,{x:0.6,y:1.6,w:8.8,h:1.4,fontSize:34,fontFace:"Calibri",bold:true,color:theme.titleText,align:"left"});

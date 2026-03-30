@@ -877,7 +877,7 @@ function buildSlideRow(i, data){
       <div style="display:flex;gap:5px" onclick="event.stopPropagation()">
         <button class="icon-btn regen" onclick="regenSlide(${i},this)" title="Regenerate" style="width:auto;padding:3px 8px;font-size:11px;border-radius:6px">↻ Redo</button>
       </div>
-      <div style="color:var(--ink-3);font-size:10px;padding-left:4px">${document.getElementById('slide-row-'+i)?.classList.contains('open')?'▲':'▼'}</div>
+      <div class="sp-chevron" id="chev-${i}" style="color:var(--ink-3);font-size:10px;padding-left:4px">▼</div>
     </div>
 
     <div class="slide-panel">
@@ -943,14 +943,16 @@ function setTplInline(i,tplId){
 
 function renderOutlineRow(i){
   if(!outline)return;
-  const newRow=buildSlideRow(i);
   const old=document.getElementById('slide-row-'+i);
   if(!old)return;
   const wasOpen=old.classList.contains('open');
-  old.outerHTML=newRow;
-  if(wasOpen){
-    const fresh=document.getElementById('slide-row-'+i);
-    if(fresh)fresh.classList.add('open');
+  const newHTML=buildSlideRow(i);
+  old.outerHTML=newHTML;
+  const fresh=document.getElementById('slide-row-'+i);
+  if(fresh&&wasOpen){
+    fresh.classList.add('open');
+    const chev=document.getElementById('chev-'+i);
+    if(chev)chev.textContent='▲';
   }
 }
 
@@ -959,9 +961,15 @@ function toggleExpand(i){
   if(!row)return;
   const isOpen=row.classList.contains('open');
   // Close all others
-  document.querySelectorAll('.slide-row.open').forEach(r=>r.classList.remove('open'));
+  document.querySelectorAll('.slide-row.open').forEach(r=>{
+    r.classList.remove('open');
+    const chev=r.querySelector('.sp-chevron');
+    if(chev)chev.textContent='▼';
+  });
   if(!isOpen){
     row.classList.add('open');
+    const chev=document.getElementById('chev-'+i);
+    if(chev)chev.textContent='▲';
     expandedIndex=i;
     const inp=document.getElementById('edit-title-'+i);
     if(inp)setTimeout(()=>inp.focus(),50);
