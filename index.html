@@ -260,19 +260,57 @@ textarea{resize:vertical;line-height:1.6}
 .icon-cell.selected{border-color:var(--teal);border-width:2px;background:rgba(26,158,143,.2)}
 .icon-loading{padding:2rem;text-align:center;color:rgba(255,255,255,.4);font-size:12px}
 
-/* INLINE SLIDE ROW WITH PREVIEW */
-.slide-row-inner{display:grid;grid-template-columns:1fr 190px;min-height:108px}
-.slide-left{padding:9px 11px;display:flex;flex-direction:column;gap:5px;min-width:0;justify-content:center}
-.slide-left-top{display:flex;align-items:center;gap:8px}
-.slide-right{border-left:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column}
-.slide-mini-canvas{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden;cursor:pointer;flex-shrink:0}
-.slide-mini-canvas:hover .mini-hover-overlay{opacity:1}
+/* SLIDE ROW — top summary bar */
+.slide-summary-bar{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;border-bottom:1px solid transparent;transition:border-color .15s}
+.slide-row.open .slide-summary-bar{border-bottom-color:var(--border)}
+/* EXPANDED PANEL — horizontal layout matching mockup */
+.slide-panel{display:none;background:var(--surface)}
+.slide-row.open .slide-panel{display:grid;grid-template-columns:auto 90px 160px auto 1fr;border-bottom:1px solid var(--border)}
+/* columns */
+.sp-col{padding:10px 12px;border-right:1px solid var(--border);min-width:0}
+.sp-col:last-child{border-right:none}
+.sp-label{font-size:10px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px}
+/* template grid */
+.sp-tpl{padding:10px 10px}
+.sp-tpl-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:220px}
+.sp-tpl-thumb{border:1px solid var(--border);border-radius:5px;padding:3px;cursor:pointer;background:var(--bg);transition:all .1s;text-align:center}
+.sp-tpl-thumb:hover{border-color:var(--teal);background:var(--teal-light)}
+.sp-tpl-thumb.active{border-color:var(--teal);border-width:1.5px;background:var(--teal-light)}
+.sp-tpl-thumb svg{width:100%;aspect-ratio:16/9;display:block;border-radius:2px}
+.sp-tpl-name{font-size:8px;font-weight:600;color:var(--ink-3);margin-top:2px;font-family:'DM Sans',sans-serif;white-space:nowrap;overflow:hidden}
+.sp-tpl-thumb.active .sp-tpl-name{color:var(--teal-dark)}
+/* bg toggle */
+.sp-bg{padding:10px 10px;display:flex;flex-direction:column;gap:6px}
+.sp-radio{display:flex;align-items:center;gap:6px;cursor:pointer;padding:5px 9px;border-radius:7px;border:1px solid var(--border);font-size:12px;font-weight:600;color:var(--ink-2);transition:all .12s;background:var(--surface)}
+.sp-radio:hover{border-color:var(--border-2);background:var(--bg)}
+.sp-radio.active-light{border-color:var(--teal);background:var(--teal-light);color:var(--teal-dark)}
+.sp-radio.active-dark{border-color:#6D8EFF;background:#F0F0FF;color:#5040CC}
+.sp-radio-dot{width:12px;height:12px;border-radius:50%;border:2px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sp-radio-dot.filled::after{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;display:block}
+/* image section */
+.sp-img{padding:10px 10px}
+.sp-img-btns{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.sp-img-btn{padding:5px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;color:var(--ink-2);display:flex;align-items:center;gap:5px;transition:all .12s;width:100%}
+.sp-img-btn:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-light)}
+.sp-img-preview{width:100%;aspect-ratio:16/9;border-radius:6px;overflow:hidden;border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.sp-img-preview img{width:100%;height:100%;object-fit:cover}
+/* icon slots */
+.sp-icons{padding:10px 10px}
+.sp-slot-row{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.sp-slot-label{font-size:11px;color:var(--ink-2);font-weight:600;min-width:38px}
+.sp-slot-btns{display:flex;gap:4px}
+.sp-slot-btn{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--surface);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;transition:all .12s}
+.sp-slot-btn:hover{border-color:var(--teal);background:var(--teal-light)}
+.sp-slot-preview{width:22px;height:22px;border-radius:4px;overflow:hidden;border:1px solid var(--border);flex-shrink:0}
+.sp-slot-preview img{width:100%;height:100%;object-fit:cover}
+/* slide preview */
+.sp-preview{padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:280px}
+.sp-canvas{width:100%;aspect-ratio:16/9;border-radius:7px;overflow:hidden;position:relative;box-shadow:0 2px 12px rgba(26,35,32,.12);cursor:pointer;flex-shrink:0}
+.sp-canvas:hover .mini-hover-overlay{opacity:1}
 .mini-hover-overlay{position:absolute;inset:0;background:rgba(26,158,143,.15);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;font-size:11px;font-weight:600;color:var(--teal)}
-.slide-tpl-strip{display:flex;flex-wrap:wrap;gap:2px;padding:4px 5px;border-top:1px solid var(--border);background:var(--surface)}
-.tpl-mini{width:26px;height:16px;border-radius:2px;cursor:pointer;overflow:hidden;border:1px solid var(--border);transition:all .1s;flex-shrink:0;position:relative}
-.tpl-mini:hover{border-color:var(--teal);transform:scale(1.08)}
-.tpl-mini.active{border-color:var(--teal);border-width:1.5px;box-shadow:0 0 0 1px rgba(26,158,143,.4)}
-.tpl-mini svg{width:100%;height:100%;display:block}
+/* editor */
+.slide-editor{border-top:1px solid var(--border);padding:14px 16px;background:var(--bg);display:none}
+.slide-row.open .slide-editor{display:block}
 
 /* TEMPLATE PICKER IN PREVIEW */
 .tpl-picker{background:rgba(255,255,255,.05);border-radius:9px;padding:10px 13px}
@@ -750,73 +788,8 @@ async function generateOutline(){
 }
 
 // ── RENDER OUTLINE ──
-function renderOutline(data){
-  document.getElementById('outline-badge').textContent=data.length+' slides';
-  document.getElementById('outline-lbl').textContent=data[0]?.title||'Slide outline';
-  const html=data.map((s,i)=>{
-    const col=typeColors[s.type]||'#1A9E8F';
-    const t=getTheme();
-    const isCover=i===0, isLast=i===data.length-1, isSpecial=isCover||isLast;
-    const tpl=slideTemplates[i]||'default';
-    const forceDark=slideDarkBg[i];
-    const defaultDark=s.type==='title'||s.type==='conclusion'||s.type==='cta'||isSpecial;
-    const isDark=forceDark===true?true:forceDark===false?false:defaultDark;
-    const accentC=brandOn?brandColors.accent:'#'+t.accent;
-    const titleBg=brandOn?brandColors.primary:'#'+t.titleBg;
-    const lightBg='#'+(t.slideBg||'FFFFFF');
-    const textC='#'+(t.slideText||'1A2320');
-    // Mini inline canvas
-    const miniCanvas=buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC);
-    // Template strip - 9 thumbs max 3 per row
-    const tplList=isSpecial?COVER_TEMPLATES:TEMPLATES;
-    const tplStrip=tplList.map(tt=>`<div class="tpl-mini${tpl===tt.id?' active':''}" onclick="setTplInline(${i},'${tt.id}')" title="${tt.label}">${wfSvg(tt.thumb,accentC)}</div>`).join('');
-    return `<div class="slide-row" id="slide-row-${i}">
-      <div class="slide-row-inner">
-        <div class="slide-left">
-          <div class="slide-left-top">
-            <div class="snum">${i+1}</div>
-            <div class="sinfo"><div class="stitle" id="stitle-${i}">${s.title}</div><div class="sdesc" id="sdesc-${i}">${(s.bullets||[]).slice(0,2).join(' · ')}</div></div>
-            <div class="stype" style="background:${col}18;color:${col};flex-shrink:0">${s.type}</div>
-          </div>
-          <div style="display:flex;gap:5px;align-items:center">
-            <button class="icon-btn" title="Edit" onclick="toggleExpand(${i})" style="font-size:11px;padding:3px 8px;width:auto;border-radius:6px">✏️ Edit</button>
-            <button class="icon-btn regen" title="Regenerate" onclick="regenSlide(${i},this)" style="font-size:11px;padding:3px 8px;width:auto;border-radius:6px">↻ Redo</button>
-          </div>
-        </div>
-        <div class="slide-right">
-          <div class="slide-mini-canvas" onclick="openPreview(${i})">
-            ${miniCanvas}
-            <div class="mini-hover-overlay">👁 Preview</div>
-          </div>
-          <div class="slide-tpl-strip">${tplStrip}</div>
-        </div>
-      </div>
-      <div class="slide-editor">
-        <div class="editor-field"><label class="editor-lbl">Title</label><input class="editor-input" id="edit-title-${i}" value="${s.title.replace(/"/g,'&quot;')}" /></div>
-        <div class="editor-field"><label class="editor-lbl">Bullets (one per line)</label><textarea class="editor-textarea" id="edit-bullets-${i}">${(s.bullets||[]).join('\n')}</textarea></div>
-        <div class="editor-field"><label class="editor-lbl">Speaker note</label><input class="editor-input" id="edit-note-${i}" value="${(s.speakerNote||'').replace(/"/g,'&quot;')}" /></div>
-        <div class="editor-btns">
-          <button class="regen-btn" onclick="regenSlide(${i},this)">↻ Regenerate</button>
-          <button class="cancel-btn" onclick="toggleExpand(${i})">Cancel</button>
-          <button class="save-btn" onclick="saveSlide(${i})">✓ Save changes</button>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
-  document.getElementById('outline-body').innerHTML=html;
-  document.getElementById('export-wrap').style.display='block';
-  expandedIndex=null;
-}
-
-function setTplInline(i, tplId){
-  slideTemplates[i]=tplId;
-  renderOutlineRow(i);
-  if(document.getElementById('preview-panel').classList.contains('open')&&previewIndex===i)renderPreview();
-}
-
-function renderOutlineRow(i){
-  const s=outline[i];
-  const t=getTheme();
+function getSlideState(i){
+  const s=outline[i], t=getTheme();
   const isCover=i===0,isLast=i===outline.length-1,isSpecial=isCover||isLast;
   const tpl=slideTemplates[i]||'default';
   const forceDark=slideDarkBg[i];
@@ -826,46 +799,212 @@ function renderOutlineRow(i){
   const titleBg=brandOn?brandColors.primary:'#'+t.titleBg;
   const lightBg='#'+(t.slideBg||'FFFFFF');
   const textC='#'+(t.slideText||'1A2320');
-  const miniCanvas=buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC);
-  const el=document.querySelector('#slide-row-'+i+' .slide-mini-canvas');
-  if(el) el.innerHTML=miniCanvas+'<div class="mini-hover-overlay">👁 Preview</div>';
-  const tplList=isSpecial?COVER_TEMPLATES:TEMPLATES;
-  const tplStrip=tplList.map(tt=>`<div class="tpl-mini${tpl===tt.id?' active':''}" onclick="setTplInline(${i},'${tt.id}')" title="${tt.label}">${wfSvg(tt.thumb,accentC)}</div>`).join('');
-  const stripEl=document.querySelector('#slide-row-'+i+' .slide-tpl-strip');
-  if(stripEl) stripEl.innerHTML=tplStrip;
+  return{s,t,isCover,isLast,isSpecial,tpl,isDark,accentC,titleBg,lightBg,textC};
 }
+
+function buildSlideRow(i, data){
+  const s=data||outline[i];
+  const {isCover,isLast,isSpecial,tpl,isDark,accentC,titleBg,lightBg,textC}=getSlideState(i);
+  const col=typeColors[s.type]||'#1A9E8F';
+  const tplList=isSpecial?COVER_TEMPLATES:TEMPLATES;
+
+  // Template grid
+  const tplGrid=tplList.map(tt=>`
+    <div class="sp-tpl-thumb${tpl===tt.id?' active':''}" onclick="setTplInline(${i},'${tt.id}')" title="${tt.label}">
+      ${wfSvg(tt.thumb,accentC)}
+      <div class="sp-tpl-name">${tt.label}</div>
+    </div>`).join('');
+
+  // Bg toggle — works for ALL slides
+  const forceDark=slideDarkBg[i];
+  const lightActive=forceDark===false?'active-light':'';
+  const darkActive=forceDark===true?'active-dark':'';
+  const bgToggle=`
+    <div class="sp-radio ${lightActive}" onclick="setSlideDark(${i},false)">
+      <div class="sp-radio-dot${forceDark===false?' filled':''}"></div>Light
+    </div>
+    <div class="sp-radio ${darkActive}" onclick="setSlideDark(${i},true)">
+      <div class="sp-radio-dot${forceDark===true?' filled':''}"></div>Dark
+    </div>`;
+
+  // Image section — single slot
+  const hasImg=!!slideImages[i];
+  const imgPreview=hasImg
+    ?`<div class="sp-img-preview"><img src="${slideImages[i]}" /></div>
+       <button class="sp-img-btn" onclick="removeImage(${i})" style="color:#E05050;border-color:#E0505030;margin-top:4px">✕ Remove</button>`
+    :`<div class="sp-img-preview" style="font-size:10px;color:var(--ink-3)">Image preview</div>`;
+  const imgSection=`
+    <button class="sp-img-btn" onclick="suggestImage(${i})">✦ Suggest</button>
+    <button class="sp-img-btn" onclick="triggerUpload(${i})">⬆ Upload</button>
+    <button class="sp-img-btn" onclick="triggerAIImage(${i})" style="color:#6A5ACD;border-color:#6A5ACD40">✨ Generate</button>
+    ${imgPreview}`;
+
+  // Icon/image slots for icon templates
+  const slotCount=tpl==='2icons'?2:tpl==='4icons'||tpl==='3images'?4:0;
+  let iconSlots='';
+  if(slotCount>0){
+    const count=tpl==='3images'?3:slotCount;
+    iconSlots=Array(count).fill(null).map((_,k)=>{
+      const icon=(slideIcons[i]||{})[k];
+      const img=(slotImages[i]||{})[k];
+      const preview=icon?`<div class="sp-slot-preview" style="background:#f0f0f0"><img src="${icon.svg}" style="filter:invert(0)" /></div>`:
+                   img?`<div class="sp-slot-preview"><img src="${img}" /></div>`:
+                   `<div class="sp-slot-preview" style="background:var(--bg)"></div>`;
+      const iconBtn=tpl!=='3images'?`<div class="sp-slot-btn" onclick="openIconModal(${i},${k})" title="Pick icon">⬡</div>`:'';
+      return `<div class="sp-slot-row">
+        <span class="sp-slot-label">Slot ${k+1}</span>
+        ${preview}
+        <div class="sp-slot-btns">
+          ${iconBtn}
+          <div class="sp-slot-btn" onclick="triggerSlotUpload(${i},${k})" title="Upload">⬆</div>
+          ${(icon||img)?`<div class="sp-slot-btn" onclick="removeSlotContent(${i},${k})" title="Remove" style="color:#E05050">✕</div>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Mini preview canvas
+  const miniCanvas=buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC);
+
+  return `<div class="slide-row" id="slide-row-${i}">
+    <div class="slide-summary-bar" onclick="toggleExpand(${i})">
+      <div class="snum">${i+1}</div>
+      <div class="sinfo" style="flex:1;min-width:0">
+        <div class="stitle" id="stitle-${i}">${s.title}</div>
+        <div class="sdesc" id="sdesc-${i}">${(s.bullets||[]).slice(0,2).join(' · ')}</div>
+      </div>
+      <div class="stype" style="background:${col}18;color:${col}">${s.type}</div>
+      <div style="display:flex;gap:5px" onclick="event.stopPropagation()">
+        <button class="icon-btn regen" onclick="regenSlide(${i},this)" title="Regenerate" style="width:auto;padding:3px 8px;font-size:11px;border-radius:6px">↻ Redo</button>
+      </div>
+      <div style="color:var(--ink-3);font-size:10px;padding-left:4px">${document.getElementById('slide-row-'+i)?.classList.contains('open')?'▲':'▼'}</div>
+    </div>
+
+    <div class="slide-panel">
+      <!-- Col 1: Template options -->
+      <div class="sp-col sp-tpl">
+        <div class="sp-label">Slide options</div>
+        <div class="sp-tpl-grid">${tplGrid}</div>
+      </div>
+      <!-- Col 2: Background -->
+      <div class="sp-col sp-bg">
+        <div class="sp-label">Background</div>
+        ${bgToggle}
+      </div>
+      <!-- Col 3: Image -->
+      <div class="sp-col sp-img">
+        <div class="sp-label">Add an image</div>
+        ${imgSection}
+      </div>
+      <!-- Col 4: Icon slots (only for icon/3image templates) -->
+      ${slotCount>0?`<div class="sp-col sp-icons"><div class="sp-label">Icon/images</div>${iconSlots}</div>`:''}
+      <!-- Col 5: Preview -->
+      <div class="sp-col sp-preview">
+        <div class="sp-label">Preview</div>
+        <div class="sp-canvas" id="sp-canvas-${i}" onclick="openPreview(${i})">
+          ${miniCanvas}
+          <div class="mini-hover-overlay">👁 Full preview</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="slide-editor">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>
+          <div class="editor-field"><label class="editor-lbl">Title</label><input class="editor-input" id="edit-title-${i}" value="${s.title.replace(/"/g,'&quot;')}" /></div>
+          <div class="editor-field"><label class="editor-lbl">Speaker note</label><input class="editor-input" id="edit-note-${i}" value="${(s.speakerNote||'').replace(/"/g,'&quot;')}" /></div>
+        </div>
+        <div>
+          <div class="editor-field"><label class="editor-lbl">Bullets (one per line)</label><textarea class="editor-textarea" id="edit-bullets-${i}" style="min-height:80px">${(s.bullets||[]).join('\n')}</textarea></div>
+        </div>
+      </div>
+      <div class="editor-btns" style="border-top:1px solid var(--border);padding-top:10px;margin-top:2px">
+        <button class="regen-btn" onclick="regenSlide(${i},this)">↻ Regenerate</button>
+        <button class="cancel-btn" onclick="toggleExpand(${i})">Cancel</button>
+        <button class="save-btn" onclick="saveSlide(${i})">✓ Save changes</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderOutline(data){
+  document.getElementById('outline-badge').textContent=data.length+' slides';
+  document.getElementById('outline-lbl').textContent=data[0]?.title||'Slide outline';
+  document.getElementById('outline-body').innerHTML=data.map((_,i)=>buildSlideRow(i,data[i])).join('');
+  document.getElementById('export-wrap').style.display='block';
+  expandedIndex=null;
+}
+
+function setTplInline(i,tplId){
+  slideTemplates[i]=tplId;
+  renderOutlineRow(i);
+  if(document.getElementById('preview-panel').classList.contains('open')&&previewIndex===i)renderPreview();
+}
+
+function renderOutlineRow(i){
+  if(!outline)return;
+  const newRow=buildSlideRow(i);
+  const old=document.getElementById('slide-row-'+i);
+  if(!old)return;
+  const wasOpen=old.classList.contains('open');
+  old.outerHTML=newRow;
+  if(wasOpen){
+    const fresh=document.getElementById('slide-row-'+i);
+    if(fresh)fresh.classList.add('open');
+  }
+}
+
+function toggleExpand(i){
+  const row=document.getElementById('slide-row-'+i);
+  if(!row)return;
+  const isOpen=row.classList.contains('open');
+  // Close all others
+  document.querySelectorAll('.slide-row.open').forEach(r=>r.classList.remove('open'));
+  if(!isOpen){
+    row.classList.add('open');
+    expandedIndex=i;
+    const inp=document.getElementById('edit-title-'+i);
+    if(inp)setTimeout(()=>inp.focus(),50);
+  } else {
+    expandedIndex=null;
+  }
+}
+
 
 function buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC){
   const hasImg=!!slideImages[i];
   const bg=isDark?titleBg:lightBg;
-  const titleColor=isDark?'rgba(255,255,255,.9)':textC;
-  const subtitleColor=isDark?'rgba(255,255,255,.6)':'rgba(26,35,32,.5)';
+  const titleColor=isDark?'rgba(255,255,255,.9)':accentC;
+  const subtitleColor=isDark?'rgba(255,255,255,.6)':textC;
 
-  if(isDark||isSpecial){
+  // Dark background for ANY slide when isDark is true
+  if(isDark){
     let extra='';
-    if(tpl==='circle-right'){
+    if(isSpecial&&tpl==='circle-right'){
       extra=`<div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:95%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.1"></div>
              <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:70%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.15"></div>
              <div style="position:absolute;right:2%;top:5%;width:45%;height:90%;border-radius:50%;overflow:hidden;border:1px solid ${accentC}40">
                ${hasImg?`<img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover" />`:`<div style="width:100%;height:100%;background:${accentC}22"></div>`}
              </div>`;
-    } else if(tpl==='half-right'){
+    } else if(isSpecial&&tpl==='half-right'){
       extra=`${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;width:50%;height:100%;object-fit:cover" />`:`<div style="position:absolute;right:0;top:0;width:50%;height:100%;background:${accentC}33"></div>`}
              <div style="position:absolute;right:50%;top:0;bottom:0;width:1px;background:${accentC}80"></div>`;
     } else if(hasImg){
       extra=`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`;
     }
+    const textRight=isSpecial&&(tpl==='circle-right'||tpl==='half-right')?'55%':'6%';
     return `<div style="position:absolute;inset:0;background:${bg}">
       ${extra}
       <div style="position:absolute;left:0;top:0;bottom:0;width:2%;background:${accentC}"></div>
-      <div style="position:absolute;left:6%;top:30%;right:${tpl==='circle-right'||tpl==='half-right'?'55%':'6%'};font-size:clamp(7px,1.8vw,11px);font-weight:700;color:${titleColor};line-height:1.2">${s.title}</div>
-      <div style="position:absolute;left:6%;top:58%;right:${tpl==='circle-right'||tpl==='half-right'?'55%':'6%'};font-size:clamp(5px,1vw,8px);color:${subtitleColor}">${(s.bullets||[])[0]||''}</div>
+      <div style="position:absolute;left:6%;top:28%;right:${textRight};font-size:clamp(7px,1.8vw,11px);font-weight:700;color:${titleColor};line-height:1.2">${s.title}</div>
+      <div style="position:absolute;left:6%;top:56%;right:${textRight};font-size:clamp(5px,1vw,8px);color:${subtitleColor}">${(s.bullets||[])[0]||''}</div>
     </div>`;
   }
 
   // Light slide mini previews
   const titleRow=`<div style="position:absolute;top:0;left:0;right:0;height:2%;background:${accentC}"></div>
     <div style="position:absolute;left:4%;top:8%;right:4%;font-size:clamp(6px,1.4vw,9px);font-weight:700;color:${textC};line-height:1.2">${s.title}</div>`;
+
 
   if(tpl==='3images'){
     const sl=slotImages[i]||{};
@@ -1398,7 +1537,11 @@ function setSlideDark(i, val){
   if(val===null) delete slideDarkBg[i];
   else slideDarkBg[i]=val;
   renderOutlineRow(i);
-  renderPreview();
+  if(document.getElementById('preview-panel').classList.contains('open')&&previewIndex===i)renderPreview();
+}
+
+function triggerAIImage(i){
+  showToast('AI image generation coming soon!');
 }
 
 // ── IMAGES ──
