@@ -271,6 +271,42 @@ module.exports=async function handler(req,res){
             s.addShape(pres.shapes.RECTANGLE,{x:0,y:4.3,w:10,h:1.325,fill:{color:theme.slideBg,transparency:30},line:{color:theme.slideBg,transparency:30}});
           }
 
+        // ── QUOTE ──
+        }else if(tpl==='quote'){
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          const logoOffset=logoImg?0.35:0;
+          const quote=(slide.bullets||[])[0]||slide.title;
+          const author=(slide.bullets||[])[1]||'';
+          // Large quote mark
+          s.addText('\u201C',{x:0.5,y:0.4+logoOffset,w:1.5,h:1.2,fontSize:80,fontFace:'Georgia',color:theme.accent,align:'left'});
+          // Quote text centred
+          s.addText(quote,{x:0.8,y:1.3+logoOffset,w:8.4,h:2.5,fontSize:20,fontFace:'Calibri',italic:true,color:theme.slideText,align:'center',valign:'middle'});
+          // Divider and author
+          s.addShape(pres.shapes.RECTANGLE,{x:3.5,y:4.1+logoOffset,w:1.0,h:0.04,fill:{color:theme.accent},line:{color:theme.accent}});
+          if(author)s.addText(author,{x:2,y:4.2+logoOffset,w:6,h:0.5,fontSize:13,fontFace:'Calibri',bold:true,color:theme.accent,align:'center'});
+
+        // ── TIMELINE ──
+        }else if(tpl==='timeline'){
+          s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});
+          await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,false);
+          const logoOffset=logoImg?0.35:0;
+          s.addText(slide.title,{x:0.5,y:0.15+logoOffset,w:9,h:0.65,fontSize:22,fontFace:'Calibri',bold:true,color:theme.slideText,align:'left',margin:0});
+          const steps=(slide.bullets||[]).slice(0,4);
+          const count=steps.length||4;
+          const stepW=(9.0)/count;
+          const lineY=2.2+logoOffset;
+          // Horizontal connector line
+          s.addShape(pres.shapes.RECTANGLE,{x:0.8,y:lineY+0.15,w:8.4,h:0.04,fill:{color:theme.accent,transparency:50},line:{color:theme.accent,transparency:50}});
+          for(let k=0;k<count;k++){
+            const cx=0.5+k*stepW+stepW/2;
+            // Circle node
+            s.addShape(pres.shapes.OVAL,{x:cx-0.22,y:lineY,w:0.44,h:0.44,fill:{color:theme.accent},line:{color:theme.accent}});
+            s.addText(String(k+1),{x:cx-0.22,y:lineY,w:0.44,h:0.44,fontSize:11,fontFace:'Calibri',bold:true,color:'FFFFFF',align:'center',valign:'middle'});
+            // Step text below
+            if(steps[k])s.addText(steps[k],{x:cx-stepW/2+0.05,y:lineY+0.55,w:stepW-0.1,h:1.8,fontSize:11,fontFace:'Calibri',color:theme.slideText,align:'center',valign:'top'});
+          }
+
         // ── DEFAULT (bullets + optional image) ──
         }else{
           s.addShape(pres.shapes.RECTANGLE,{x:0,y:0,w:10,h:0.06,fill:{color:theme.accent},line:{color:theme.accent}});

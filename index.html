@@ -190,7 +190,7 @@ textarea{resize:vertical;line-height:1.6}
 .close-btn{width:26px;height:26px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:transparent;cursor:pointer;color:rgba(255,255,255,.7);font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .12s}
 .close-btn:hover{border-color:#ff6b6b;color:#ff6b6b}
 .preview-body{flex:1;padding:1.25rem;display:flex;flex-direction:column;gap:.875rem;overflow-y:auto}
-.slide-canvas{width:100%;aspect-ratio:16/9;border-radius:9px;overflow:hidden;position:relative;box-shadow:0 4px 20px rgba(0,0,0,.4)}
+.slide-canvas{width:100%;aspect-ratio:16/9;border-radius:9px;overflow:hidden;position:relative;box-shadow:0 4px 20px rgba(0,0,0,.4);max-height:calc((100vw - 60px) * 9/16)}
 .slide-canvas-inner{width:100%;height:100%;position:relative}
 .slide-dark{background:var(--preview-bg,#1E2761)}
 .slide-dark .acc-bar{position:absolute;left:0;top:0;bottom:0;width:1.5%;background:var(--preview-accent,#4472C4)}
@@ -250,15 +250,29 @@ textarea{resize:vertical;line-height:1.6}
 .icon-modal{background:#1A2320;border-radius:14px;width:380px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,.5)}
 .icon-modal-hdr{padding:1rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
 .icon-modal-title{font-size:13px;font-weight:600;color:white}
-.icon-search-input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;color:white;outline:none;margin:0 1.25rem;margin-top:10px;box-sizing:border-box}
+.icon-search-input{width:calc(100% - 2.5rem);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px 11px;font-size:13px;font-family:'DM Sans',sans-serif;color:white;outline:none;margin:10px 1.25rem 0;display:block}
 .icon-search-input:focus{border-color:var(--teal)}
 .icon-search-input::placeholder{color:rgba(255,255,255,.3)}
-.icon-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:1rem 1.25rem;overflow-y:auto;flex:1}
+.icon-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:.75rem 1.25rem;overflow-y:auto;flex:1}
 .icon-cell{width:100%;aspect-ratio:1;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .12s;padding:6px}
 .icon-cell:hover{border-color:var(--teal);background:rgba(26,158,143,.15)}
 .icon-cell img{width:100%;height:100%;object-fit:contain;filter:invert(1)}
 .icon-cell.selected{border-color:var(--teal);border-width:2px;background:rgba(26,158,143,.2)}
 .icon-loading{padding:2rem;text-align:center;color:rgba(255,255,255,.4);font-size:12px}
+
+/* INLINE SLIDE ROW WITH PREVIEW */
+.slide-row-inner{display:grid;grid-template-columns:1fr 190px;min-height:108px}
+.slide-left{padding:9px 11px;display:flex;flex-direction:column;gap:5px;min-width:0;justify-content:center}
+.slide-left-top{display:flex;align-items:center;gap:8px}
+.slide-right{border-left:1px solid var(--border);background:var(--bg);display:flex;flex-direction:column}
+.slide-mini-canvas{width:100%;aspect-ratio:16/9;position:relative;overflow:hidden;cursor:pointer;flex-shrink:0}
+.slide-mini-canvas:hover .mini-hover-overlay{opacity:1}
+.mini-hover-overlay{position:absolute;inset:0;background:rgba(26,158,143,.15);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;font-size:11px;font-weight:600;color:var(--teal)}
+.slide-tpl-strip{display:flex;flex-wrap:wrap;gap:2px;padding:4px 5px;border-top:1px solid var(--border);background:var(--surface)}
+.tpl-mini{width:26px;height:16px;border-radius:2px;cursor:pointer;overflow:hidden;border:1px solid var(--border);transition:all .1s;flex-shrink:0;position:relative}
+.tpl-mini:hover{border-color:var(--teal);transform:scale(1.08)}
+.tpl-mini.active{border-color:var(--teal);border-width:1.5px;box-shadow:0 0 0 1px rgba(26,158,143,.4)}
+.tpl-mini svg{width:100%;height:100%;display:block}
 
 /* TEMPLATE PICKER IN PREVIEW */
 .tpl-picker{background:rgba(255,255,255,.05);border-radius:9px;padding:10px 13px}
@@ -597,7 +611,9 @@ const TEMPLATES=[
   {id:'stat',     label:'Big Stat',    thumb:'stat'},
   {id:'3images',  label:'3 Images',    thumb:'3img'},
   {id:'2icons',   label:'2 Icons',     thumb:'2ico'},
-  {id:'4icons',   label:'4 Icons',     thumb:'4ico'}
+  {id:'4icons',   label:'4 Icons',     thumb:'4ico'},
+  {id:'quote',    label:'Quote',       thumb:'quote'},
+  {id:'timeline', label:'Timeline',    thumb:'timeline'}
 ];
 
 const typeColors={title:'#1A9E8F',agenda:'#1A9E8F',content:'#0E7A6E',data:'#D95B2A',quote:'#B04520',cta:'#D95B2A',conclusion:'#1A9E8F',intro:'#0E7A6E'};
@@ -739,20 +755,43 @@ function renderOutline(data){
   document.getElementById('outline-lbl').textContent=data[0]?.title||'Slide outline';
   const html=data.map((s,i)=>{
     const col=typeColors[s.type]||'#1A9E8F';
-    const tplBtns=TEMPLATES.map(t=>`<button class="tpl-btn${slideTemplates[i]===t.id?' active':''}" onclick="setTemplate(${i},'${t.id}',this)"><span class="tpl-icon">${t.icon}</span>${t.label}</button>`).join('');
+    const t=getTheme();
+    const isCover=i===0, isLast=i===data.length-1, isSpecial=isCover||isLast;
+    const tpl=slideTemplates[i]||'default';
+    const forceDark=slideDarkBg[i];
+    const defaultDark=s.type==='title'||s.type==='conclusion'||s.type==='cta'||isSpecial;
+    const isDark=forceDark===true?true:forceDark===false?false:defaultDark;
+    const accentC=brandOn?brandColors.accent:'#'+t.accent;
+    const titleBg=brandOn?brandColors.primary:'#'+t.titleBg;
+    const lightBg='#'+(t.slideBg||'FFFFFF');
+    const textC='#'+(t.slideText||'1A2320');
+    // Mini inline canvas
+    const miniCanvas=buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC);
+    // Template strip - 9 thumbs max 3 per row
+    const tplList=isSpecial?COVER_TEMPLATES:TEMPLATES;
+    const tplStrip=tplList.map(tt=>`<div class="tpl-mini${tpl===tt.id?' active':''}" onclick="setTplInline(${i},'${tt.id}')" title="${tt.label}">${wfSvg(tt.thumb,accentC)}</div>`).join('');
     return `<div class="slide-row" id="slide-row-${i}">
-      <div class="slide-summary" onclick="toggleExpand(${i})">
-        <div class="snum">${i+1}</div>
-        <div class="sinfo"><div class="stitle" id="stitle-${i}">${s.title}</div><div class="sdesc" id="sdesc-${i}">${(s.bullets||[]).slice(0,2).join(' · ')}</div></div>
-        <div class="stype" style="background:${col}18;color:${col}">${s.type}</div>
-        <div class="slide-actions" onclick="event.stopPropagation()">
-          <button class="icon-btn preview-btn" title="Preview" onclick="openPreview(${i})">👁</button>
-          <button class="icon-btn" title="Edit" onclick="toggleExpand(${i})">✏️</button>
-          <button class="icon-btn regen" title="Regenerate" onclick="regenSlide(${i},this)">↻</button>
+      <div class="slide-row-inner">
+        <div class="slide-left">
+          <div class="slide-left-top">
+            <div class="snum">${i+1}</div>
+            <div class="sinfo"><div class="stitle" id="stitle-${i}">${s.title}</div><div class="sdesc" id="sdesc-${i}">${(s.bullets||[]).slice(0,2).join(' · ')}</div></div>
+            <div class="stype" style="background:${col}18;color:${col};flex-shrink:0">${s.type}</div>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center">
+            <button class="icon-btn" title="Edit" onclick="toggleExpand(${i})" style="font-size:11px;padding:3px 8px;width:auto;border-radius:6px">✏️ Edit</button>
+            <button class="icon-btn regen" title="Regenerate" onclick="regenSlide(${i},this)" style="font-size:11px;padding:3px 8px;width:auto;border-radius:6px">↻ Redo</button>
+          </div>
+        </div>
+        <div class="slide-right">
+          <div class="slide-mini-canvas" onclick="openPreview(${i})">
+            ${miniCanvas}
+            <div class="mini-hover-overlay">👁 Preview</div>
+          </div>
+          <div class="slide-tpl-strip">${tplStrip}</div>
         </div>
       </div>
       <div class="slide-editor">
-        <div class="editor-field"><label class="editor-lbl">Slide template</label><div class="tpl-grid">${tplBtns}</div></div>
         <div class="editor-field"><label class="editor-lbl">Title</label><input class="editor-input" id="edit-title-${i}" value="${s.title.replace(/"/g,'&quot;')}" /></div>
         <div class="editor-field"><label class="editor-lbl">Bullets (one per line)</label><textarea class="editor-textarea" id="edit-bullets-${i}">${(s.bullets||[]).join('\n')}</textarea></div>
         <div class="editor-field"><label class="editor-lbl">Speaker note</label><input class="editor-input" id="edit-note-${i}" value="${(s.speakerNote||'').replace(/"/g,'&quot;')}" /></div>
@@ -767,6 +806,133 @@ function renderOutline(data){
   document.getElementById('outline-body').innerHTML=html;
   document.getElementById('export-wrap').style.display='block';
   expandedIndex=null;
+}
+
+function setTplInline(i, tplId){
+  slideTemplates[i]=tplId;
+  renderOutlineRow(i);
+  if(document.getElementById('preview-panel').classList.contains('open')&&previewIndex===i)renderPreview();
+}
+
+function renderOutlineRow(i){
+  const s=outline[i];
+  const t=getTheme();
+  const isCover=i===0,isLast=i===outline.length-1,isSpecial=isCover||isLast;
+  const tpl=slideTemplates[i]||'default';
+  const forceDark=slideDarkBg[i];
+  const defaultDark=s.type==='title'||s.type==='conclusion'||s.type==='cta'||isSpecial;
+  const isDark=forceDark===true?true:forceDark===false?false:defaultDark;
+  const accentC=brandOn?brandColors.accent:'#'+t.accent;
+  const titleBg=brandOn?brandColors.primary:'#'+t.titleBg;
+  const lightBg='#'+(t.slideBg||'FFFFFF');
+  const textC='#'+(t.slideText||'1A2320');
+  const miniCanvas=buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC);
+  const el=document.querySelector('#slide-row-'+i+' .slide-mini-canvas');
+  if(el) el.innerHTML=miniCanvas+'<div class="mini-hover-overlay">👁 Preview</div>';
+  const tplList=isSpecial?COVER_TEMPLATES:TEMPLATES;
+  const tplStrip=tplList.map(tt=>`<div class="tpl-mini${tpl===tt.id?' active':''}" onclick="setTplInline(${i},'${tt.id}')" title="${tt.label}">${wfSvg(tt.thumb,accentC)}</div>`).join('');
+  const stripEl=document.querySelector('#slide-row-'+i+' .slide-tpl-strip');
+  if(stripEl) stripEl.innerHTML=tplStrip;
+}
+
+function buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC){
+  const hasImg=!!slideImages[i];
+  const bg=isDark?titleBg:lightBg;
+  const titleColor=isDark?'rgba(255,255,255,.9)':textC;
+  const subtitleColor=isDark?'rgba(255,255,255,.6)':'rgba(26,35,32,.5)';
+
+  if(isDark||isSpecial){
+    let extra='';
+    if(tpl==='circle-right'){
+      extra=`<div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:95%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.1"></div>
+             <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:70%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.15"></div>
+             <div style="position:absolute;right:2%;top:5%;width:45%;height:90%;border-radius:50%;overflow:hidden;border:1px solid ${accentC}40">
+               ${hasImg?`<img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover" />`:`<div style="width:100%;height:100%;background:${accentC}22"></div>`}
+             </div>`;
+    } else if(tpl==='half-right'){
+      extra=`${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;width:50%;height:100%;object-fit:cover" />`:`<div style="position:absolute;right:0;top:0;width:50%;height:100%;background:${accentC}33"></div>`}
+             <div style="position:absolute;right:50%;top:0;bottom:0;width:1px;background:${accentC}80"></div>`;
+    } else if(hasImg){
+      extra=`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`;
+    }
+    return `<div style="position:absolute;inset:0;background:${bg}">
+      ${extra}
+      <div style="position:absolute;left:0;top:0;bottom:0;width:2%;background:${accentC}"></div>
+      <div style="position:absolute;left:6%;top:30%;right:${tpl==='circle-right'||tpl==='half-right'?'55%':'6%'};font-size:clamp(7px,1.8vw,11px);font-weight:700;color:${titleColor};line-height:1.2">${s.title}</div>
+      <div style="position:absolute;left:6%;top:58%;right:${tpl==='circle-right'||tpl==='half-right'?'55%':'6%'};font-size:clamp(5px,1vw,8px);color:${subtitleColor}">${(s.bullets||[])[0]||''}</div>
+    </div>`;
+  }
+
+  // Light slide mini previews
+  const titleRow=`<div style="position:absolute;top:0;left:0;right:0;height:2%;background:${accentC}"></div>
+    <div style="position:absolute;left:4%;top:8%;right:4%;font-size:clamp(6px,1.4vw,9px);font-weight:700;color:${textC};line-height:1.2">${s.title}</div>`;
+
+  if(tpl==='3images'){
+    const sl=slotImages[i]||{};
+    const imgs=[0,1,2].map(k=>sl[k]
+      ?`<div style="flex:1;overflow:hidden;border-radius:1px"><img src="${sl[k]}" style="width:100%;height:100%;object-fit:cover"/></div>`
+      :`<div style="flex:1;background:${accentC}33;border-radius:1px"></div>`).join('');
+    return `<div style="position:absolute;inset:0;background:${bg}">${titleRow}
+      <div style="position:absolute;left:3%;right:3%;top:26%;height:48%;display:flex;gap:2%">${imgs}</div>
+    </div>`;
+  }
+  if(tpl==='2icons'||tpl==='4icons'){
+    const count=tpl==='2icons'?2:4;
+    const circles=Array(count).fill(null).map((_,k)=>`<div style="flex:1;display:flex;justify-content:center;align-items:center"><div style="width:clamp(10px,3vw,18px);height:clamp(10px,3vw,18px);border-radius:50%;border:1.5px solid ${accentC}"></div></div>`).join('');
+    return `<div style="position:absolute;inset:0;background:${bg}">${titleRow}
+      <div style="position:absolute;left:2%;right:2%;top:30%;bottom:10%;display:flex;gap:1%">${circles}</div>
+    </div>`;
+  }
+  if(tpl==='fullbleed'){
+    return `<div style="position:absolute;inset:0;background:${titleBg}">
+      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.5" />`:''}
+      <div style="position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(to top,rgba(0,0,0,.7),transparent)"></div>
+      <div style="position:absolute;bottom:15%;left:5%;right:5%;font-size:clamp(6px,1.4vw,9px);font-weight:700;color:white">${s.title}</div>
+    </div>`;
+  }
+  if(tpl==='two-col'){
+    return `<div style="position:absolute;inset:0;background:${bg}">${titleRow}
+      <div style="position:absolute;left:4%;top:30%;width:43%;bottom:8%;display:flex;flex-direction:column;gap:3px">
+        ${(s.bullets||[]).slice(0,2).map(b=>`<div style="height:3px;border-radius:1px;background:${textC};opacity:.25"></div>`).join('')}
+      </div>
+      <div style="position:absolute;left:51%;top:30%;right:4%;bottom:8%;display:flex;flex-direction:column;gap:3px">
+        ${(s.bullets||[]).slice(2,4).map(b=>`<div style="height:3px;border-radius:1px;background:${textC};opacity:.25"></div>`).join('')}
+      </div>
+      <div style="position:absolute;left:49%;top:26%;bottom:5%;width:1px;background:${accentC};opacity:.3"></div>
+    </div>`;
+  }
+  if(tpl==='stat'){
+    return `<div style="position:absolute;inset:0;background:${bg}">${titleRow}
+      <div style="position:absolute;top:28%;left:0;right:0;text-align:center;font-size:clamp(14px,5vw,28px);font-weight:700;color:${accentC}">${(s.bullets||[])[0]||'100%'}</div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:22%;background:${accentC}22"></div>
+    </div>`;
+  }
+  if(tpl==='quote'){
+    return `<div style="position:absolute;inset:0;background:${bg}">
+      <div style="position:absolute;top:15%;left:8%;font-size:clamp(16px,5vw,30px);color:${accentC};opacity:.6">"</div>
+      <div style="position:absolute;top:25%;left:8%;right:8%;font-size:clamp(5px,1.2vw,8px);color:${textC};text-align:center;line-height:1.5;font-style:italic">${(s.bullets||[])[0]||s.title}</div>
+      <div style="position:absolute;bottom:20%;left:0;right:0;text-align:center"><div style="display:inline-block;width:20%;height:1px;background:${accentC}"></div></div>
+    </div>`;
+  }
+  if(tpl==='timeline'){
+    const steps=[0,1,2,3].map(k=>`
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:clamp(8px,2vw,12px);height:clamp(8px,2vw,12px);border-radius:50%;background:${accentC};flex-shrink:0"></div>
+        <div style="height:2px;background:${accentC};width:2px;opacity:.4"></div>
+        <div style="font-size:clamp(3px,.7vw,5px);color:${textC};text-align:center;opacity:.7">${(s.bullets||[])[k]||''}</div>
+      </div>`).join('');
+    const line=`<div style="position:absolute;left:10%;right:10%;top:38%;height:1px;background:${accentC};opacity:.4"></div>`;
+    return `<div style="position:absolute;inset:0;background:${bg}">${titleRow}${line}
+      <div style="position:absolute;left:5%;right:5%;top:28%;bottom:5%;display:flex;gap:0">${steps}</div>
+    </div>`;
+  }
+  // default bullets
+  const bullets=(s.bullets||[]).slice(0,3).map(b=>`<div style="display:flex;gap:2px;align-items:flex-start"><div style="width:3px;height:3px;border-radius:50%;background:${accentC};flex-shrink:0;margin-top:2px"></div><div style="font-size:clamp(4px,.9vw,6px);color:${textC};opacity:.8;line-height:1.3">${b}</div></div>`).join('');
+  return `<div style="position:absolute;inset:0;background:${bg}">
+    ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;bottom:0;width:35%;object-fit:cover" />`:''}
+    ${titleRow}
+    <div style="position:absolute;left:4%;top:24%;right:${hasImg?'38%':'4%'};bottom:5%;display:flex;flex-direction:column;gap:4px">${bullets}</div>
+  </div>`;
 }
 
 function setTemplate(i,tplId,el){
@@ -851,44 +1017,44 @@ function renderPreview(){
   // ── SLIDE CANVAS ──
   let canvas='';
   if(isSpecial){
-    // Cover, last slide — limited templates
+    // Use dark or light bg based on toggle
+    const coverBg=isDark?titleBg:lightBg;
+    const coverTitleColor=isDark?'rgba(255,255,255,.95)':accentC;
+    const coverSubColor=isDark?'rgba(255,255,255,.7)':textC;
+    const coverAccBar=`<div style="position:absolute;left:0;top:0;bottom:0;width:2%;background:${accentC}"></div>`;
     if(tpl==='half-right'){
-      // Half image right
-      canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
+      canvas=`<div class="slide-canvas-inner" style="background:${coverBg}">
         ${hasImg
           ?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;width:50%;height:100%;object-fit:cover" />`
           :`<div style="position:absolute;right:0;top:0;width:50%;height:100%;background:${accentC}33;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.8vw,13px);color:${accentC}">+Image</div>`}
         <div style="position:absolute;right:50%;top:0;bottom:0;width:1px;background:${accentC};opacity:.5"></div>
-        <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
+        ${coverAccBar}${logoBgHTML}${logoHTML}
         <div class="slide-num">${i+1}</div>
-        <div class="main-title" style="right:53%;left:5%">${s.title}</div>
-        <div class="sub-txt" style="right:53%;left:5%">${(s.bullets||[])[0]||''}</div>
+        <div style="position:absolute;left:5%;top:28%;right:53%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
+        <div style="position:absolute;left:5%;top:58%;right:53%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor};line-height:1.4">${(s.bullets||[])[0]||''}</div>
       </div>`;
     } else if(tpl==='circle-right'){
-      // Circle with decorative fading rings
-      canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
-        <!-- Decorative fading rings -->
+      canvas=`<div class="slide-canvas-inner" style="background:${coverBg}">
         <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:95%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.08"></div>
         <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:80%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.12"></div>
         <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:65%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.18"></div>
-        <!-- Main circle image -->
-        <div style="position:absolute;right:2%;top:5%;width:46%;height:90%;border-radius:50%;overflow:hidden;border:1.5px solid ${accentC};opacity:.9">
+        <div style="position:absolute;right:2%;top:5%;width:46%;height:90%;border-radius:50%;overflow:hidden;border:1.5px solid ${accentC}">
           ${hasImg
             ?`<img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover" />`
             :`<div style="width:100%;height:100%;background:${accentC}22;display:flex;align-items:center;justify-content:center;color:${accentC};font-size:clamp(9px,1.8vw,13px)">+Image</div>`}
         </div>
-        <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
-        <div class="main-title" style="right:52%;left:5%">${s.title}</div>
-        <div class="sub-txt" style="right:52%;left:5%">${(s.bullets||[])[0]||''}</div>
+        ${coverAccBar}${logoBgHTML}${logoHTML}
+        <div class="slide-num">${i+1}</div>
+        <div style="position:absolute;left:5%;top:28%;right:52%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
+        <div style="position:absolute;left:5%;top:58%;right:52%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor};line-height:1.4">${(s.bullets||[])[0]||''}</div>
       </div>`;
     } else {
-      // Full bleed default
-      canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
-        ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`:''}
-        <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
+      canvas=`<div class="slide-canvas-inner" style="background:${coverBg}">
+        ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:${isDark?.2:.4}" />`:''}
+        ${coverAccBar}${logoBgHTML}${logoHTML}
         <div class="slide-num">${i+1}</div>
-        <div class="main-title" style="right:55%;left:5%">${s.title}</div>
-        <div class="sub-txt" style="right:55%;left:5%">${(s.bullets||[])[0]||''}</div>
+        <div style="position:absolute;left:8%;top:28%;right:5%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
+        <div style="position:absolute;left:8%;top:56%;right:5%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor};line-height:1.4">${(s.bullets||[])[0]||''}</div>
       </div>`;
     }
   } else if(isDark){
@@ -965,6 +1131,36 @@ function renderPreview(){
       <div style="position:absolute;top:28%;left:0;right:0;text-align:center;font-size:clamp(20px,6vw,38px);font-weight:700;color:${accentC};line-height:1">${stat}</div>
       <div style="position:absolute;top:58%;left:10%;right:10%;text-align:center;font-size:clamp(6px,1.1vw,9px);color:${textC};opacity:.7">${(s.bullets||[]).slice(1).join(' · ')}</div>
       ${statImg?`<img src="${statImg}" style="position:absolute;bottom:0;left:0;right:0;width:100%;height:24%;object-fit:cover;opacity:.7" />`:`<div style="position:absolute;bottom:0;left:0;right:0;height:24%;background:${accentC}22;border-top:1px dashed ${accentC}44;display:flex;align-items:center;justify-content:center;font-size:clamp(7px,1.2vw,9px);color:${accentC};opacity:.6">+ Add image</div>`}
+    </div>`;
+  } else if(tpl==='quote'){
+    const quote=(s.bullets||[])[0]||s.title;
+    const author=(s.bullets||[])[1]||'';
+    canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
+      <div class="acc-top"></div>${logoBgHTML}${logoHTML}
+      <div style="position:absolute;top:10%;left:7%;font-size:clamp(40px,10vw,70px);color:${accentC};opacity:.5;line-height:1;font-family:Georgia,serif">"</div>
+      <div style="position:absolute;top:22%;left:8%;right:8%;font-size:clamp(11px,2.2vw,16px);color:${textC};text-align:center;line-height:1.6;font-style:italic">${quote}</div>
+      <div style="position:absolute;bottom:20%;left:0;right:0;display:flex;align-items:center;justify-content:center;gap:8px">
+        <div style="width:30px;height:1px;background:${accentC}"></div>
+        <div style="font-size:clamp(9px,1.6vw,12px);color:${accentC};font-weight:600">${author}</div>
+        <div style="width:30px;height:1px;background:${accentC}"></div>
+      </div>
+    </div>`;
+  } else if(tpl==='timeline'){
+    const steps=(s.bullets||[]).slice(0,4);
+    const stepsHTML=steps.map((step,k)=>`
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 4px">
+        <div style="width:clamp(18px,3.5vw,26px);height:clamp(18px,3.5vw,26px);border-radius:50%;background:${accentC};display:flex;align-items:center;justify-content:center;color:white;font-size:clamp(7px,1.4vw,10px);font-weight:700;flex-shrink:0">${k+1}</div>
+        <div style="font-size:clamp(6px,1.1vw,9px);color:${textC};text-align:center;line-height:1.4">${step}</div>
+      </div>`).join('');
+    const connectors=steps.slice(0,-1).map(()=>`<div style="position:absolute;top:calc(38% + clamp(9px,1.75vw,13px));left:${100/(steps.length*2)}%;right:${100/(steps.length*2)}%;height:1px;background:${accentC};opacity:.4"></div>`).join('');
+    canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
+      <div class="acc-top"></div>${logoBgHTML}${logoHTML}
+      <div class="sl-title">${s.title}</div>
+      <div class="acc-line"></div>
+      <div style="position:absolute;left:3%;right:3%;top:32%;bottom:5%;display:flex;position:relative">
+        ${connectors}
+        <div style="display:flex;width:100%;gap:0">${stepsHTML}</div>
+      </div>
     </div>`;
   } else {
     const bullets=(s.bullets||[]).map(b=>`<div class="b-item"><div class="b-dot"></div><div class="b-txt">${b}</div></div>`).join('');
@@ -1047,7 +1243,12 @@ function renderPreview(){
           }).join('')}
         </div>
       </div>`;
-    } else if(tpl!=='two-col'&&tpl!=='stat'){
+    } else if(tpl==='stat'){
+      // Image for bottom strip on stat slide
+      mediaSections=hasImg
+        ?`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Bottom image strip</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ New</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button><button class="img-btn remove" onclick="removeImage(${i})">✕ Remove</button></div></div><div class="image-preview-area"><img class="slide-image" src="${slideImages[i]}" /></div></div>`
+        :`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Bottom image strip</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ Suggest</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button></div></div><div class="image-preview-area"><div class="image-empty">Add an image that runs across the bottom of the slide.</div></div></div>`;
+    } else if(tpl!=='two-col'&&tpl!=='quote'&&tpl!=='timeline'){
       // Single image slot for default and fullbleed
       mediaSections=hasImg
         ?`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Slide image</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ New</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button><button class="img-btn remove" onclick="removeImage(${i})">✕ Remove</button></div></div><div class="image-preview-area"><img class="slide-image" src="${slideImages[i]}" /></div></div>`
@@ -1139,6 +1340,33 @@ function wfSvg(type, accent){
       <rect x="94" y="64" width="28" height="3" rx="1" fill="${txt}"/>
       <rect x="134" y="64" width="28" height="3" rx="1" fill="${txt}"/>
     </svg>`,
+    quote:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
+      <text x="12" y="38" font-size="36" fill="${a}" opacity=".5" font-family="Georgia">"</text>
+      <rect x="25" y="30" width="110" height="3" rx="1" fill="${txt}" opacity=".5"/>
+      <rect x="30" y="38" width="100" height="3" rx="1" fill="${txt}" opacity=".4"/>
+      <rect x="35" y="46" width="90" height="3" rx="1" fill="${txt}" opacity=".3"/>
+      <rect x="68" y="60" width="24" height="1" rx=".5" fill="${a}"/>
+      <rect x="50" y="65" width="60" height="3" rx="1" fill="${a}" opacity=".4"/>
+    </svg>`,
+    timeline:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+      <rect width="160" height="90" fill="${bg}"/>
+      <rect x="0" y="0" width="160" height="2" fill="${a}"/>
+      <rect x="8" y="10" width="60" height="5" rx="1" fill="${line}"/>
+      <rect x="18" y="44" width="124" height="1" rx=".5" fill="${a}" opacity=".4"/>
+      <circle cx="28" cy="44" r="7" fill="${a}"/>
+      <circle cx="68" cy="44" r="7" fill="${a}"/>
+      <circle cx="108" cy="44" r="7" fill="${a}"/>
+      <circle cx="148" cy="44" r="7" fill="${a}"/>
+      <rect x="14" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
+      <rect x="14" y="62" width="22" height="2" rx="1" fill="${txt}" opacity=".25"/>
+      <rect x="54" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
+      <rect x="54" y="62" width="22" height="2" rx="1" fill="${txt}" opacity=".25"/>
+      <rect x="94" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
+      <rect x="94" y="62" width="22" height="2" rx="1" fill="${txt}" opacity=".25"/>
+      <rect x="134" y="56" width="28" height="3" rx="1" fill="${txt}" opacity=".4"/>
+    </svg>`,
     halfright:`<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
       <rect width="160" height="90" fill="${bg}"/>
       <rect x="80" y="0" width="80" height="90" fill="rgba(255,255,255,.07)" stroke="${line}" stroke-width=".5"/>
@@ -1169,6 +1397,7 @@ function setTplFromPreview(tplId){
 function setSlideDark(i, val){
   if(val===null) delete slideDarkBg[i];
   else slideDarkBg[i]=val;
+  renderOutlineRow(i);
   renderPreview();
 }
 
