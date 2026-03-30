@@ -261,11 +261,9 @@ textarea{resize:vertical;line-height:1.6}
 .icon-loading{padding:2rem;text-align:center;color:rgba(255,255,255,.4);font-size:12px}
 
 /* SLIDE ROW — top summary bar */
-.slide-summary-bar{display:flex;align-items:center;gap:9px;padding:9px 12px;cursor:pointer;border-bottom:1px solid transparent;transition:border-color .15s}
-.slide-row.open .slide-summary-bar{border-bottom-color:var(--border)}
-/* EXPANDED PANEL — horizontal layout matching mockup */
-.slide-panel{display:none;background:var(--surface)}
-.slide-row.open .slide-panel{display:grid;grid-template-columns:auto 90px 160px auto 1fr;border-bottom:1px solid var(--border)}
+.slide-summary-bar{display:flex;align-items:center;gap:9px;padding:9px 12px;border-bottom:1px solid var(--border)}
+/* ALWAYS-VISIBLE PANEL — horizontal layout */
+.slide-panel{display:grid;grid-template-columns:auto 90px 160px auto 1fr;background:var(--surface);border-top:1px solid var(--border)}
 /* columns */
 .sp-col{padding:10px 12px;border-right:1px solid var(--border);min-width:0}
 .sp-col:last-child{border-right:none}
@@ -348,12 +346,7 @@ textarea{resize:vertical;line-height:1.6}
 <div class="preview-overlay" id="preview-overlay" onclick="closePreview()"></div>
 <div class="preview-panel" id="preview-panel">
   <div class="preview-panel-hdr">
-    <span class="preview-panel-title">Slide preview</span>
-    <div class="preview-nav">
-      <button class="nav-btn" id="nav-prev" onclick="navigatePreview(-1)">‹</button>
-      <span class="nav-count" id="nav-count">1 / 8</span>
-      <button class="nav-btn" id="nav-next" onclick="navigatePreview(1)">›</button>
-    </div>
+    <span class="preview-panel-title" id="preview-panel-title">All slides</span>
     <button class="close-btn" onclick="closePreview()">×</button>
   </div>
   <div class="preview-body" id="preview-body"></div>
@@ -863,8 +856,9 @@ function buildSlideRow(i, data){
     }).join('');
   }
 
-  // Mini preview canvas
-  const miniCanvas=buildMiniCanvas(s,i,tpl,isDark,isSpecial,accentC,titleBg,lightBg,textC);
+  // Mini preview canvas — use full canvas renderer
+  const t2=getTheme();
+  const miniCanvas=buildSlideCanvas(s,i,tpl,isDark,isSpecial,titleBg,accentC,lightBg,textC,t2);
 
   return `<div class="slide-row" id="slide-row-${i}">
     <div class="slide-summary-bar" onclick="toggleExpand(${i})">
@@ -1128,31 +1122,65 @@ async function regenSlide(i,btn){
 }
 
 // ── PREVIEW ──
-function openPreview(i){previewIndex=i;renderPreview();document.getElementById('preview-overlay').classList.add('open');document.getElementById('preview-panel').classList.add('open')}
-function closePreview(){document.getElementById('preview-overlay').classList.remove('open');document.getElementById('preview-panel').classList.remove('open')}
-function navigatePreview(d){previewIndex=Math.max(0,Math.min(outline.length-1,previewIndex+d));renderPreview()}
+function openPreview(startIndex){
+  previewIndex=startIndex||0;
+  // Render ALL slides stacked
+  renderAllPreviews(startIndex);
+  document.getElementById('preview-overlay').classList.add('open');
+  document.getElementById('preview-panel').classList.add('open');
+}
+
+function renderAllPreviews(scrollToIndex){
+  if(!outline)return;
+  document.getElementById('preview-panel-title').textContent=`All slides (${outline.length})`;
+  const html=outline.map((_,i)=>{
+    // Temporarily set previewIndex so renderPreview canvas works
+    previewIndex=i;
+    const t=getTheme();
+    const isCover=i===0,isLast=i===outline.length-1,isSpecial=isCover||isLast;
+    const forceDark=slideDarkBg[i];
+    const defaultDark=outline[i].type==='title'||outline[i].type==='conclusion'||outline[i].type==='cta'||isSpecial;
+    const isDark=forceDark===true?true:forceDark===false?false:defaultDark;
+    const tpl=slideTemplates[i]||'default';
+    const titleBg=brandOn?brandColors.primary:'#'+t.titleBg;
+    const accentC=brandOn?brandColors.accent:'#'+t.accent;
+    const lightBg='#'+(t.slideBg||'FFFFFF');
+    const textC='#'+(t.slideText||'1A2320');
+    const canvas=buildSlideCanvas(outline[i],i,tpl,isDark,isSpecial,titleBg,accentC,lightBg,textC,t);
+    const s=outline[i];
+    const bullets=(s.bullets||[]).map(b=>`<li>${b}</li>`).join('');
+    const note=s.speakerNote?`<div class="preview-note">🎤 ${s.speakerNote}</div>`:'';
+    return `<div id="prev-slide-${i}" style="margin-bottom:1.5rem">
+      <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.35);margin-bottom:5px;text-transform:uppercase;letter-spacing:.08em">Slide ${i+1}</div>
+      <div class="slide-canvas">${canvas}</div>
+      <div class="preview-meta" style="margin-top:6px"><div class="preview-meta-title">${s.title}</div><ul class="preview-meta-bullets">${bullets}</ul>${note}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('preview-body').innerHTML=html;
+  // Scroll to the clicked slide
+  if(scrollToIndex>0){
+    setTimeout(()=>{
+      const el=document.getElementById('prev-slide-'+scrollToIndex);
+      if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+    },100);
+  }
+}
+
+function closePreview(){
+  document.getElementById('preview-overlay').classList.remove('open');
+  document.getElementById('preview-panel').classList.remove('open');
+}
+function navigatePreview(d){previewIndex=Math.max(0,Math.min(outline.length-1,previewIndex+d));renderAllPreviews(previewIndex);}
 
 function renderPreview(){
-  if(!outline)return;
-  const s=outline[previewIndex],t=getTheme();
-  const i=previewIndex;
-  const isCover=i===0;
-  const isLast=i===outline.length-1;
-  const isSpecial=isCover||isLast;
-  const defaultDark=s.type==='title'||s.type==='conclusion'||s.type==='cta'||isSpecial;
-  const forceDark=slideDarkBg[i];
-  const isDark=forceDark===true?true:forceDark===false?false:defaultDark;
+  // Used when preview panel is open — refresh all slides
+  if(document.getElementById('preview-panel').classList.contains('open')){
+    renderAllPreviews(previewIndex);
+  }
+}
+
+function buildSlideCanvas(s,i,tpl,isDark,isSpecial,titleBg,accentC,lightBg,textC,t){
   const hasImg=!!slideImages[i];
-  const tpl=slideTemplates[i]||(isSpecial?'default':'default');
-
-  document.getElementById('nav-count').textContent=`${i+1} / ${outline.length}`;
-  document.getElementById('nav-prev').disabled=i===0;
-  document.getElementById('nav-next').disabled=i===outline.length-1;
-
-  const titleBg=brandOn?brandColors.primary:'#'+t.titleBg;
-  const accentC=brandOn?brandColors.accent:'#'+t.accent;
-  const lightBg='#'+(t.slideBg||'FFFFFF');
-  const textC='#'+(t.slideText||'1A2320');
   const isBottom=logoPos==='bottom-left';
   const logoStyle=i===0
     ?`position:absolute;${isBottom?'bottom:5%;':'top:5%;'}left:3%;max-height:13%;max-width:28%;object-fit:contain;z-index:10`
@@ -1161,24 +1189,19 @@ function renderPreview(){
   const logoBgHTML=logoData&&logoWhiteBg
     ?`<div style="position:absolute;${isBottom?'bottom:0':'top:0'};left:0;right:0;height:${i===0?'20%':'12%'};background:white;z-index:9;opacity:.95"></div>`:'';
 
-  // ── SLIDE CANVAS ──
   let canvas='';
   if(isSpecial){
-    // Use dark or light bg based on toggle
     const coverBg=isDark?titleBg:lightBg;
     const coverTitleColor=isDark?'rgba(255,255,255,.95)':accentC;
     const coverSubColor=isDark?'rgba(255,255,255,.7)':textC;
     const coverAccBar=`<div style="position:absolute;left:0;top:0;bottom:0;width:2%;background:${accentC}"></div>`;
     if(tpl==='half-right'){
       canvas=`<div class="slide-canvas-inner" style="background:${coverBg}">
-        ${hasImg
-          ?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;width:50%;height:100%;object-fit:cover" />`
-          :`<div style="position:absolute;right:0;top:0;width:50%;height:100%;background:${accentC}33;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.8vw,13px);color:${accentC}">+Image</div>`}
+        ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;width:50%;height:100%;object-fit:cover" />`:`<div style="position:absolute;right:0;top:0;width:50%;height:100%;background:${accentC}33;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.8vw,13px);color:${accentC}">+Image</div>`}
         <div style="position:absolute;right:50%;top:0;bottom:0;width:1px;background:${accentC};opacity:.5"></div>
         ${coverAccBar}${logoBgHTML}${logoHTML}
-        <div class="slide-num">${i+1}</div>
         <div style="position:absolute;left:5%;top:28%;right:53%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
-        <div style="position:absolute;left:5%;top:58%;right:53%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor};line-height:1.4">${(s.bullets||[])[0]||''}</div>
+        <div style="position:absolute;left:5%;top:58%;right:53%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor}">${(s.bullets||[])[0]||''}</div>
       </div>`;
     } else if(tpl==='circle-right'){
       canvas=`<div class="slide-canvas-inner" style="background:${coverBg}">
@@ -1186,26 +1209,21 @@ function renderPreview(){
         <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:80%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.12"></div>
         <div style="position:absolute;right:-5%;top:50%;transform:translateY(-50%);width:65%;aspect-ratio:1;border-radius:50%;border:1px solid ${accentC};opacity:.18"></div>
         <div style="position:absolute;right:2%;top:5%;width:46%;height:90%;border-radius:50%;overflow:hidden;border:1.5px solid ${accentC}">
-          ${hasImg
-            ?`<img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover" />`
-            :`<div style="width:100%;height:100%;background:${accentC}22;display:flex;align-items:center;justify-content:center;color:${accentC};font-size:clamp(9px,1.8vw,13px)">+Image</div>`}
+          ${hasImg?`<img src="${slideImages[i]}" style="width:100%;height:100%;object-fit:cover" />`:`<div style="width:100%;height:100%;background:${accentC}22;display:flex;align-items:center;justify-content:center;color:${accentC};font-size:clamp(9px,1.8vw,13px)">+Image</div>`}
         </div>
         ${coverAccBar}${logoBgHTML}${logoHTML}
-        <div class="slide-num">${i+1}</div>
         <div style="position:absolute;left:5%;top:28%;right:52%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
-        <div style="position:absolute;left:5%;top:58%;right:52%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor};line-height:1.4">${(s.bullets||[])[0]||''}</div>
+        <div style="position:absolute;left:5%;top:58%;right:52%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor}">${(s.bullets||[])[0]||''}</div>
       </div>`;
     } else {
       canvas=`<div class="slide-canvas-inner" style="background:${coverBg}">
         ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:${isDark?.2:.4}" />`:''}
         ${coverAccBar}${logoBgHTML}${logoHTML}
-        <div class="slide-num">${i+1}</div>
         <div style="position:absolute;left:8%;top:28%;right:5%;font-size:clamp(13px,3.2vw,21px);font-weight:700;color:${coverTitleColor};line-height:1.2">${s.title}</div>
-        <div style="position:absolute;left:8%;top:56%;right:5%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor};line-height:1.4">${(s.bullets||[])[0]||''}</div>
+        <div style="position:absolute;left:8%;top:56%;right:5%;font-size:clamp(8px,1.6vw,12px);color:${coverSubColor}">${(s.bullets||[])[0]||''}</div>
       </div>`;
     }
   } else if(isDark){
-    // Forced dark content slide
     canvas=`<div class="slide-canvas-inner slide-dark" style="--preview-bg:${titleBg};--preview-accent:${accentC}">
       ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2" />`:''}
       <div class="acc-bar"></div>${logoBgHTML}${logoHTML}
@@ -1215,12 +1233,7 @@ function renderPreview(){
     </div>`;
   } else if(tpl==='3images'){
     const sl=(slotImages[i]||{});
-    const imgs=[0,1,2].map(k=>{
-      const src=sl[k];
-      return src
-        ?`<div style="flex:1;display:flex;flex-direction:column;gap:0"><div style="flex:1;border-radius:3px;overflow:hidden"><img src="${src}" style="width:100%;height:100%;object-fit:cover" /></div></div>`
-        :`<div style="flex:1;background:${accentC}33;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.5vw,12px);color:${accentC};font-weight:600">+${k+1}</div>`;
-    }).join('');
+    const imgs=[0,1,2].map(k=>{const src=sl[k];return src?`<div style="flex:1;border-radius:3px;overflow:hidden"><img src="${src}" style="width:100%;height:100%;object-fit:cover"/></div>`:`<div style="flex:1;background:${accentC}33;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.5vw,12px);color:${accentC};font-weight:600">+${k+1}</div>`;}).join('');
     const captions=[0,1,2].map(k=>`<div style="flex:1;padding:2px 1px"><div style="font-size:clamp(5px,.85vw,7px);font-weight:700;color:${textC};margin-bottom:1px">${(s.bullets||[])[k*2]||s.bullets?.[k]||''}</div><div style="font-size:clamp(4px,.75vw,6px);color:${textC};opacity:.6">${(s.bullets||[])[k*2+1]||''}</div></div>`).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
@@ -1230,20 +1243,11 @@ function renderPreview(){
     </div>`;
   } else if(tpl==='2icons'||tpl==='4icons'){
     const count=tpl==='2icons'?2:4;
-    const iconSlots=slideIcons[i]||{};
-    const sl2=slotImages[i]||{};
+    const iconSlots=slideIcons[i]||{},sl2=slotImages[i]||{};
     const cells=Array(count).fill(null).map((_,k)=>{
-      const icon=iconSlots[k];
-      const img=sl2[k];
-      const content=icon
-        ?`<img src="${icon.svg}" style="width:55%;height:55%;object-fit:contain" />`
-        :img
-          ?`<img src="${img}" style="width:55%;height:55%;object-fit:contain" />`
-          :`<div style="width:40%;height:40%;border-radius:50%;border:1px solid ${accentC};opacity:.4"></div>`;
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px">
-        <div style="width:clamp(24px,4.5vw,38px);height:clamp(24px,4.5vw,38px);border-radius:50%;border:1.5px solid ${accentC};display:flex;align-items:center;justify-content:center">${content}</div>
-        <div style="font-size:clamp(4px,.8vw,7px);color:${textC};text-align:center;font-weight:600;line-height:1.2">${(s.bullets||[])[k]||'Point '+(k+1)}</div>
-      </div>`;
+      const icon=iconSlots[k],img=sl2[k];
+      const content=icon?`<img src="${icon.svg}" style="width:55%;height:55%;object-fit:contain"/>`:img?`<img src="${img}" style="width:55%;height:55%;object-fit:contain"/>`:`<div style="width:40%;height:40%;border-radius:50%;border:1px solid ${accentC};opacity:.4"></div>`;
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px"><div style="width:clamp(24px,4.5vw,38px);height:clamp(24px,4.5vw,38px);border-radius:50%;border:1.5px solid ${accentC};display:flex;align-items:center;justify-content:center">${content}</div><div style="font-size:clamp(4px,.8vw,7px);color:${textC};text-align:center;font-weight:600;line-height:1.2">${(s.bullets||[])[k]||'Point '+(k+1)}</div></div>`;
     }).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
@@ -1277,11 +1281,10 @@ function renderPreview(){
       <div class="sl-title">${s.title}</div>
       <div style="position:absolute;top:28%;left:0;right:0;text-align:center;font-size:clamp(20px,6vw,38px);font-weight:700;color:${accentC};line-height:1">${stat}</div>
       <div style="position:absolute;top:58%;left:10%;right:10%;text-align:center;font-size:clamp(6px,1.1vw,9px);color:${textC};opacity:.7">${(s.bullets||[]).slice(1).join(' · ')}</div>
-      ${statImg?`<img src="${statImg}" style="position:absolute;bottom:0;left:0;right:0;width:100%;height:24%;object-fit:cover;opacity:.7" />`:`<div style="position:absolute;bottom:0;left:0;right:0;height:24%;background:${accentC}22;border-top:1px dashed ${accentC}44;display:flex;align-items:center;justify-content:center;font-size:clamp(7px,1.2vw,9px);color:${accentC};opacity:.6">+ Add image</div>`}
+      ${statImg?`<img src="${statImg}" style="position:absolute;bottom:0;left:0;right:0;width:100%;height:24%;object-fit:cover;opacity:.7"/>`:`<div style="position:absolute;bottom:0;left:0;right:0;height:24%;background:${accentC}22;display:flex;align-items:center;justify-content:center;font-size:clamp(7px,1.2vw,9px);color:${accentC};opacity:.6">+ Add image</div>`}
     </div>`;
   } else if(tpl==='quote'){
-    const quote=(s.bullets||[])[0]||s.title;
-    const author=(s.bullets||[])[1]||'';
+    const quote=(s.bullets||[])[0]||s.title,author=(s.bullets||[])[1]||'';
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
       <div style="position:absolute;top:10%;left:7%;font-size:clamp(40px,10vw,70px);color:${accentC};opacity:.5;line-height:1;font-family:Georgia,serif">"</div>
@@ -1294,25 +1297,17 @@ function renderPreview(){
     </div>`;
   } else if(tpl==='timeline'){
     const steps=(s.bullets||[]).slice(0,4);
-    const stepsHTML=steps.map((step,k)=>`
-      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 4px">
-        <div style="width:clamp(18px,3.5vw,26px);height:clamp(18px,3.5vw,26px);border-radius:50%;background:${accentC};display:flex;align-items:center;justify-content:center;color:white;font-size:clamp(7px,1.4vw,10px);font-weight:700;flex-shrink:0">${k+1}</div>
-        <div style="font-size:clamp(6px,1.1vw,9px);color:${textC};text-align:center;line-height:1.4">${step}</div>
-      </div>`).join('');
+    const stepsHTML=steps.map((step,k)=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:0 4px"><div style="width:clamp(18px,3.5vw,26px);height:clamp(18px,3.5vw,26px);border-radius:50%;background:${accentC};display:flex;align-items:center;justify-content:center;color:white;font-size:clamp(7px,1.4vw,10px);font-weight:700;flex-shrink:0">${k+1}</div><div style="font-size:clamp(6px,1.1vw,9px);color:${textC};text-align:center;line-height:1.4">${step}</div></div>`).join('');
     const connectors=steps.slice(0,-1).map(()=>`<div style="position:absolute;top:calc(38% + clamp(9px,1.75vw,13px));left:${100/(steps.length*2)}%;right:${100/(steps.length*2)}%;height:1px;background:${accentC};opacity:.4"></div>`).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
-      <div class="sl-title">${s.title}</div>
-      <div class="acc-line"></div>
-      <div style="position:absolute;left:3%;right:3%;top:32%;bottom:5%;display:flex;position:relative">
-        ${connectors}
-        <div style="display:flex;width:100%;gap:0">${stepsHTML}</div>
-      </div>
+      <div class="sl-title">${s.title}</div><div class="acc-line"></div>
+      <div style="position:absolute;left:3%;right:3%;top:32%;bottom:5%;position:relative">${connectors}<div style="display:flex;width:100%;gap:0">${stepsHTML}</div></div>
     </div>`;
   } else {
     const bullets=(s.bullets||[]).map(b=>`<div class="b-item"><div class="b-dot"></div><div class="b-txt">${b}</div></div>`).join('');
     canvas=`<div class="slide-canvas-inner slide-light" style="--preview-bg:${lightBg};--preview-accent:${accentC};--preview-text:${textC}">
-      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;bottom:0;width:38%;height:100%;object-fit:cover" />`:''}
+      ${hasImg?`<img src="${slideImages[i]}" style="position:absolute;right:0;top:0;bottom:0;width:38%;height:100%;object-fit:cover"/>`:''}
       <div class="acc-top"></div>${logoBgHTML}${logoHTML}
       <div class="sl-title" style="${hasImg?'right:42%':''}">${s.title}</div>
       <div class="acc-line"></div>
@@ -1320,99 +1315,9 @@ function renderPreview(){
       <div class="slide-num">${i+1} / ${outline.length}</div>
     </div>`;
   }
-
-  // ── TEMPLATE PICKER ──
-  const tplList=isSpecial?COVER_TEMPLATES:TEMPLATES;
-  const thumbs=tplList.map(t=>`
-    <div class="tpl-thumb${tpl===t.id?' active':''}" onclick="setTplFromPreview('${t.id}')">
-      <div class="tpl-wf">${wfSvg(t.thumb,accentC)}</div>
-      <div class="tpl-thumb-name">${t.label}</div>
-    </div>`).join('');
-  const tplPicker=`<div class="tpl-picker">
-    <div class="tpl-picker-title">Slide layout</div>
-    <div class="tpl-grid-preview">${thumbs}</div>
-  </div>`;
-
-  // ── DARK / LIGHT TOGGLE ──
-  const darkState=slideDarkBg[i];
-  const darkActive=darkState===true?'active-dark':'';
-  const lightActive=darkState===false?'active-light':'';
-  const autoLabel=isDark?'Auto (dark)':'Auto (light)';
-  const darkToggle=`<div class="dark-toggle-row">
-    <span class="dark-toggle-label">Background</span>
-    <button class="dark-toggle-btn ${darkActive}" onclick="setSlideDark(${i},true)">🌙 Dark</button>
-    <button class="dark-toggle-btn" onclick="setSlideDark(${i},null)" style="font-size:9px;color:rgba(255,255,255,.35)">${autoLabel}</button>
-    <button class="dark-toggle-btn ${lightActive}" onclick="setSlideDark(${i},false)">☀️ Light</button>
-  </div>`;
-
-  // ── MEDIA SECTIONS ──
-  let mediaSections='';
-  if(!isDark){
-    if(tpl==='3images'){
-      const slots=slotImages[i]||{};
-      mediaSections=`<div class="image-section">
-        <div class="image-section-hdr"><span class="image-section-title">🖼 Images</span></div>
-        <div class="slot-grid" style="grid-template-columns:1fr 1fr 1fr">
-          ${[0,1,2].map(k=>{
-            const src=slots[k];
-            return `<div class="slot-item">
-              <div class="slot-hdr"><span class="slot-label">Image ${k+1}</span><div class="slot-btns">
-                <button class="img-btn suggest" onclick="suggestSlotImage(${i},${k})" title="Suggest">✦</button>
-                <button class="img-btn upload" onclick="triggerSlotUpload(${i},${k})" title="Upload">⬆</button>
-                ${src?`<button class="img-btn remove" onclick="removeSlotImage(${i},${k})" title="Remove">✕</button>`:''}
-              </div></div>
-              ${src?`<img class="slot-img" src="${src}" />`:`<div class="slot-placeholder" style="background:${accentC}20;color:${accentC}">+</div>`}
-            </div>`;
-          }).join('')}
-        </div>
-      </div>`;
-    } else if(tpl==='2icons'||tpl==='4icons'){
-      const count=tpl==='2icons'?2:4;
-      const iconSlots=slideIcons[i]||{};
-      const imgSlots=slotImages[i]||{};
-      mediaSections=`<div class="image-section">
-        <div class="image-section-hdr"><span class="image-section-title">Icons / Images</span></div>
-        <div class="slot-grid" style="grid-template-columns:${count===2?'1fr 1fr':'1fr 1fr 1fr 1fr'}">
-          ${Array(count).fill(null).map((_,k)=>{
-            const icon=iconSlots[k];
-            const img=imgSlots[k];
-            const hasContent=!!(icon||img);
-            return `<div class="slot-item">
-              <div class="slot-hdr"><span class="slot-label">Slot ${k+1}</span><div class="slot-btns">
-                <button class="img-btn suggest" onclick="openIconModal(${i},${k})" title="Pick icon" style="color:#A89FE8;border-color:#6A5ACD50">⬡</button>
-                <button class="img-btn upload" onclick="triggerSlotUpload(${i},${k})" title="Upload image">⬆</button>
-                ${hasContent?`<button class="img-btn remove" onclick="removeSlotContent(${i},${k})" title="Remove">✕</button>`:''}
-              </div></div>
-              ${icon?`<div class="icon-preview"><img src="${icon.svg}" style="width:28px;height:28px;object-fit:contain;filter:invert(.7)" /></div>`
-                :img?`<img class="slot-img" src="${img}" style="height:50px" />`
-                :`<div class="slot-placeholder" style="background:${accentC}20;color:${accentC}">+</div>`}
-            </div>`;
-          }).join('')}
-        </div>
-      </div>`;
-    } else if(tpl==='stat'){
-      // Image for bottom strip on stat slide
-      mediaSections=hasImg
-        ?`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Bottom image strip</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ New</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button><button class="img-btn remove" onclick="removeImage(${i})">✕ Remove</button></div></div><div class="image-preview-area"><img class="slide-image" src="${slideImages[i]}" /></div></div>`
-        :`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Bottom image strip</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ Suggest</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button></div></div><div class="image-preview-area"><div class="image-empty">Add an image that runs across the bottom of the slide.</div></div></div>`;
-    } else if(tpl!=='two-col'&&tpl!=='quote'&&tpl!=='timeline'){
-      // Single image slot for default and fullbleed
-      mediaSections=hasImg
-        ?`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Slide image</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ New</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button><button class="img-btn remove" onclick="removeImage(${i})">✕ Remove</button></div></div><div class="image-preview-area"><img class="slide-image" src="${slideImages[i]}" /></div></div>`
-        :`<div class="image-section"><div class="image-section-hdr"><span class="image-section-title">🖼 Add an image</span><div class="image-btns"><button class="img-btn suggest" onclick="suggestImage(${i})">✦ Suggest</button><button class="img-btn upload" onclick="triggerUpload(${i})">⬆ Upload</button></div></div><div class="image-preview-area"><div class="image-empty">No image yet — suggest one or upload your own.</div></div></div>`;
-    }
-  }
-
-  const bulletsMeta=(s.bullets||[]).map(b=>`<li>${b}</li>`).join('');
-  const noteHTML=s.speakerNote?`<div class="preview-note">🎤 ${s.speakerNote}</div>`:'';
-
-  document.getElementById('preview-body').innerHTML=`
-    <div class="slide-canvas">${canvas}</div>
-    ${darkToggle}
-    ${tplPicker}
-    ${mediaSections}
-    <div class="preview-meta"><div class="preview-meta-title">${s.title}</div><ul class="preview-meta-bullets">${bulletsMeta}</ul>${noteHTML}</div>`;
+  return canvas;
 }
+
 
 // ── WIREFRAME THUMBNAILS ──
 function wfSvg(type, accent){
