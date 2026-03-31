@@ -838,26 +838,53 @@ window.addEventListener('keydown',function(e){
   if(e.key==='Escape'){if(fc){fc.discardActiveObject();fc.renderAll();}return;}
 });
 
-function initCanvas(){
+function initCanvas(force){
   var stage=document.getElementById('canvas-stage');
   var sw=stage.clientWidth-48, sh=stage.clientHeight-48;
   var cw=sw, ch=sw*9/16;
   if(ch>sh){ch=sh;cw=sh*16/9;}
+  if(cw<100) return; // sidebar animating, skip
 
   var wrap=document.getElementById('canvas-wrap');
   wrap.style.width=cw+'px'; wrap.style.height=ch+'px';
+
+  // If canvas already exists, just resize it — don't destroy/recreate
+  if(fc && !force){
+    var newSc=cw/960;
+    var oldSc=fc._sc||1;
+    var ratio=newSc/oldSc;
+    fc.setWidth(cw); fc.setHeight(ch);
+    fc._sc=newSc;
+    // Scale all existing objects
+    fc.getObjects().forEach(function(o){
+      o.set({left:(o.left||0)*ratio, top:(o.top||0)*ratio,
+        scaleX:(o.scaleX||1)*ratio, scaleY:(o.scaleY||1)*ratio});
+      o.setCoords();
+    });
+    if(fc.backgroundImage){
+      fc.backgroundImage.set({scaleX:(fc.backgroundImage.scaleX||1)*ratio,scaleY:(fc.backgroundImage.scaleY||1)*ratio});
+    }
+    fc.renderAll();
+    return;
+  }
 
   if(fc){fc.dispose();fc=null;}
   fc=new fabric.Canvas('c',{width:cw,height:ch,backgroundColor:'#FFFFFF',preserveObjectStacking:true});
   fc._sc=cw/960;
 
-  // Clean minimal handles
-  fabric.Object.prototype.set({
-    cornerSize:8, cornerColor:'#00e5c3', cornerStrokeColor:'#080c0b',
-    cornerStyle:'rect', transparentCorners:false,
-    borderColor:'#00e5c3', borderScaleFactor:1.5, padding:4
-  });
-  delete fabric.Object.prototype.controls.mtr;
+  // Set handle style ONCE on the canvas, not on prototype
+  fabric.Object.prototype.cornerSize=8;
+  fabric.Object.prototype.cornerColor='#00e5c3';
+  fabric.Object.prototype.cornerStrokeColor='#080c0b';
+  fabric.Object.prototype.cornerStyle='rect';
+  fabric.Object.prototype.transparentCorners=false;
+  fabric.Object.prototype.borderColor='#00e5c3';
+  fabric.Object.prototype.borderScaleFactor=1.5;
+  fabric.Object.prototype.padding=4;
+  // Hide rotation handle safely (set visible=false, don't delete)
+  if(fabric.Object.prototype.controls.mtr){
+    fabric.Object.prototype.controls.mtr.visible=false;
+  }
 
   fc.on('selection:created',onSel);
   fc.on('selection:updated',onSel);
@@ -890,7 +917,7 @@ function toggleSidebar(){
   app.classList.toggle('sb-off',collapsed);
   btn.textContent=collapsed?'»':'☰';
   btn.title=collapsed?'Show sidebar':'Hide sidebar';
-  // Reinit canvas so it fills new space
+  // Wait for CSS transition to finish, then resize canvas smoothly
   setTimeout(function(){initCanvas();},300);
 }
 function setStyle(s,el){style=s;brandOn=false;resetBrand();document.querySelectorAll('.style-card').forEach(function(c){c.classList.remove('on');});el.classList.add('on');}
@@ -1109,26 +1136,32 @@ function mkSlide(sl,idx,t,isDark){
 function loadSlide(idx){
   if(!fc||idx<0||idx>=slides.length) return;
   saving=true; cur=idx;
-  // Reset undo history for this slide
   history=[]; historyIdx=-1;
   var sl=slides[idx];
-  fc.clear(); fc.backgroundColor=sl.bg||'#FFFFFF';
+  fc.clear();
+  fc.backgroundColor=sl.bg||'#FFFFFF';
   document.getElementById('bgcol').value=sl.bg||'#FFFFFF';
 
   function done(){
     fc.renderAll();
     saving=false;
-    pushHistory(); // capture initial state for undo baseline
-    updateStatus();hiThumb(idx);updateRP();
+    // Save fresh JSON from canvas
+    slides[cur]._json=JSON.stringify(fc.toJSON(['customType','_isBg']));
+    pushHistory();
+    updateStatus(); hiThumb(idx); updateRP();
   }
 
   if(sl._json){
-    fc.loadFromJSON(sl._json,function(){fc.backgroundColor=sl.bg||'#FFFFFF';done();});
+    fc.loadFromJSON(sl._json,function(){
+      fc.backgroundColor=sl.bg||'#FFFFFF';
+      done();
+    });
   } else if(sl._objs&&sl._objs.length){
     sl._objs.forEach(function(o){fc.add(o);});
-    sl._json=JSON.stringify(fc.toJSON(['customType']));
     done();
-  } else {done();}
+  } else {
+    done();
+  }
 }
 
 function saveCur(){
