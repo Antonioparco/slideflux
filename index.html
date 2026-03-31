@@ -49,12 +49,30 @@ body{font-family:var(--font);background:var(--bg0);color:var(--text0);font-size:
   display:flex;flex-direction:column;
   overflow-y:auto;height:100vh;
   padding:0;
+  width:240px;min-width:240px;
+  transition:width .28s cubic-bezier(.4,0,.2,1),min-width .28s cubic-bezier(.4,0,.2,1),border .28s;
+  overflow-x:hidden;flex-shrink:0;
 }
+.sidebar.collapsed{width:0;min-width:0;border-right:none;}
+.sidebar.collapsed>*{opacity:0;pointer-events:none;transition:opacity .15s;}
+.sb-toggle{
+  position:fixed;top:11px;left:11px;z-index:200;
+  width:26px;height:26px;border-radius:6px;
+  background:var(--bg3);border:1px solid var(--line2);
+  color:var(--text2);cursor:pointer;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;box-shadow:0 2px 8px rgba(0,0,0,.5);
+  font-family:var(--font);
+}
+.sb-toggle:hover{border-color:var(--teal);color:var(--teal);background:var(--teal-glow);}
+.app{transition:grid-template-columns .28s cubic-bezier(.4,0,.2,1);}
+.app.sb-off{grid-template-columns:0 280px 1fr 256px;}
 .logo-wrap{
-  padding:18px 16px 16px;
+  padding:14px 16px 14px 46px;
   border-bottom:1px solid var(--line);
   display:flex;align-items:center;gap:10px;
   background:linear-gradient(135deg,var(--bg2),var(--bg1));
+  flex-shrink:0;
 }
 .logo-mark{
   width:32px;height:32px;border-radius:8px;
@@ -74,14 +92,7 @@ body{font-family:var(--font);background:var(--bg0);color:var(--text0);font-size:
 .sb-label::after{content:'';flex:1;height:1px;background:var(--line)}
 
 /* Categories */
-.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px}
-.cat-btn{
-  padding:5px 6px;border-radius:5px;border:1px solid var(--line2);
-  background:transparent;cursor:pointer;font-size:10px;font-family:var(--font);
-  color:var(--text2);text-align:center;transition:all .15s;
-}
-.cat-btn:hover{border-color:var(--teal3);color:var(--text1)}
-.cat-btn.on{border-color:var(--teal);background:var(--teal-glow);color:var(--teal);font-weight:600}
+
 
 /* Style cards */
 .style-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
@@ -411,10 +422,11 @@ textarea{line-height:1.5}
 </style>
 </head>
 <body>
-<div class="app">
+<button class="sb-toggle" id="sb-toggle" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
+<div class="app" id="app">
 
 <!-- ===== SIDEBAR ===== -->
-<aside class="sidebar">
+<aside class="sidebar" id="slideflux-sb">
   <div class="logo-wrap">
     <div class="logo-mark">
       <svg width="16" height="16" viewBox="0 0 18 18" fill="none">
@@ -425,19 +437,7 @@ textarea{line-height:1.5}
     <div class="logo-name">slide<span>flux</span></div>
   </div>
 
-  <div class="sb-section">
-    <div class="sb-label">Category</div>
-    <div class="cat-grid">
-      <button class="cat-btn" onclick="setCat('business',this)">💼 Business</button>
-      <button class="cat-btn" onclick="setCat('education',this)">🎓 Education</button>
-      <button class="cat-btn" onclick="setCat('sales',this)">📈 Sales</button>
-      <button class="cat-btn" onclick="setCat('startup',this)">🚀 Startup</button>
-      <button class="cat-btn" onclick="setCat('report',this)">📋 Report</button>
-      <button class="cat-btn" onclick="setCat('training',this)">🧠 Training</button>
-      <button class="cat-btn" onclick="setCat('creative',this)">🎨 Creative</button>
-      <button class="cat-btn" onclick="setCat('other',this)">✦ Other</button>
-    </div>
-  </div>
+
 
   <div class="sb-section">
     <div class="sb-label">Style</div>
@@ -881,7 +881,18 @@ function onSel(){
 }
 
 // ── SIDEBAR ──
-function setCat(c,el){cat=c;document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.remove('on');});el.classList.add('on');}
+
+function toggleSidebar(){
+  var sb=document.getElementById('slideflux-sb');
+  var app=document.getElementById('app');
+  var btn=document.getElementById('sb-toggle');
+  var collapsed=sb.classList.toggle('collapsed');
+  app.classList.toggle('sb-off',collapsed);
+  btn.textContent=collapsed?'»':'☰';
+  btn.title=collapsed?'Show sidebar':'Hide sidebar';
+  // Reinit canvas so it fills new space
+  setTimeout(function(){initCanvas();},300);
+}
 function setStyle(s,el){style=s;brandOn=false;resetBrand();document.querySelectorAll('.style-card').forEach(function(c){c.classList.remove('on');});el.classList.add('on');}
 function adjCount(d){slideCount=Math.max(2,Math.min(20,slideCount+d));document.getElementById('cnt').textContent=slideCount;}
 
