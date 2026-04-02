@@ -162,39 +162,57 @@ module.exports=async function handler(req,res){
 
     // ── OUTLINE / SLIDE GENERATION ──
     if(action==="outline"){
-      const prompt=`You are a presentation design expert. Based on the input below, create a structured ${slideCount}-slide presentation.
+      const prompt=`You are an expert presentation writer and consultant. Your job is to create a detailed, content-rich presentation that reads like it was written by a human expert — not a generic AI.
 
+USER INPUT:
 ${input}
 
-IMPORTANT:
-- If input contains document content, extract the ACTUAL facts, data and arguments — do not genericise
-- Mix content types naturally across slides
-- Keep text concise — slides are not essays
+YOUR TASK:
+Create exactly ${slideCount} slides. Each slide must be PACKED with real, specific, useful content. Think like a consultant who has researched this topic deeply.
 
-Return ONLY a raw JSON array with exactly ${slideCount} objects, starting with [ and ending with ].
-Each object:
+STRICT CONTENT RULES:
+- "heading": punchy, specific headline (not generic — e.g. "Solar Costs Fell 89% in a Decade" not "Cost Overview")
+- "bullets": EXACTLY 4-5 bullets per slide. Each bullet must be a COMPLETE sentence or data point (15-25 words). Include real numbers, percentages, comparisons, examples wherever possible. No vague bullets like "Increased efficiency" — write "Solar panel efficiency improved from 15% to 23% between 2010-2024, reducing cost per watt by 60%."
+- "paragraph": ALWAYS include this. Write 40-55 words of flowing prose that adds context beyond the bullets. This is the expert insight layer.
+- "subheading": for title/conclusion slides write a compelling 12-18 word subtitle that sets the stage
+- "stat": for stat slides pick the single most striking number with units (e.g. "£847bn" or "340%")
+- "quote": for quote slides write a real or realistic expert quote (20-30 words) that supports the slide theme
+
+LAYOUT RULES — pick the best layout for each slide's content:
+- First slide: always "title-center" with dark:true
+- Last slide: "title-center" with dark:true (call to action / conclusion)
+- Use "stat" when a single number tells the whole story
+- Use "quote" for credibility / social proof slides
+- Use "two-col" when comparing two things or listing many points
+- Use "timeline" for process, history, or steps
+- Use "three-images" for showcasing products, case studies, or examples
+- Use "two-icons" or "four-icons" for features, benefits, or pillars
+- Use "fullbleed" for dramatic impact slides (market opportunity, vision)
+- Use "default" (bullets) for most content slides
+
+Return ONLY a raw JSON array of exactly ${slideCount} objects. No markdown, no explanation, no code fences.
+
+Each object must have ALL these fields:
 {
-  "title": "slide title (3-7 words)",
+  "title": "short slide title 3-6 words",
   "type": "title|content|data|quote|cta|conclusion",
-  "dark": true or false (true for first, last, and emphasis slides),
-  "layout": "title-center|bullets-right|two-col|stat|quote|timeline|three-images|two-icons|four-icons|fullbleed",
-  "heading": "main heading text",
-  "subheading": "subtitle or supporting line (for title/conclusion slides)",
-  "bullets": ["bullet 1","bullet 2","bullet 3"],
-  "paragraph": "optional prose paragraph max 40 words",
-  "stat": "big number or stat if layout is stat e.g. 94%",
-  "quote": "quote text if layout is quote",
-  "author": "quote author if layout is quote",
-  "imageKeyword": "2-4 word image search term relevant to slide content",
-  "speakerNote": "one sentence speaker guidance"
-}
-
-No markdown, no code fences. Raw JSON array only.`;
+  "dark": true or false,
+  "layout": "default|two-col|title-center|fullbleed|stat|quote|timeline|three-images|two-icons|four-icons",
+  "heading": "specific compelling headline",
+  "subheading": "supporting subtitle (use for title/conclusion slides)",
+  "bullets": ["Complete sentence bullet with specific data point one","Complete sentence bullet with specific data point two","Complete sentence bullet with specific data point three","Complete sentence bullet with specific data point four"],
+  "paragraph": "40-55 word expert insight paragraph that adds real context and depth beyond the bullets. Write this like a senior consultant summarising the key implication.",
+  "stat": "the key number if layout is stat, empty string otherwise",
+  "quote": "exact quote text if layout is quote, empty string otherwise",
+  "author": "quote author name and title if layout is quote, empty string otherwise",
+  "imageKeyword": "3-5 word specific image search term",
+  "speakerNote": "one sentence of speaker guidance for this slide"
+}`;
 
       const r=await fetch("https://api.anthropic.com/v1/messages",{
         method:"POST",
         headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
-        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:prompt}]})
+        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:8000,messages:[{role:"user",content:prompt}]})
       });
       const d=await r.json();
       if(!r.ok)return res.status(r.status).json({error:d.error?.message||"API error"});
