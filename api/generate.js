@@ -77,60 +77,59 @@ async function addLogo(s,pres,logoImgData,logoPos,logoWhiteBg,isCover){
   try{s.addImage({data:logoImgData,x,y,w:finalW,h:finalH});}catch(e){}
 }
 
-// Build PPTX from slide objects that contain positioned elements
+// Build PPTX from slide objects — elements are in 960x540 coordinate space
 async function buildPptxFromSlides(slides, theme, pres, logoImg, logoPos, logoWhiteBg){
-  // Slide canvas is 960x540 in preview (96dpi equivalent)
-  // PPTX is 10" x 5.625" = 960x540 at 96dpi
-  const PX_TO_IN = 1/96;
-  const CANVAS_W = 960;
-  const CANVAS_H = 540;
-  const PPTX_W = 10;
-  const PPTX_H = 5.625;
+  // Elements arrive already in 960x540 space (doExport normalizes them)
+  // PPTX slide is 10" x 5.625" — so: inches = px/960*10
+  const CW=960, CH=540, PW=10, PH=5.625;
+  function toIn(px,axis){return Math.round((px/(axis==='x'?CW:CH)*(axis==='x'?PW:PH))*1000)/1000;}
+  function clamp(v,mn,mx){return Math.max(mn,Math.min(mx,v));}
+  function hexColor(c){
+    if(!c)return 'FFFFFF';
+    c=c.trim();
+    if(c.startsWith('#'))return c.replace('#','').padEnd(6,'0').slice(0,6).toUpperCase();
+    const m=c.match(/\d+/g);
+    if(m&&m.length>=3)return [m[0],m[1],m[2]].map(v=>('0'+parseInt(v).toString(16)).slice(-2)).join('').toUpperCase();
+    return 'FFFFFF';
+  }
 
   for(let si=0;si<slides.length;si++){
     const slide=slides[si];
     const s=pres.addSlide();
-    const bg=slide.background||('#'+theme.slideBg);
-    s.background={color:bg.replace('#','')};
+    s.background={color:hexColor(slide.background||'#FFFFFF')};
 
-    // Add logo
     await addLogo(s,pres,logoImg,logoPos||'top-left',logoWhiteBg,si===0);
 
-    // Render each element
     const elements=slide.elements||[];
     for(const el of elements){
-      // Convert pixel positions to inches
-      const x=(el.left||0)/CANVAS_W*PPTX_W;
-      const y=(el.top||0)/CANVAS_H*PPTX_H;
-      const w=(el.width||200)/CANVAS_W*PPTX_W;
-      const h=(el.height||50)/CANVAS_H*PPTX_H;
+      // All coords are already in 960x540 space
+      const x=toIn(clamp(el.left||0,-20,960),'x');
+      const y=toIn(clamp(el.top||0,-20,540),'y');
+      const w=toIn(clamp(el.width||100,4,960),'x');
+      const h=toIn(clamp(el.height||20,2,540),'y');
 
-      if(el.type==='text'||el.type==='title'||el.type==='subtitle'||el.type==='bullet'){
-        const fontSize=Math.round((el.fontSize||16)*0.75); // px to pt approx
-        const color=(el.color||'#'+theme.slideText).replace('#','');
-        const bold=el.bold||el.type==='title';
-        const italic=el.italic||false;
+      if(el.type==='text'){
+        // Font size: elements are in 960-space pixels, convert to points (1pt = 1.33px at 96dpi)
+        // But our canvas uses Arial at screen pixels, so 1px ≈ 0.75pt
+        const rawPt=Math.round((el.fontSize||18)*0.75);
+        const fontSize=clamp(rawPt,7,54);
+        const color=hexColor(el.color||theme.slideText);
+        const bold=!!el.bold;
+        const italic=!!el.italic;
         const align=el.align||'left';
+        const text=el.text||'';
 
-        // For bullets, split by newline
-        if(el.type==='bullet'&&el.text&&el.text.includes('\n')){
-          const lines=el.text.split('\n').filter(l=>l.trim());
+        if(text.includes('\n')){
+          // Multi-line: render as individual paragraphs
+          const lines=text.split('\n').filter(l=>l.trim());
           s.addText(lines.map((line,j)=>({
             text:line,
-            options:{bullet:true,fontSize:Math.min(fontSize,18),fontFace:'Calibri',
-              color,paraSpaceAfter:4,breakLine:j<lines.length-1}
-          })),{x,y,w,h,valign:'top'});
+            options:{fontSize,fontFace:'Calibri',bold,italic,color,
+              paraSpaceAfter:2,breakLine:j<lines.length-1}
+          })),{x,y,w,h,valign:'top',wrap:true});
         }else{
-          s.addText(el.text||'',{
-            x,y,w,h,
-            fontSize:Math.min(fontSize,44),
-            fontFace:'Calibri',
-            bold,italic,
-            color,
-            align,
-            valign:'middle',
-            wrap:true
-          });
+          s.addText(text,{x,y,w,h,fontSize,fontFace:'Calibri',
+            bold,italic,color,align,valign:'middle',wrap:true,margin:2});
         }
       }else if(el.type==='image'&&el.src){
         const imgData=await prepImg(el.src);
@@ -138,11 +137,11 @@ async function buildPptxFromSlides(slides, theme, pres, logoImg, logoPos, logoWh
           try{s.addImage({data:imgData,x,y,w,h,sizing:{type:'cover',w,h}});}catch(e){}
         }
       }else if(el.type==='shape'){
-        const fillColor=(el.fill||'#'+theme.accent).replace('#','');
-        s.addShape(pres.shapes.RECTANGLE,{x,y,w,h,fill:{color:fillColor},line:{color:fillColor}});
-      }else if(el.type==='accent-line'){
-        const fillColor=(el.fill||'#'+theme.accent).replace('#','');
-        s.addShape(pres.shapes.RECTANGLE,{x,y,w,h:Math.max(h,0.04),fill:{color:fillColor},line:{color:fillColor}});
+        if(w<0.01||h<0.01)continue; // skip invisible shapes
+        const fill=hexColor(el.fill||'#cccccc');
+        // Detect transparent/low-opacity fills and skip
+        if(el.fill&&el.fill.includes('rgba')&&parseFloat((el.fill.match(/[\d.]+/g)||[])[3]||'1')<0.05)continue;
+        s.addShape(pres.shapes.RECTANGLE,{x,y,w,h,fill:{color:fill},line:{color:fill}});
       }
     }
   }

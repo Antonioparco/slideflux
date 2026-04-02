@@ -1273,22 +1273,70 @@ window.addEventListener('keydown',function(e){
 async function doExport(){
   if(!slides.length){toast('No slides to export');return;}
   saveSlide();
+  var sc=fc._sc||1;
+
   var data=slides.map(function(sl){
     var els=[];
-    if(sl._json){try{var p=JSON.parse(sl._json);(p.objects||[]).forEach(function(o){
-      if(o.type==='textbox'||o.type==='i-text')els.push({type:'text',text:o.text||'',left:o.left||0,top:o.top||0,width:o.width||200,height:(o.fontSize||18)*2,fontSize:o.fontSize||18,bold:o.fontWeight==='bold',italic:o.fontStyle==='italic',color:o.fill||'#1A2320',align:o.textAlign||'left'});
-      else if(o.type==='rect')els.push({type:'shape',left:o.left||0,top:o.top||0,width:(o.width||0)*(o.scaleX||1),height:(o.height||0)*(o.scaleY||1),fill:o.fill||'#ccc'});
-      else if(o.type==='image')els.push({type:'image',src:o.src||'',left:o.left||0,top:o.top||0,width:(o.width||0)*(o.scaleX||1),height:(o.height||0)*(o.scaleY||1)});
-    });}catch(e){}}
-    return{title:sl.title,background:sl.bg||'#FFFFFF',elements:els,scale:fc._sc||1};
+    if(sl._json){
+      try{
+        var p=JSON.parse(sl._json);
+        (p.objects||[]).forEach(function(o){
+          // Convert from scaled canvas coords back to 960x540 space
+          var L=Math.round((o.left||0)/sc);
+          var T=Math.round((o.top||0)/sc);
+          var W=Math.max(1,Math.round((o.width||0)*(o.scaleX||1)/sc));
+          var H=Math.max(1,Math.round((o.height||0)*(o.scaleY||1)/sc));
+          var FS=Math.max(8,Math.min(54,Math.round((o.fontSize||18)/sc)));
+
+          if(o.type==='textbox'||o.type==='i-text'){
+            var lines2=(o.text||'').split('\n').length;
+            var TH=Math.max(H, Math.round(FS*1.5*lines2+12));
+            var fillColor=o.fill||'#1A2320';
+            // rgba to hex
+            var m=fillColor.match(/rgba?\((\d+),(\d+),(\d+)/);
+            if(m) fillColor='#'+[m[1],m[2],m[3]].map(function(v){return ('0'+parseInt(v).toString(16)).slice(-2);}).join('');
+            els.push({type:'text',text:o.text||'',left:L,top:T,width:W,height:TH,
+              fontSize:FS,bold:o.fontWeight==='bold',italic:o.fontStyle==='italic',
+              color:fillColor,align:o.textAlign||'left'});
+          }else if(o.type==='rect'){
+            var fillR=o.fill||'#cccccc';
+            var mr=fillR.match(/rgba?\((\d+),(\d+),(\d+)/);
+            if(mr) fillR='#'+[mr[1],mr[2],mr[3]].map(function(v){return ('0'+parseInt(v).toString(16)).slice(-2);}).join('');
+            els.push({type:'shape',left:L,top:T,width:W,height:H,fill:fillR});
+          }else if(o.type==='image'&&o.src&&o.src.length>10){
+            els.push({type:'image',src:o.src,left:L,top:T,width:W,height:H});
+          }else if(o.type==='group'||o.type==='path'){
+            // SVG icon — render to image via offscreen canvas
+            try{
+              var tmpC=document.createElement('canvas');
+              tmpC.width=W*2;tmpC.height=H*2;
+              var tmpCtx=tmpC.getContext('2d');
+              // We can't easily render fabric SVG groups to canvas here
+              // Instead pass a placeholder colored rectangle
+              els.push({type:'shape',left:L,top:T,width:W,height:H,fill:o.fill||'#1A9E8F'});
+            }catch(e){}
+          }
+        });
+      }catch(e){console.error('Export error',e);}
+    }
+    return{title:sl.title,background:sl.bg||'#FFFFFF',elements:els};
   });
-  var btn=document.querySelector('.t-btn.go');btn.disabled=true;btn.textContent='Building...';toast('Building PowerPoint...');
+
+  var btn=document.querySelector('.t-btn.go');
+  btn.disabled=true;btn.textContent='Building...';toast('Building PowerPoint...');
   try{
-    var res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'pptx',title:slides[0]?.title||'Presentation',slides:data,style:sty,brandOn:brandOn,brandColors:bColors,logoData:logoData,logoPos:logoPos,logoWhiteBg:logoWhiteBg})});
+    var res=await fetch('/api/generate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'pptx',title:slides[0]?.title||'Presentation',
+        slides:data,style:sty,brandOn:brandOn,brandColors:bColors,
+        logoData:logoData,logoPos:logoPos,logoWhiteBg:logoWhiteBg})
+    });
     if(!res.ok)throw new Error('Export failed');
     var blob=await res.blob();var url=URL.createObjectURL(blob);
-    var a=document.createElement('a');a.href=url;a.download=(slides[0]?.title||'presentation').replace(/[^a-z0-9]/gi,'_')+'.pptx';
-    document.body.appendChild(a);a.click();document.body.removeChild(a);toast('Downloaded!');
+    var a=document.createElement('a');a.href=url;
+    a.download=(slides[0]?.title||'presentation').replace(/[^a-z0-9]/gi,'_')+'.pptx';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    toast('Downloaded!');
   }catch(e){toast('Export failed: '+e.message);}
   finally{btn.disabled=false;btn.innerHTML='&#8599; Export .pptx';}
 }
