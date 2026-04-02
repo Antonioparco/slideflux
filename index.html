@@ -1224,11 +1224,57 @@ function searchIcons(q){
   iconTmr=setTimeout(async function(){
     try{var res=await fetch('https://api.iconify.design/search?query='+encodeURIComponent(q)+'&limit=30');var data=await res.json();var icons=data.icons||[];
       if(!icons.length){g.innerHTML='<div style="grid-column:1/-1;text-align:center;font-size:10px;color:var(--t3);padding:.5rem">No results</div>';return;}
-      g.innerHTML=icons.map(function(name){var p=name.split(':');var url='https://api.iconify.design/'+p[0]+'/'+p[1]+'.svg?color=%2300e5c3';return '<button class="icon-it" onclick="addIcon(\''+url+'\')" title="'+name+'"><img src="'+url+'" onerror="this.parentElement.style.display=\'none\'"/></button>';}).join('');
+      g.innerHTML=icons.map(function(name){
+        var p=name.split(':');
+        var svgUrl='https://api.iconify.design/'+p[0]+'/'+p[1]+'.svg?color=%2300e5c3';
+        var pngUrl='https://api.iconify.design/'+p[0]+'/'+p[1]+'.svg?color=%2300e5c3&height=128';
+        // Show SVG in grid (for preview), pass PNG url to addIcon
+        return '<button class="icon-it" onclick="addIcon(\''+pngUrl+'\')" title="'+name+'"><img src="'+svgUrl+'" onerror="this.parentElement.style.display=\'none\'"/></button>';
+      }).join('');
     }catch(e){g.innerHTML='<div style="grid-column:1/-1;font-size:10px;color:var(--t3);padding:.5rem">Failed</div>';}
   },400);
 }
-function addIcon(url){fabric.loadSVGFromURL(url,function(objects,options){var svg=fabric.util.groupSVGElements(objects,options);svg.set({left:fc._sc*100,top:fc._sc*100,scaleX:fc._sc*0.14,scaleY:fc._sc*0.14});fc.add(svg);fc.setActiveObject(svg);fc.renderAll();toast('Icon added');pushHist();saveSlide();},null,{crossOrigin:'anonymous'});}
+function addIcon(url){
+  // Load icon as raster image (PNG) so it:
+  // 1. Renders correctly on canvas
+  // 2. Serializes into fabricJSON as a base64 src
+  // 3. Exports cleanly to PPTX
+  var img=new Image();
+  img.crossOrigin='anonymous';
+  img.onload=function(){
+    // Draw onto offscreen canvas to get base64 PNG
+    var oc=document.createElement('canvas');
+    oc.width=img.width||128; oc.height=img.height||128;
+    var ctx=oc.getContext('2d');
+    ctx.drawImage(img,0,0);
+    var dataUrl=oc.toDataURL('image/png');
+    fabric.Image.fromURL(dataUrl,function(fImg){
+      var size=fc._sc*80; // 80px in 960-space
+      fImg.scaleToWidth(size);
+      fImg.set({left:fc._sc*100, top:fc._sc*100});
+      fc.add(fImg);
+      fc.setActiveObject(fImg);
+      fc.renderAll();
+      toast('Icon added');
+      pushHist();
+      saveSlide();
+    });
+  };
+  img.onerror=function(){
+    // Fallback: try loading directly
+    fabric.Image.fromURL(url,function(fImg){
+      fImg.scaleToWidth(fc._sc*80);
+      fImg.set({left:fc._sc*100, top:fc._sc*100});
+      fc.add(fImg);
+      fc.setActiveObject(fImg);
+      fc.renderAll();
+      toast('Icon added');
+      pushHist();
+      saveSlide();
+    },{crossOrigin:'anonymous'});
+  };
+  img.src=url;
+}
 
 // ── UNDO / HISTORY ──
 function pushHist(){
@@ -1306,15 +1352,7 @@ async function doExport(){
           }else if(o.type==='image'&&o.src&&o.src.length>10){
             els.push({type:'image',src:o.src,left:L,top:T,width:W,height:H});
           }else if(o.type==='group'||o.type==='path'){
-            // SVG icon — render to image via offscreen canvas
-            try{
-              var tmpC=document.createElement('canvas');
-              tmpC.width=W*2;tmpC.height=H*2;
-              var tmpCtx=tmpC.getContext('2d');
-              // We can't easily render fabric SVG groups to canvas here
-              // Instead pass a placeholder colored rectangle
-              els.push({type:'shape',left:L,top:T,width:W,height:H,fill:o.fill||'#1A9E8F'});
-            }catch(e){}
+            // Old SVG icon (legacy) — skip silently, new icons are fabric.Image
           }
         });
       }catch(e){console.error('Export error',e);}
