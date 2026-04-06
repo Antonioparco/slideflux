@@ -1,4 +1,5 @@
 const PptxGenJS = require("pptxgenjs");
+// Note: Vercel uses Node 18+ with native fetch — no polyfill needed
 const THEMES={
   professional:{dark:"1E2761",light:"FFFFFF",text:"1A2320",accent:"4472C4"},
   teal:        {dark:"1A9E8F",light:"FFFFFF",text:"1A2320",accent:"D95B2A"},
@@ -61,14 +62,14 @@ async function buildPptx(slides,theme,pres,logoImg,logoPos,logoWb){
         const col=toHex(el.color||"#1A2320");
         const lh=el.lineHeight||1.35;
         const raw=el.text||"";
-        const opts={x,y,w,h,fontFace:el.fontFamily||"Calibri",bold:!!el.bold,italic:!!el.italic,
-          color:col,align:el.align||"left",valign:"top",wrap:true,margin:[2,4,2,4],lineSpacingMultiple:lh};
+        const baseOpts={x,y,w,h,fontFace:el.fontFamily||"Calibri",bold:!!el.bold,italic:!!el.italic,
+          fontSize:pt,color:col,align:el.align||"left",valign:"top",wrap:true,margin:[2,4,2,4]};
         if(raw.includes("\n")){
           const lines=raw.split("\n");
           s.addText(lines.map((ln,j)=>({text:ln,options:{fontSize:pt,fontFace:el.fontFamily||"Calibri",
-            bold:!!el.bold,italic:!!el.italic,color:col,paraSpaceAfter:2,breakLine:j<lines.length-1}})),
-            {x,y,w,h,valign:"top",wrap:true,margin:[2,4,2,4],lineSpacingMultiple:lh});
-        }else{s.addText(raw,{...opts,fontSize:pt});}
+            bold:!!el.bold,italic:!!el.italic,color:col,paraSpaceAfter:Math.round((lh-1)*pt*0.5),
+            breakLine:j<lines.length-1}})),{x,y,w,h,valign:"top",wrap:true,margin:[2,4,2,4]});
+        }else{s.addText(raw,baseOpts);}
       }else if(el.type==="image"){
         const d=await prepImg(el.src);
         if(d)try{s.addImage({data:d,x,y,w,h,sizing:{type:"cover",w,h}});}catch(e){}
