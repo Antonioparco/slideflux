@@ -1,15 +1,15 @@
 {
   "name": "slideflux",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "Slideflux AI Presentation Builder",
-  "scripts": {
-    "dev": "vercel dev",
-    "start": "vercel dev"
-  },
   "dependencies": {
     "pptxgenjs": "^3.12.0"
   },
   "engines": {
     "node": ">=18"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev"
   }
 }
