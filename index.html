@@ -99,6 +99,10 @@ textarea:focus,input[type=text]:focus{border-color:var(--teal)}textarea{line-hei
 .tbtn:hover{border-color:var(--teal);color:var(--teal);background:var(--tg)}.tbtn.on{background:var(--tg);border-color:var(--teal);color:var(--teal)}
 .tbtn.go{background:linear-gradient(135deg,var(--orange),var(--orange2));color:#fff;border-color:var(--orange2);font-weight:700}.tbtn.go:hover{filter:brightness(1.1)}
 .tbtn:disabled{opacity:.28;cursor:not-allowed}
+.shape-dd{position:relative}
+.shape-menu{display:none;position:absolute;top:30px;left:0;z-index:40;min-width:170px;background:var(--bg3);border:1px solid var(--line2);border-radius:6px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.shape-opt{width:100%;text-align:left;background:transparent;border:none;color:var(--t1);padding:7px 9px;border-radius:4px;cursor:pointer;font:inherit}
+.shape-opt:hover{background:var(--tg);color:var(--teal)}
 .tsel{padding:3px 6px;border-radius:4px;border:1px solid var(--line2);background:var(--bg2);font-size:10px;color:var(--t2);font-family:var(--m);outline:none;cursor:pointer}.tsel:focus{border-color:var(--teal)}
 .tcol{width:22px;height:22px;border-radius:4px;border:1px solid var(--line2);cursor:pointer;padding:2px;flex-shrink:0;background:var(--bg2)}
 .obj-tools{display:flex;align-items:center;gap:4px;transition:opacity .13s}.obj-tools.dim{opacity:.2;pointer-events:none}
@@ -226,16 +230,16 @@ textarea:focus,input[type=text]:focus{border-color:var(--teal)}textarea{line-hei
     <button class="tbtn" onclick="addTxt('bullet')">&#8801; List</button>
     <div class="tsep"></div>
     <button class="tbtn" onclick="trigImg()">+ Image</button>
-    <button class="tbtn" onclick="addShape()">&#9644; Shape</button>
+    <div class="shape-dd"><button class="tbtn" type="button" onclick="toggleShapeMenu(event)">&#9644; Shape &#9662;</button><div class="shape-menu" id="shape-menu"><button class="shape-opt" onclick="addShapeKind('rect')">Rectangle</button><button class="shape-opt" onclick="addShapeKind('rounded-rect')">Rounded rectangle</button><button class="shape-opt" onclick="addShapeKind('circle')">Circle</button><button class="shape-opt" onclick="addShapeKind('star')">Star</button><button class="shape-opt" onclick="addShapeKind('line')">Line</button></div></div>
     <div class="tsep"></div>
     <div class="obj-tools dim" id="obj-tools">
       <select class="tsel" id="fsize" onchange="setFS(this.value)"><option>9</option><option>11</option><option>13</option><option>15</option><option selected>18</option><option>21</option><option>24</option><option>28</option><option>32</option><option>38</option><option>44</option><option>52</option></select>
       <button class="tbtn" id="btn-b" onclick="toggleFmt('bold')"><b>B</b></button>
       <button class="tbtn" id="btn-i" onclick="toggleFmt('italic')"><i>I</i></button>
       <input type="color" class="tcol" id="tcol" value="#1A2320" onchange="setTC(this.value)" title="Text colour"/>
-      <button class="tbtn" onclick="setAl('left')">L</button>
-      <button class="tbtn" onclick="setAl('center')">C</button>
-      <button class="tbtn" onclick="setAl('right')">R</button>
+      <button class="tbtn" onclick="setAl('left')" title="Align left">&#8801;</button>
+      <button class="tbtn" onclick="setAl('center')" title="Align center">&#8803;</button>
+      <button class="tbtn" onclick="setAl('right')" title="Align right">&#8801;&#8594;</button>
       <div class="tsep"></div>
       <button class="tbtn" onclick="layerOp('front')" title="Bring to Front">&#11014;&#11014;</button>
       <button class="tbtn" onclick="layerOp('fwd')" title="Forward Ctrl+]">&#11014;</button>
@@ -921,10 +925,38 @@ function trigImg(){document.getElementById('img-hidden').click();}
 function addImgToCanvas(inp){
   if(!inp.files[0])return;
   var r=new FileReader();
-  r.onload=function(ev){fabric.Image.fromURL(ev.target.result,function(img){img.scaleToWidth(fc._sc*340);img.set({left:fc._sc*100,top:fc._sc*80});fc.add(img);fc.setActiveObject(img);fc.renderAll();saveSlide();pushHist();});};
+  r.onload=function(ev){fabric.Image.fromURL(ev.target.result,function(img){
+    img.scaleToWidth(fc._sc*340);
+    img.set({left:fc._sc*100,top:fc._sc*80});
+    img.src=ev.target.result;
+    fc.add(img);fc.setActiveObject(img);fc.renderAll();saveSlide();pushHist();
+  },{crossOrigin:'anonymous'});};
   r.readAsDataURL(inp.files[0]);inp.value='';
 }
-function addShape(){var t=th();var o=new fabric.Rect({left:fc._sc*200,top:fc._sc*150,width:fc._sc*260,height:fc._sc*150,fill:t.accent,rx:fc._sc*3});fc.add(o);fc.setActiveObject(o);fc.renderAll();saveSlide();pushHist();}
+function toggleShapeMenu(e){if(e)e.stopPropagation();var m=document.getElementById('shape-menu');if(!m)return;m.style.display=m.style.display==='block'?'none':'block';}
+document.addEventListener('click',function(){var m=document.getElementById('shape-menu');if(m)m.style.display='none';});
+function addShapeKind(kind){
+  var t=th(),sc=fc._sc,obj=null;
+  if(kind==='rect'){
+    obj=new fabric.Rect({left:sc*200,top:sc*150,width:sc*260,height:sc*150,fill:t.accent,stroke:t.accent,strokeWidth:sc*2});
+    obj._shapeKind='rect';
+  }else if(kind==='rounded-rect'){
+    obj=new fabric.Rect({left:sc*200,top:sc*150,width:sc*260,height:sc*150,fill:t.accent,stroke:t.accent,strokeWidth:sc*2,rx:sc*14,ry:sc*14});
+    obj._shapeKind='rounded-rect';
+  }else if(kind==='circle'){
+    obj=new fabric.Circle({left:sc*220,top:sc*150,radius:sc*70,fill:t.accent,stroke:t.accent,strokeWidth:sc*2});
+    obj._shapeKind='circle';
+  }else if(kind==='star'){
+    obj=new fabric.Polygon([{x:50,y:0},{x:61,y:35},{x:98,y:35},{x:68,y:57},{x:79,y:91},{x:50,y:70},{x:21,y:91},{x:32,y:57},{x:2,y:35},{x:39,y:35}],{left:sc*220,top:sc*150,fill:t.accent,stroke:t.accent,strokeWidth:sc*2,scaleX:sc*1.5,scaleY:sc*1.5});
+    obj._shapeKind='star';
+  }else if(kind==='line'){
+    obj=new fabric.Line([0,0,sc*220,0],{left:sc*180,top:sc*200,stroke:t.accent,strokeWidth:sc*4});
+    obj._shapeKind='line';
+  }
+  if(obj){fc.add(obj);fc.setActiveObject(obj);fc.renderAll();saveSlide();pushHist();}
+  var m=document.getElementById('shape-menu');if(m)m.style.display='none';
+}
+function addShape(){addShapeKind('rounded-rect');}
 function delObj(){
   var o=fc&&fc.getActiveObject();if(!o)return;
   if(o.type==='activeSelection'){o.getObjects().forEach(function(obj){fc.remove(obj);});fc.discardActiveObject();}
@@ -1148,11 +1180,15 @@ async function doExport(){
         els.push({type:'text',text:o.text||'',left:L,top:T,width:W,height:TH,fontSize:FS,fontFamily:o.fontFamily||'Arial',bold:o.fontWeight==='bold',italic:o.fontStyle==='italic',underline:!!o.underline,color:r2h(o.fill||'#1A2320'),align:o.textAlign||'left',lineHeight:o.lineHeight||1.35});
       }else if(o.type==='rect'){
         if(H<4&&W>400)return;var am2=(o.fill||'').match(/rgba\([\d,\s]+,([\d.]+)\)/);if(am2&&parseFloat(am2[1])<0.06)return;
-        els.push({type:'shape',left:L,top:T,width:W,height:H,fill:r2h(o.fill||'#cccccc')});
+        els.push({type:'shape',shapeKind:(o._shapeKind||(o.rx||o.ry?'rounded-rect':'rect')),left:L,top:T,width:W,height:H,fill:r2h(o.fill||'#cccccc'),stroke:o.stroke?r2h(o.stroke):r2h(o.fill||'#cccccc'),strokeWidth:Math.round((o.strokeWidth||2)/sc)});
       }else if(o.type==='circle'){
         var am3=(o.fill||'').match(/rgba\([\d,\s]+,([\d.]+)\)/);if(am3&&parseFloat(am3[1])<0.06)return;
         var diam=Math.max(2,Math.round(o.radius*2*(o.scaleX||1)/sc));
         els.push({type:'circle',left:Math.round((o.left||0)/sc),top:Math.round((o.top||0)/sc),width:diam,height:diam,fill:o.fill&&o.fill!=='transparent'?r2h(o.fill):'transparent',stroke:o.stroke?r2h(o.stroke):'transparent',strokeWidth:Math.round((o.strokeWidth||2)/sc)});
+      }else if(o.type==='polygon'&&o._shapeKind==='star'){
+        els.push({type:'star',left:L,top:T,width:W,height:H,fill:r2h(o.fill||'#cccccc'),stroke:o.stroke?r2h(o.stroke):'transparent',strokeWidth:Math.round((o.strokeWidth||2)/sc)});
+      }else if(o.type==='line'){
+        els.push({type:'line',left:L,top:T,width:Math.max(2,W),height:Math.max(2,H),stroke:o.stroke?r2h(o.stroke):'#000000',strokeWidth:Math.round((o.strokeWidth||2)/sc)});
       }else if(o.type==='image'&&o.src&&o.src.length>10){
         els.push({type:'image',src:o.src,left:L,top:T,width:W,height:H});
       }
