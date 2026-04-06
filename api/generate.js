@@ -271,19 +271,20 @@ STRICT STRUCTURE RULES:
 - First slide must be layout "cover-center" and dark true.
 - Last slide must be layout "closing" and dark true.
 - Use varied layouts for the remaining slides.
-- Keep content visually safe:
-  - heading: max 10 words
-  - subheading: max 16 words
-  - bullets: EXACTLY 4 bullets, each max 12 words
-  - paragraph: max 28 words
-  - quote: max 28 words
+- Keep content visually safe but substantial:
+  - heading: 8-16 words
+  - subheading: 14-22 words
+  - bullets: EXACTLY 4 bullets, each 18-28 words
+  - paragraph: 70-90 words
+  - quote: 28-40 words
   - stat: max 8 words
   - author: max 6 words
-  - imageKeyword: max 4 words
+  - imageKeyword: 2-5 words
   - speakerNote: one short sentence
+- Every content slide must feel presentation-ready and text-rich.
 
 Each object must contain:
-{"title":"3-6 words","type":"title|content|data|quote|cta","dark":true,"layout":"cover-center|cover-split|cover-circle|cover-dark|default|two-col|three-col|title-body|quote|big-statement|agenda|closing|stat|three-stats|timeline|four-icons|two-icons|comparison|process|pyramid|img-right|img-left|img-full|img-top|two-images|three-images|img-mosaic|img-hero","heading":"specific headline","subheading":"","bullets":["One","Two","Three","Four"],"paragraph":"brief paragraph","stat":"","quote":"","author":"","imageKeyword":"keyword","speakerNote":"one sentence"}`;
+{"title":"3-6 words","type":"title|content|data|quote|cta","dark":true,"layout":"cover-center|cover-split|cover-circle|cover-dark|default|two-col|three-col|title-body|quote|big-statement|agenda|closing|stat|three-stats|timeline|four-icons|two-icons|comparison|process|pyramid|img-right|img-left|img-full|img-top|two-images|three-images|img-mosaic|img-hero","heading":"specific headline","subheading":"","bullets":["Sentence one with data.","Sentence two.","Sentence three.","Sentence four."],"paragraph":"70-90 word expert insight paragraph.","stat":"","quote":"","author":"","imageKeyword":"3-5 words","speakerNote":"one sentence"}`;
 
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
@@ -322,7 +323,7 @@ Each object must contain:
       }
 
       const pres = new PptxGenJS();
-      pres.layout = "LAYOUT_16X9";
+      pres.layout = "LAYOUT_16x9";
       pres.author = "Slideflux";
       pres.company = "Slideflux";
       pres.subject = String(title || "Presentation");
