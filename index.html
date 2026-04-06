@@ -226,23 +226,16 @@ textarea:focus,input[type=text]:focus{border-color:var(--teal)}textarea{line-hei
     <button class="tbtn" onclick="addTxt('bullet')">&#8801; List</button>
     <div class="tsep"></div>
     <button class="tbtn" onclick="trigImg()">+ Image</button>
-    <select class="tsel" id="shape-dd" onchange="if(this.value){addShapeType(this.value);this.value='';}">
-      <option value="">Shape</option>
-      <option value="rect">Rectangle</option>
-      <option value="roundRect">Rounded rect</option>
-      <option value="circle">Circle</option>
-      <option value="star">Star</option>
-      <option value="line">Line</option>
-    </select>
+    <button class="tbtn" onclick="addShape()">&#9644; Shape</button>
     <div class="tsep"></div>
     <div class="obj-tools dim" id="obj-tools">
       <select class="tsel" id="fsize" onchange="setFS(this.value)"><option>9</option><option>11</option><option>13</option><option>15</option><option selected>18</option><option>21</option><option>24</option><option>28</option><option>32</option><option>38</option><option>44</option><option>52</option></select>
       <button class="tbtn" id="btn-b" onclick="toggleFmt('bold')"><b>B</b></button>
       <button class="tbtn" id="btn-i" onclick="toggleFmt('italic')"><i>I</i></button>
       <input type="color" class="tcol" id="tcol" value="#1A2320" onchange="setTC(this.value)" title="Text colour"/>
-      <button class="tbtn" onclick="setAl('left')" title="Align left">&#9776;</button>
-      <button class="tbtn" onclick="setAl('center')" title="Align center">&#8801;</button>
-      <button class="tbtn" onclick="setAl('right')" title="Align right">&#9783;</button>
+      <button class="tbtn" onclick="setAl('left')">L</button>
+      <button class="tbtn" onclick="setAl('center')">C</button>
+      <button class="tbtn" onclick="setAl('right')">R</button>
       <div class="tsep"></div>
       <button class="tbtn" onclick="layerOp('front')" title="Bring to Front">&#11014;&#11014;</button>
       <button class="tbtn" onclick="layerOp('fwd')" title="Forward Ctrl+]">&#11014;</button>
@@ -270,14 +263,7 @@ textarea:focus,input[type=text]:focus{border-color:var(--teal)}textarea{line-hei
     <div class="acc"><div class="acc-hdr" onclick="toggleAcc(this)"><div class="acc-title"><span>04</span> Image Layouts</div><div class="acc-arrow">&#9662;</div></div><div class="acc-body"><div class="lt-grid" id="lt-img"></div></div></div>
     <div id="img-slots-wrap" style="margin-top:4px"></div>
     <div class="rp-lbl" style="margin-top:9px">Speaker note</div>
-
-    <div class="rp-lbl" style="margin-top:9px">Quick templates</div>
-    <div class="lt-grid" id="lt-quick">
-      <div class="lt" onclick="applyQuickTemplate('title-summary')"><svg viewBox="0 0 100 60"><rect width="100" height="60" fill="#0b1117"/><rect x="8" y="8" width="52" height="6" fill="#48a3ff"/><rect x="8" y="22" width="84" height="5" fill="#94a8b8"/><rect x="8" y="32" width="58" height="4" fill="#94a8b8"/><rect x="8" y="41" width="68" height="4" fill="#94a8b8"/></svg><div class="lt-n">Title + Summary</div></div>
-      <div class="lt" onclick="applyQuickTemplate('comparison')"><svg viewBox="0 0 100 60"><rect width="100" height="60" fill="#0b1117"/><rect x="8" y="8" width="45" height="6" fill="#48a3ff"/><rect x="8" y="22" width="38" height="24" fill="#223242"/><rect x="54" y="22" width="38" height="24" fill="#223242"/></svg><div class="lt-n">Comparison</div></div>
-      <div class="lt" onclick="applyQuickTemplate('kpi')"><svg viewBox="0 0 100 60"><rect width="100" height="60" fill="#0b1117"/><rect x="8" y="8" width="32" height="6" fill="#48a3ff"/><rect x="8" y="22" width="84" height="24" fill="#223242"/><rect x="14" y="28" width="22" height="12" fill="#48a3ff"/></svg><div class="lt-n">KPI</div></div>
-      <div class="lt" onclick="applyQuickTemplate('timeline')"><svg viewBox="0 0 100 60"><rect width="100" height="60" fill="#0b1117"/><rect x="8" y="10" width="40" height="6" fill="#48a3ff"/><rect x="12" y="36" width="76" height="3" fill="#94a8b8"/><circle cx="24" cy="37" r="4" fill="#48a3ff"/><circle cx="50" cy="37" r="4" fill="#48a3ff"/><circle cx="76" cy="37" r="4" fill="#48a3ff"/></svg><div class="lt-n">Timeline</div></div>
-    </div>
+    <textarea class="note-ta" id="note-ta" placeholder="Speaker note..." onchange="saveNote(this.value)"></textarea>
   </div>
   <div id="rp-text" class="rp-body" style="display:none">
     <div id="no-sel" class="no-sel">Select a text element on the canvas to edit typography.</div>
@@ -290,7 +276,7 @@ textarea:focus,input[type=text]:focus{border-color:var(--teal)}textarea{line-hei
       <div class="rp-lbl">Style</div>
       <div class="btn-row"><button class="fmt-btn" id="fp-bold" onclick="toggleFmt('bold')"><b>B</b></button><button class="fmt-btn" id="fp-italic" onclick="toggleFmt('italic')"><i>I</i></button><button class="fmt-btn" id="fp-under" onclick="toggleFmt('underline')"><u>U</u></button></div>
       <div class="rp-lbl">Alignment</div>
-      <div class="btn-row"><button class="fmt-btn" id="al-left" onclick="setAl('left')" title="Align left">&#9776;</button><button class="fmt-btn" id="al-center" onclick="setAl('center')" title="Align center">&#8801;</button><button class="fmt-btn" id="al-right" onclick="setAl('right')" title="Align right">&#9783;</button><button class="fmt-btn" id="al-justify" onclick="setAl('justify')" title="Justify">&#8802;</button></div>
+      <div class="btn-row"><button class="fmt-btn" id="al-left" onclick="setAl('left')">L</button><button class="fmt-btn" id="al-center" onclick="setAl('center')">C</button><button class="fmt-btn" id="al-right" onclick="setAl('right')">R</button><button class="fmt-btn" id="al-justify" onclick="setAl('justify')">J</button></div>
       <div class="rp-lbl">Colour</div>
       <div class="col-row"><input type="color" class="col-swatch" id="fp-col" value="#1A2320" oninput="setTC(this.value)"/><input type="text" class="col-hex" id="fp-col-hex" value="#1A2320" maxlength="7" onchange="setTCHex(this.value)"/></div>
     </div>
@@ -303,35 +289,27 @@ textarea:focus,input[type=text]:focus{border-color:var(--teal)}textarea{line-hei
 </div>
 </div>
 <div class="ctx" id="ctx">
-  <div class="ctx-head">Edit</div>
   <div class="ctx-item" onclick="undo()">Undo <span class="ctx-key">Ctrl+Z</span></div>
+  <div class="ctx-sep"></div>
   <div class="ctx-item" onclick="ctxCopy()">Copy <span class="ctx-key">Ctrl+C</span></div>
   <div class="ctx-item" onclick="ctxPaste()">Paste <span class="ctx-key">Ctrl+V</span></div>
   <div class="ctx-item" onclick="ctxDup()">Duplicate <span class="ctx-key">Ctrl+D</span></div>
-  <div class="ctx-item" onclick="ctxSelAll()">Select All <span class="ctx-key">Ctrl+A</span></div>
   <div class="ctx-sep"></div>
-  <div class="ctx-head">Layer order</div>
+  <div class="ctx-item ctx-head">Layer order</div>
   <div class="ctx-item" onclick="layerOp('front')">&#11014;&#11014; Bring to Front <span class="ctx-key">Ctrl+Shift+]</span></div>
   <div class="ctx-item" onclick="layerOp('fwd')">&#11014; Bring Forward <span class="ctx-key">Ctrl+]</span></div>
   <div class="ctx-item" onclick="layerOp('bwd')">&#11015; Send Backward <span class="ctx-key">Ctrl+[</span></div>
   <div class="ctx-item" onclick="layerOp('back')">&#11015;&#11015; Send to Back <span class="ctx-key">Ctrl+Shift+[</span></div>
   <div class="ctx-sep"></div>
-  <div class="ctx-head">Text</div>
+  <div class="ctx-item ctx-head">Text</div>
   <div class="ctx-item" onclick="toggleFmt('bold')"><b>B</b> Bold <span class="ctx-key">Ctrl+B</span></div>
   <div class="ctx-item" onclick="toggleFmt('italic')"><i>I</i> Italic <span class="ctx-key">Ctrl+I</span></div>
-  <div class="ctx-item" onclick="setAl('left')">&#9776; Align Left <span class="ctx-key">Alt+1</span></div>
-  <div class="ctx-item" onclick="setAl('center')">&#8801; Align Center <span class="ctx-key">Alt+2</span></div>
-  <div class="ctx-item" onclick="setAl('right')">&#9783; Align Right <span class="ctx-key">Alt+3</span></div>
+  <div class="ctx-item" onclick="setAl('left')">Align Left</div>
+  <div class="ctx-item" onclick="setAl('center')">Align Center</div>
+  <div class="ctx-item" onclick="setAl('right')">Align Right</div>
   <div class="ctx-sep"></div>
-  <div class="ctx-head">Shapes</div>
-  <div class="ctx-item" onclick="addShapeType('rect')">Rectangle <span class="ctx-key">Shift+1</span></div>
-  <div class="ctx-item" onclick="addShapeType('roundRect')">Rounded Rect <span class="ctx-key">Shift+2</span></div>
-  <div class="ctx-item" onclick="addShapeType('circle')">Circle <span class="ctx-key">Shift+3</span></div>
-  <div class="ctx-item" onclick="addShapeType('star')">Star <span class="ctx-key">Shift+4</span></div>
-  <div class="ctx-item" onclick="addShapeType('line')">Line <span class="ctx-key">Shift+5</span></div>
-  <div class="ctx-sep"></div>
-  <div class="ctx-head">Delete</div>
-  <div class="ctx-item danger" onclick="delObj()">&#10005; Delete <span class="ctx-key">Del / Backspace</span></div>
+  <div class="ctx-item" onclick="ctxSelAll()">Select All <span class="ctx-key">Ctrl+A</span></div>
+  <div class="ctx-item danger" onclick="delObj()">&#10005; Delete <span class="ctx-key">Del</span></div>
 </div>
 <input type="file" id="img-hidden" accept="image/*" style="display:none" onchange="addImgToCanvas(this)"/>
 <div class="toast" id="toast"></div>
@@ -347,97 +325,8 @@ var LAYOUTS={
 var sty='professional',brandOn=false,bColors={primary:'#1A9E8F',secondary:'#0E7A6E',accent:'#D95B2A',text:'#1A2320'};
 var logoData=null,logoPos='top-left',logoWhiteBg=false;
 var upContent='',upFileName='',slideCount=8,aTab='topic';
-var slides=[],cur=0,fc=null,clipboard=null,hist=[],hIdx=-1,iconTmr=null,toastTmr=null,guideLines=[],gridSize=24*snapScale(),snapOn=true,guideOn=true;
+var slides=[],cur=0,fc=null,clipboard=null,hist=[],hIdx=-1,iconTmr=null,toastTmr=null;
 function th(){if(brandOn)return{dark:bColors.primary,light:'#FFFFFF',text:bColors.text,accent:bColors.accent};return TH[sty]||TH.professional;}
-function snapScale(){return (window.devicePixelRatio&&window.devicePixelRatio>1)?1:1;}
-function clampWords(txt,maxWords){
-  txt=String(txt||'').replace(/\s+/g,' ').trim();
-  if(!txt)return '';
-  var parts=txt.split(' ');
-  return parts.length<=maxWords?txt:parts.slice(0,maxWords).join(' ')+'…';
-}
-function normalizeSlideContent(sl){
-  var lay=sl.layout||sl.lay||'default';
-  var rules={
-    'cover-center':{heading:9,sub:16,bullets:1,bw:14,para:24},
-    'cover-split':{heading:9,sub:16,bullets:1,bw:14,para:22},
-    'cover-circle':{heading:9,sub:16,bullets:1,bw:14,para:22},
-    'cover-dark':{heading:9,sub:16,bullets:1,bw:14,para:22},
-    'default':{heading:10,sub:0,bullets:4,bw:12,para:24},
-    'two-col':{heading:10,sub:0,bullets:6,bw:11,para:18},
-    'three-col':{heading:10,sub:0,bullets:6,bw:8,para:0},
-    'title-body':{heading:10,sub:0,bullets:0,bw:0,para:50},
-    'quote':{heading:8,sub:0,bullets:0,bw:0,para:26},
-    'big-statement':{heading:8,sub:0,bullets:1,bw:8,para:18},
-    'agenda':{heading:10,sub:0,bullets:6,bw:10,para:0},
-    'closing':{heading:8,sub:16,bullets:0,bw:0,para:14},
-    'stat':{heading:9,sub:0,bullets:2,bw:10,para:18},
-    'three-stats':{heading:9,sub:0,bullets:3,bw:8,para:0},
-    'timeline':{heading:9,sub:0,bullets:4,bw:10,para:0},
-    'four-icons':{heading:9,sub:0,bullets:4,bw:8,para:0},
-    'two-icons':{heading:9,sub:0,bullets:2,bw:12,para:14},
-    'comparison':{heading:9,sub:0,bullets:6,bw:10,para:0},
-    'process':{heading:9,sub:0,bullets:4,bw:10,para:14},
-    'pyramid':{heading:9,sub:0,bullets:4,bw:8,para:14},
-    'img-right':{heading:10,sub:0,bullets:4,bw:11,para:18},
-    'img-left':{heading:10,sub:0,bullets:4,bw:11,para:18},
-    'img-full':{heading:8,sub:0,bullets:1,bw:10,para:20},
-    'img-top':{heading:9,sub:0,bullets:0,bw:0,para:30},
-    'two-images':{heading:9,sub:0,bullets:2,bw:10,para:0},
-    'three-images':{heading:9,sub:0,bullets:3,bw:9,para:0},
-    'img-mosaic':{heading:9,sub:0,bullets:4,bw:6,para:0},
-    'img-hero':{heading:8,sub:0,bullets:2,bw:10,para:14}
-  }[lay]||{heading:10,sub:16,bullets:4,bw:12,para:24};
-  sl.heading=clampWords(sl.heading||sl.title||'',rules.heading);
-  sl.title=clampWords(sl.title||sl.heading||'',Math.max(3,rules.heading));
-  sl.subheading=rules.sub?clampWords(sl.subheading||'',rules.sub):'';
-  sl.paragraph=rules.para?clampWords(sl.paragraph||'',rules.para):'';
-  var b=Array.isArray(sl.bullets)?sl.bullets:[];
-  sl.bullets=b.slice(0,rules.bullets).map(function(x){return clampWords(x,rules.bw);});
-  return sl;
-}
-function drawGrid(){
-  if(!fc||!guideOn)return;
-  clearGuides();
-  var w=fc.getWidth(),h=fc.getHeight(), g=Math.round(gridSize*(fc._sc||1));
-  for(var x=g;x<w;x+=g){
-    var ln=new fabric.Line([x,0,x,h],{stroke:'rgba(0,229,195,0.06)',selectable:false,evented:false,excludeFromExport:true});
-    ln._guide=true;guideLines.push(ln);fc.add(ln);fc.sendToBack(ln);
-  }
-  for(var y=g;y<h;y+=g){
-    var ln2=new fabric.Line([0,y,w,y],{stroke:'rgba(0,229,195,0.06)',selectable:false,evented:false,excludeFromExport:true});
-    ln2._guide=true;guideLines.push(ln2);fc.add(ln2);fc.sendToBack(ln2);
-  }
-}
-function clearGuides(){
-  if(!fc)return;
-  guideLines.forEach(function(g){try{fc.remove(g);}catch(e){}});
-  guideLines=[];
-}
-function addGuideLine(x1,y1,x2,y2){
-  if(!fc||!guideOn)return;
-  var ln=new fabric.Line([x1,y1,x2,y2],{stroke:'rgba(0,229,195,0.35)',strokeWidth:1,selectable:false,evented:false,excludeFromExport:true});
-  ln._guide=true;guideLines.push(ln);fc.add(ln);fc.bringToFront(ln);
-}
-function refreshGuidesForObject(o){
-  if(!fc||!o||!guideOn)return;
-  clearGuides();drawGrid();
-  addGuideLine(o.left,0,o.left,fc.getHeight());
-  addGuideLine(o.left+(o.getScaledWidth?o.getScaledWidth():0),0,o.left+(o.getScaledWidth?o.getScaledWidth():0),fc.getHeight());
-  addGuideLine(0,o.top,fc.getWidth(),o.top);
-  addGuideLine(0,o.top+(o.getScaledHeight?o.getScaledHeight():0),fc.getWidth(),o.top+(o.getScaledHeight?o.getScaledHeight():0));
-}
-function fitTextbox(tb){
-  if(!tb||tb.type!=='textbox')return;
-  var maxH=(tb._maxH||tb.height||120), minFS=8*(fc&&fc._sc||1), tries=0;
-  tb.set({splitByGrapheme:false});
-  tb.initDimensions();
-  while(tb.calcTextHeight&&tb.calcTextHeight()>maxH && (tb.fontSize||0)>minFS && tries<20){
-    tb.set('fontSize',(tb.fontSize||16)-1);tb.initDimensions();tries++;
-  }
-  var target=Math.max(maxH,tb.calcTextHeight?tb.calcTextHeight()+6*(fc&&fc._sc||1):maxH);
-  tb.set({height:target});
-}
 
 // ── CANVAS ──
 window.addEventListener('load',function(){initCanvas();buildLtGrid();});
@@ -459,22 +348,11 @@ function initCanvas(){
   fc=new fabric.Canvas('c',{width:d.cw,height:d.ch,backgroundColor:'#FFFFFF',preserveObjectStacking:true,selection:true});
   fc._sc=d.cw/960;
   applyHandles();
-  drawGrid();
   fc.on('selection:created',onSel);
   fc.on('selection:updated',onSel);
-  fc.on('selection:cleared',function(){clearGuides();drawGrid();onDesel();});
-  fc.on('object:moving',function(e){
-    var o=e.target;if(!o||!snapOn)return;
-    var step=Math.round(gridSize*(fc._sc||1));
-    o.set({left:Math.round((o.left||0)/step)*step,top:Math.round((o.top||0)/step)*step});
-    refreshGuidesForObject(o);
-  });
-  fc.on('object:scaling',function(e){if(e.target)refreshGuidesForObject(e.target);});
-  fc.on('object:modified',function(e){
-    if(e&&e.target&&e.target.type==='textbox')fitTextbox(e.target);
-    clearGuides();drawGrid();saveSlide();pushHist();setTimeout(function(){renderThumb(cur);},80);
-  });
-  fc.on('text:changed',function(e){if(e&&e.target)fitTextbox(e.target);saveSlide();});
+  fc.on('selection:cleared',onDesel);
+  fc.on('object:modified',function(){saveSlide();pushHist();setTimeout(function(){renderThumb(cur);},80);});
+  fc.on('text:changed',function(){saveSlide();});
   // Right-click context menu
   document.getElementById('c').addEventListener('contextmenu',function(e){e.preventDefault();showCtx(e.clientX,e.clientY);});
   if(slides.length)loadSlide(cur);
@@ -602,7 +480,6 @@ async function generate(){
 
 // ── mkSlide — all positions in 960x540, scaled by fc._sc ──
 function mkSlide(sl,idx,t,isDark){
-  sl=normalizeSlideContent(sl||{});
   var bg=isDark?t.dark:t.light;
   var tc=isDark?'#FFFFFF':t.text;
   var bc=isDark?'rgba(255,255,255,0.88)':t.text;
@@ -617,16 +494,13 @@ function mkSlide(sl,idx,t,isDark){
   function R(x,y,w,h,fill,sel){return new fabric.Rect({left:px(x),top:px(y),width:px(w),height:px(h),fill:fill||'#ccc',stroke:null,selectable:sel!==false,evented:sel!==false});}
   function T(txt,x,y,w,sz,o){
     o=o||{};
-    var tb=new fabric.Textbox(txt||'',{
+    return new fabric.Textbox(txt||'',{
       left:px(x),top:px(y),width:px(w),
       fontSize:px(sz||14),fontFamily:o.ff||'Arial',
       fontWeight:o.bold?'bold':'normal',fontStyle:o.it?'italic':'normal',
       fill:o.c||'#1A2320',textAlign:o.al||'left',
       lineHeight:o.lh||1.3,editable:true,selectable:true
     });
-    tb._maxH=px(o.maxH||120);
-    setTimeout(function(){try{fitTextbox(tb);}catch(e){}},0);
-    return tb;
   }
   function CI(cx,cy,r,fill,stroke){return new fabric.Circle({left:px(cx-r),top:px(cy-r),radius:px(r),fill:fill||'transparent',stroke:stroke||ac,strokeWidth:px(2),selectable:true});}
   function IP(x,y,w,h,lb,slot){
@@ -646,10 +520,10 @@ function mkSlide(sl,idx,t,isDark){
   // ── COVER LAYOUTS ──
   if(lay==='cover-center'||lay==='title-center'||(idx===0&&(lay==='default'||!lay))){
     os.push(R(0,0,5,540,ac,false));
-    os.push(T(sl.heading||sl.title,            76,130,760,36,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,            76,130,760,36,{bold:true,c:tc,lh:1.1}));
     os.push(R(76,200,70,3,ac,false));
-    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 76,214,700,16,{c:bc,lh:1.3,maxH:72}));
-    if(sl.paragraph) os.push(T(sl.paragraph,  76,260,680,12,{it:true,c:bc,lh:1.4,maxH:92}));
+    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 76,214,700,16,{c:bc,lh:1.3}));
+    if(sl.paragraph) os.push(T(sl.paragraph,  76,260,680,12,{it:true,c:bc,lh:1.4}));
     IP(756,44,180,450,'+ Image',0);
 
   }else if(lay==='cover-split'){
@@ -658,8 +532,8 @@ function mkSlide(sl,idx,t,isDark){
     os.push(R(0,0,5,540,ac,false));
     os.push(T(sl.heading||sl.title,            52,130,380,32,{bold:true,c:tc,lh:1.15}));
     os.push(R(52,200,60,3,ac,false));
-    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 52,214,360,14,{c:bc,lh:1.3,maxH:72}));
-    if(sl.paragraph) os.push(T(sl.paragraph,  52,256,360,11,{it:true,c:bc,lh:1.4,maxH:92}));
+    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 52,214,360,14,{c:bc,lh:1.3}));
+    if(sl.paragraph) os.push(T(sl.paragraph,  52,256,360,11,{it:true,c:bc,lh:1.4}));
     IP(484,10,464,520,'+ Image',0);
 
   }else if(lay==='cover-circle'){
@@ -669,8 +543,8 @@ function mkSlide(sl,idx,t,isDark){
     os.push(R(0,0,5,540,ac,false));
     os.push(T(sl.heading||sl.title,            52,130,440,32,{bold:true,c:tc,lh:1.15}));
     os.push(R(52,200,60,3,ac,false));
-    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 52,214,420,14,{c:bc,lh:1.3,maxH:72}));
-    if(sl.paragraph) os.push(T(sl.paragraph,  52,256,400,11,{it:true,c:bc,lh:1.4,maxH:92}));
+    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 52,214,420,14,{c:bc,lh:1.3}));
+    if(sl.paragraph) os.push(T(sl.paragraph,  52,256,400,11,{it:true,c:bc,lh:1.4}));
     IP(690,130,240,280,'+ Image',0);
 
   }else if(lay==='cover-dark'){
@@ -685,24 +559,24 @@ function mkSlide(sl,idx,t,isDark){
   // ── TEXT LAYOUTS ──
   }else if(lay==='default'){
     // Title: 14, bar: 50, bullets start: 60, paragraph: 420 max
-    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,50,70,3,ac,false));
     var bt=(sl.bullets||[]).join('\n');
-    if(bt) os.push(T(bt, 38,60,884,13,{c:bc,lh:1.5,maxH:220}));
-    if(sl.paragraph) os.push(T(sl.paragraph, 38,400,884,11,{it:true,c:bc,lh:1.4,maxH:92}));
+    if(bt) os.push(T(bt, 38,60,884,13,{c:bc,lh:1.5}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 38,400,884,11,{it:true,c:bc,lh:1.4}));
 
   }else if(lay==='two-col'){
-    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,50,70,3,ac,false));
     os.push(R(478,58,2,460,ac+'30',false));
     var h2=Math.ceil((sl.bullets||[]).length/2);
     var c1=(sl.bullets||[]).slice(0,h2).join('\n'), c2=(sl.bullets||[]).slice(h2).join('\n');
-    if(c1) os.push(T(c1, 38,58,430,13,{c:bc,lh:1.5,maxH:220}));
-    if(c2) os.push(T(c2, 492,58,430,13,{c:bc,lh:1.5,maxH:220}));
+    if(c1) os.push(T(c1, 38,58,430,13,{c:bc,lh:1.5}));
+    if(c2) os.push(T(c2, 492,58,430,13,{c:bc,lh:1.5}));
     if(sl.paragraph) os.push(T(sl.paragraph, 38,430,884,11,{it:true,c:bc}));
 
   }else if(lay==='three-col'){
-    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,50,884,3,ac,false));
     var t3=Math.ceil((sl.bullets||[]).length/3);
     var cols=[(sl.bullets||[]).slice(0,t3),(sl.bullets||[]).slice(t3,t3*2),(sl.bullets||[]).slice(t3*2)];
@@ -710,17 +584,17 @@ function mkSlide(sl,idx,t,isDark){
     for(var ci=0;ci<3;ci++){
       if(cols[ci]&&cols[ci].length){
         os.push(R(colX[ci],56,6,30,ac,false));
-        os.push(T(cols[ci].join('\n'), colX[ci]+14,56,268,12,{c:bc,lh:1.5,maxH:220}));
+        os.push(T(cols[ci].join('\n'), colX[ci]+14,56,268,12,{c:bc,lh:1.5}));
       }
     }
     if(sl.paragraph) os.push(T(sl.paragraph, 38,440,884,11,{it:true,c:bc,al:'center'}));
 
   }else if(lay==='title-body'){
-    os.push(T(sl.heading||sl.title,  38,16,884,22,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,16,884,22,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,54,80,3,ac,false));
     if(sl.paragraph) os.push(T(sl.paragraph, 38,68,884,14,{c:bc,lh:1.55}));
     var tb2=(sl.bullets||[]).join('\n');
-    if(tb2) os.push(T(tb2, 38,216,884,13,{c:bc,lh:1.5,maxH:220}));
+    if(tb2) os.push(T(tb2, 38,216,884,13,{c:bc,lh:1.5}));
 
   }else if(lay==='quote'){
     os.push(T('\u201c', 28,8,110,64,{bold:true,c:ac}));
@@ -735,7 +609,7 @@ function mkSlide(sl,idx,t,isDark){
     if(sl.paragraph) os.push(T(sl.paragraph, 80,204,800,15,{c:bc,al:'center',lh:1.5}));
 
   }else if(lay==='agenda'){
-    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,50,70,3,ac,false));
     var agItems=sl.bullets||[];
     for(var ai=0;ai<Math.min(agItems.length,5);ai++){
@@ -765,7 +639,7 @@ function mkSlide(sl,idx,t,isDark){
     if(sl.paragraph) os.push(T(sl.paragraph, 80,276,800,11,{it:true,c:bc,al:'center',lh:1.4}));
 
   }else if(lay==='three-stats'){
-    os.push(T(sl.heading||sl.title,  38,12,884,18,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,12,884,18,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,46,884,3,ac,false));
     var st3=sl.bullets||[];
     for(var si3=0;si3<3;si3++){
@@ -778,7 +652,7 @@ function mkSlide(sl,idx,t,isDark){
     if(sl.paragraph) os.push(T(sl.paragraph, 38,278,884,11,{it:true,c:bc}));
 
   }else if(lay==='timeline'){
-    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(56,178,848,3,ac,false));
     var tst=(sl.bullets||[]).slice(0,5), tsw=848/Math.max(tst.length,1);
     for(var tk=0;tk<tst.length;tk++){
@@ -790,7 +664,7 @@ function mkSlide(sl,idx,t,isDark){
     if(sl.paragraph) os.push(T(sl.paragraph, 38,416,884,11,{it:true,c:bc}));
 
   }else if(lay==='four-icons'){
-    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1}));
     var cw4=880/4, r4=44;
     for(var fk=0;fk<4;fk++){
       var fcx=38+fk*cw4+cw4/2;
@@ -802,7 +676,7 @@ function mkSlide(sl,idx,t,isDark){
     }
 
   }else if(lay==='two-icons'){
-    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1}));
     var cw2i=880/2, r2i=58;
     for(var ik=0;ik<2;ik++){
       var icx=38+ik*cw2i+cw2i/2;
@@ -814,7 +688,7 @@ function mkSlide(sl,idx,t,isDark){
     }
 
   }else if(lay==='comparison'){
-    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,48,884,3,ac,false));
     var hc=Math.ceil((sl.bullets||[]).length/2);
     var lB=(sl.bullets||[]).slice(0,hc), rB=(sl.bullets||[]).slice(hc);
@@ -822,13 +696,13 @@ function mkSlide(sl,idx,t,isDark){
     os.push(R(480,58,442,460,ac+'07',true));
     os.push(R(38,58,442,38,ac+'26',false));
     os.push(R(480,58,442,38,ac+'1A',false));
-    if(lB[0]) os.push(T(lB[0], 46,62,426,14,{bold:true,c:tc,al:'center',maxH:48}));
-    if(rB[0]) os.push(T(rB[0], 488,62,426,14,{bold:true,c:tc,al:'center',maxH:48}));
-    os.push(T(lB.slice(1).join('\n'), 46,104,426,12,{c:bc,lh:1.5,maxH:220}));
-    os.push(T(rB.slice(1).join('\n'), 488,104,426,12,{c:bc,lh:1.5,maxH:220}));
+    if(lB[0]) os.push(T(lB[0], 46,62,426,14,{bold:true,c:tc,al:'center'}));
+    if(rB[0]) os.push(T(rB[0], 488,62,426,14,{bold:true,c:tc,al:'center'}));
+    os.push(T(lB.slice(1).join('\n'), 46,104,426,12,{c:bc,lh:1.5}));
+    os.push(T(rB.slice(1).join('\n'), 488,104,426,12,{c:bc,lh:1.5}));
 
   }else if(lay==='process'){
-    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,48,884,3,ac,false));
     var pst=(sl.bullets||[]).slice(0,4), pw=852/Math.max(pst.length,1)-6;
     for(var pk=0;pk<pst.length;pk++){
@@ -842,7 +716,7 @@ function mkSlide(sl,idx,t,isDark){
     if(sl.paragraph) os.push(T(sl.paragraph, 38,374,884,11,{it:true,c:bc}));
 
   }else if(lay==='pyramid'){
-    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,12,884,20,{bold:true,c:tc,lh:1.1}));
     var pyL=sl.bullets||[], pyTot=Math.min(pyL.length,4), pyH=318, pyTop=54;
     for(var pi=0;pi<pyTot;pi++){
       var pct=(pi+1)/pyTot;
@@ -856,20 +730,20 @@ function mkSlide(sl,idx,t,isDark){
 
   // ── IMAGE LAYOUTS ──
   }else if(lay==='img-right'){
-    os.push(T(sl.heading||sl.title,  38,14,468,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,14,468,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,50,70,3,ac,false));
     var ir=(sl.bullets||[]).join('\n');
-    if(ir) os.push(T(ir, 38,60,468,13,{c:bc,lh:1.5,maxH:220}));
-    if(sl.paragraph) os.push(T(sl.paragraph, 38,388,468,11,{it:true,c:bc,lh:1.4,maxH:92}));
+    if(ir) os.push(T(ir, 38,60,468,13,{c:bc,lh:1.5}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 38,388,468,11,{it:true,c:bc,lh:1.4}));
     IP(518,0,442,540,'+ Image',0);
 
   }else if(lay==='img-left'){
     IP(0,0,418,540,'+ Image',0);
-    os.push(T(sl.heading||sl.title,  432,14,490,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  432,14,490,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(432,50,70,3,ac,false));
     var il=(sl.bullets||[]).join('\n');
-    if(il) os.push(T(il, 432,60,490,13,{c:bc,lh:1.5,maxH:220}));
-    if(sl.paragraph) os.push(T(sl.paragraph, 432,388,490,11,{it:true,c:bc,lh:1.4,maxH:92}));
+    if(il) os.push(T(il, 432,60,490,13,{c:bc,lh:1.5}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 432,388,490,11,{it:true,c:bc,lh:1.4}));
 
   }else if(lay==='img-full'||lay==='fullbleed'){
     os[0]=R(0,0,960,540,bg,false);
@@ -882,12 +756,12 @@ function mkSlide(sl,idx,t,isDark){
 
   }else if(lay==='img-top'){
     IP(0,0,960,256,'+ Top image',0);
-    os.push(T(sl.heading||sl.title,  38,270,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,270,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,306,70,3,ac,false));
-    if(sl.paragraph) os.push(T(sl.paragraph, 38,318,884,14,{c:bc,lh:1.5,maxH:220}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 38,318,884,14,{c:bc,lh:1.5}));
 
   }else if(lay==='two-images'){
-    os.push(T(sl.heading||sl.title,  38,14,884,18,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,14,884,18,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,48,884,3,ac,false));
     IP(14,58,452,352,'+ Image 1',0);
     IP(480,58,466,352,'+ Image 2',1);
@@ -895,14 +769,14 @@ function mkSlide(sl,idx,t,isDark){
     if((sl.bullets||[])[1]) os.push(T(sl.bullets[1], 480,418,466,11,{bold:true,c:bc,lh:1.3}));
 
   }else if(lay==='three-images'){
-    os.push(T(sl.heading||sl.title,  38,12,884,18,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,12,884,18,{bold:true,c:tc,lh:1.1}));
     for(var tik=0;tik<3;tik++){
       IP(12+tik*322,46,308,352,'+ Image '+(tik+1),tik);
       if((sl.bullets||[])[tik]) os.push(T(sl.bullets[tik], 12+tik*322,404,308,11,{bold:true,c:bc,lh:1.3}));
     }
 
   }else if(lay==='img-mosaic'){
-    os.push(T(sl.heading||sl.title,  38,10,884,18,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,10,884,18,{bold:true,c:tc,lh:1.1}));
     IP(8,38,456,268,'+ Image 1',0);
     IP(472,38,480,126,'+ Image 2',1);
     IP(472,172,480,134,'+ Image 3',2);
@@ -911,19 +785,19 @@ function mkSlide(sl,idx,t,isDark){
   }else if(lay==='img-hero'){
     IP(0,0,584,540,'+ Hero image',0);
     os.push(R(550,0,410,540,bg,false));
-    os.push(T(sl.heading||sl.title,  566,54,374,22,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  566,54,374,22,{bold:true,c:tc,lh:1.1}));
     os.push(R(566,92,58,3,ac,false));
     var ihe=(sl.bullets||[]).join('\n');
-    if(ihe) os.push(T(ihe, 566,104,374,12,{c:bc,lh:1.5,maxH:220}));
-    if(sl.paragraph) os.push(T(sl.paragraph, 566,386,374,11,{it:true,c:bc,lh:1.4,maxH:92}));
+    if(ihe) os.push(T(ihe, 566,104,374,12,{c:bc,lh:1.5}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 566,386,374,11,{it:true,c:bc,lh:1.4}));
 
   }else{
     // Fallback = default bullets
-    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1,maxH:78}));
+    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1}));
     os.push(R(38,50,70,3,ac,false));
     var bf=(sl.bullets||[]).join('\n');
-    if(bf) os.push(T(bf, 38,60,884,13,{c:bc,lh:1.5,maxH:220}));
-    if(sl.paragraph) os.push(T(sl.paragraph, 38,400,884,11,{it:true,c:bc,lh:1.4,maxH:92}));
+    if(bf) os.push(T(bf, 38,60,884,13,{c:bc,lh:1.5}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 38,400,884,11,{it:true,c:bc,lh:1.4}));
   }
 
   return{title:sl.title||sl.heading||'Slide '+(idx+1),bg:bg,lay:lay,
@@ -937,7 +811,7 @@ function loadSlide(idx){
   var sl=slides[idx];
   fc.clear();fc.backgroundColor=sl.bg||'#FFFFFF';
   document.getElementById('bgcol').value=sl.bg||'#FFFFFF';
-  function done(){fc.getObjects().forEach(function(o){if(o.type==='textbox')fitTextbox(o);});fc.renderAll();sl._json=JSON.stringify(fc.toJSON(['_imgSrc','_imgSlot']));pushHist();updateUI();}
+  function done(){fc.renderAll();sl._json=JSON.stringify(fc.toJSON(['_imgSrc','_imgSlot']));pushHist();updateUI();}
   if(sl._json){fc.loadFromJSON(sl._json,function(){fc.backgroundColor=sl.bg||'#FFFFFF';replacePlaceholders(done);});}
   else if(sl._os&&sl._os.length){sl._os.forEach(function(o){fc.add(o);});replacePlaceholders(done);}
   else done();
@@ -1050,25 +924,7 @@ function addImgToCanvas(inp){
   r.onload=function(ev){fabric.Image.fromURL(ev.target.result,function(img){img.scaleToWidth(fc._sc*340);img.set({left:fc._sc*100,top:fc._sc*80});fc.add(img);fc.setActiveObject(img);fc.renderAll();saveSlide();pushHist();});};
   r.readAsDataURL(inp.files[0]);inp.value='';
 }
-function addShape(){addShapeType('roundRect');}
-function makeStarPoints(cx,cy,outer,inner,count){
-  var pts=[],ang=Math.PI/count;
-  for(var i=0;i<2*count;i++){
-    var r=i%2===0?outer:inner,a=i*ang-Math.PI/2;
-    pts.push({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r});
-  }
-  return pts;
-}
-function addShapeType(tp){
-  var t=th(),sc=fc._sc||1,o=null;
-  if(tp==='rect')o=new fabric.Rect({left:sc*200,top:sc*150,width:sc*260,height:sc*150,fill:t.accent,rx:0,ry:0});
-  else if(tp==='roundRect')o=new fabric.Rect({left:sc*200,top:sc*150,width:sc*260,height:sc*150,fill:t.accent,rx:sc*14,ry:sc*14});
-  else if(tp==='circle')o=new fabric.Circle({left:sc*250,top:sc*140,radius:sc*70,fill:t.accent});
-  else if(tp==='line')o=new fabric.Line([sc*180,sc*180,sc*420,sc*180],{stroke:t.accent,strokeWidth:sc*4});
-  else if(tp==='star')o=new fabric.Polygon(makeStarPoints(sc*280,sc*200,sc*80,sc*38,5),{left:0,top:0,fill:t.accent});
-  if(!o)return;
-  fc.add(o);fc.setActiveObject(o);fc.renderAll();saveSlide();pushHist();hideCtx();
-}
+function addShape(){var t=th();var o=new fabric.Rect({left:fc._sc*200,top:fc._sc*150,width:fc._sc*260,height:fc._sc*150,fill:t.accent,rx:fc._sc*3});fc.add(o);fc.setActiveObject(o);fc.renderAll();saveSlide();pushHist();}
 function delObj(){
   var o=fc&&fc.getActiveObject();if(!o)return;
   if(o.type==='activeSelection'){o.getObjects().forEach(function(obj){fc.remove(obj);});fc.discardActiveObject();}
@@ -1105,18 +961,6 @@ function setSlideBg(v){if(!fc)return;fc.backgroundColor=v;fc.renderAll();if(slid
 // ── RIGHT PANEL ──
 function rpTab(tab,el){document.querySelectorAll('.rpt').forEach(function(t){t.classList.remove('on');});el.classList.add('on');['layout','text','icons'].forEach(function(t){var p=document.getElementById('rp-'+t);if(p)p.style.display=t===tab?'block':'none';});}
 function toggleAcc(hdr){hdr.classList.toggle('open');}
-
-function applyQuickTemplate(id){
-  if(!slides[cur])return;
-  var sl=slides[cur], t=th();
-  var raw=sl._raw||{title:sl.title||'Slide',heading:sl.title||'Slide',bullets:['Point one','Point two','Point three','Point four'],paragraph:'Supporting detail goes here.',dark:false,layout:sl.lay||'default'};
-  if(id==='title-summary'){raw.layout='title-body';raw.heading=raw.heading||'Executive summary';raw.paragraph=raw.paragraph||'Summarise the slide in one crisp paragraph.';raw.bullets=[];}
-  if(id==='comparison'){raw.layout='comparison';raw.heading=raw.heading||'Option comparison';raw.bullets=['Option A','Faster launch and lighter cost base','Option B','Higher upside with more complexity'];}
-  if(id==='kpi'){raw.layout='stat';raw.heading=raw.heading||'Core KPI';raw.stat=raw.stat||'42%';raw.bullets=['42% conversion lift','Measured across the latest campaign'];raw.paragraph='Use a single number and one sentence of context.';}
-  if(id==='timeline'){raw.layout='timeline';raw.heading=raw.heading||'Roadmap';raw.bullets=['Phase 1','Phase 2','Phase 3','Phase 4'];}
-  slides[cur]._raw=raw;
-  var r=mkSlide(raw,cur,t,sl.bg===t.dark);sl._os=r._os;sl._json=null;sl.lay=raw.layout;loadSlide(cur);buildLtGrid();toast('Template applied');
-}
 
 // ── LAYOUT THUMBNAILS ──
 var LT_S=(function(){
@@ -1244,7 +1088,7 @@ function addIcon(url){
 
 // ── CONTEXT MENU ──
 document.addEventListener('click',function(){hideCtx();});
-function showCtx(x,y){var ctx=document.getElementById('ctx');var vw=window.innerWidth,vh=window.innerHeight;if(x+240>vw)x=vw-244;if(y+520>vh)y=vh-524;ctx.style.left=x+'px';ctx.style.top=y+'px';ctx.classList.add('show');}
+function showCtx(x,y){var ctx=document.getElementById('ctx');var vw=window.innerWidth,vh=window.innerHeight;if(x+196>vw)x=vw-200;if(y+320>vh)y=vh-324;ctx.style.left=x+'px';ctx.style.top=y+'px';ctx.classList.add('show');}
 function hideCtx(){document.getElementById('ctx').classList.remove('show');}
 function ctxCopy(){var o=fc&&fc.getActiveObject();if(o){o.clone(function(cl){clipboard=cl;});toast('Copied');}hideCtx();}
 function ctxPaste(){
@@ -1269,12 +1113,6 @@ window.addEventListener('keydown',function(e){
   if(ctrl&&e.key==='c'){e.preventDefault();ctxCopy();return;}
   if(ctrl&&e.key==='v'){e.preventDefault();ctxPaste();return;}
   if(ctrl&&e.key==='d'){e.preventDefault();ctxDup();return;}
-  if(ctrl&&e.key===']'){e.preventDefault();if(e.shiftKey)layerOp('front');else layerOp('fwd');return;}
-  if(ctrl&&e.key==='['){e.preventDefault();if(e.shiftKey)layerOp('back');else layerOp('bwd');return;}
-  if(e.altKey&&e.key==='1'){e.preventDefault();setAl('left');return;}
-  if(e.altKey&&e.key==='2'){e.preventDefault();setAl('center');return;}
-  if(e.altKey&&e.key==='3'){e.preventDefault();setAl('right');return;}
-  if(e.shiftKey&&['1','2','3','4','5'].indexOf(e.key)>-1){e.preventDefault();var mp={'1':'rect','2':'roundRect','3':'circle','4':'star','5':'line'};addShapeType(mp[e.key]);return;}
   if(ctrl&&e.key==='b'){e.preventDefault();toggleFmt('bold');return;}
   if(ctrl&&e.key==='i'){e.preventDefault();toggleFmt('italic');return;}
   if(ctrl&&e.key==='a'){e.preventDefault();ctxSelAll();return;}
@@ -1315,11 +1153,6 @@ async function doExport(){
         var am3=(o.fill||'').match(/rgba\([\d,\s]+,([\d.]+)\)/);if(am3&&parseFloat(am3[1])<0.06)return;
         var diam=Math.max(2,Math.round(o.radius*2*(o.scaleX||1)/sc));
         els.push({type:'circle',left:Math.round((o.left||0)/sc),top:Math.round((o.top||0)/sc),width:diam,height:diam,fill:o.fill&&o.fill!=='transparent'?r2h(o.fill):'transparent',stroke:o.stroke?r2h(o.stroke):'transparent',strokeWidth:Math.round((o.strokeWidth||2)/sc)});
-      }else if(o.type==='line'){
-        els.push({type:'line',left:L,top:T,width:W,height:H,stroke:o.stroke?r2h(o.stroke):'#333333',strokeWidth:Math.round((o.strokeWidth||2)/sc)});
-      }else if(o.type==='polygon'){
-        var pts=(o.points||[]).map(function(pt){return{x:Math.round(pt.x*(o.scaleX||1)/sc),y:Math.round(pt.y*(o.scaleY||1)/sc)};});
-        els.push({type:'star',left:L,top:T,width:W,height:H,fill:r2h(o.fill||'#cccccc'),stroke:o.stroke?r2h(o.stroke):'transparent',strokeWidth:Math.round((o.strokeWidth||2)/sc),points:pts});
       }else if(o.type==='image'&&o.src&&o.src.length>10){
         els.push({type:'image',src:o.src,left:L,top:T,width:W,height:H});
       }
