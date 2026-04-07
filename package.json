@@ -2,12 +2,8 @@
   "name": "slideflux",
   "version": "1.0.0",
   "description": "Slideflux AI Presentation Builder",
-  "main": "generate.js",
-  "scripts": {
-    "start": "node generate.js"
-  },
   "dependencies": {
-    "pptxgenjs": "3.12.0"
+    "pptxgenjs": "^3.12.0"
   },
   "engines": {
     "node": ">=18"

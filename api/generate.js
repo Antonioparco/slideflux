@@ -1,7 +1,7 @@
 const PptxGenJS = require("pptxgenjs");
 // Note: Vercel uses Node 18+ with native fetch — no polyfill needed
 
-const MAX_SLIDES = 20; // guard against oversized requests
+const MAX_SLIDES = 20;
 
 const THEMES={
   professional:{dark:"1E2761",light:"FFFFFF",text:"1A2320",accent:"4472C4"},
@@ -12,7 +12,6 @@ const THEMES={
   forest:      {dark:"2C5F2D",light:"FAFAF8",text:"1A2320",accent:"97BC62"}
 };
 
-// Returns a 6-char hex string, or null for transparent/near-transparent colours.
 function toHex(c){
   if(!c||c==="transparent")return null;
   c=String(c).trim();
@@ -36,7 +35,6 @@ async function fetchB64(url){
 
 async function prepImg(src){
   if(!src)return null;
-  // PptxGenJS expects "mediaType;base64,<data>" without the leading "data:"
   if(src.startsWith("data:"))return src.slice(5);
   return await fetchB64(src);
 }
@@ -45,10 +43,8 @@ async function getImgDims(d){
   try{
     const b64=d.includes(";base64,")?d.split(";base64,")[1]:d;
     const buf=Buffer.from(b64,"base64");
-    // PNG: magic bytes 0x89 50 4E 47 at bytes 0-3
     if(buf[0]===0x89&&buf[1]===0x50&&buf[2]===0x4E&&buf[3]===0x47)
       return{w:buf.readUInt32BE(16),h:buf.readUInt32BE(20)};
-    // JPEG: scan for SOF0/SOF2 markers
     let i=2;
     while(i<buf.length-8){
       if(buf[i]===0xFF&&(buf[i+1]===0xC0||buf[i+1]===0xC2))
@@ -68,7 +64,6 @@ async function addLogo(s,pres,data,pos,wb,isCover){
   if(dims&&dims.w>0){const r=dims.w/dims.h;if(r>maxW/maxH){fw=maxW;fh=maxW/r;}else{fh=maxH;fw=maxH*r;}}
   const x=0.22,y=isBot?(5.625-fh-0.15):0.13;
   if(wb){const bh=Math.max(fh+0.15,isCover?0.9:0.48);s.addShape(pres.shapes.RECTANGLE,{x:0,y:isBot?5.625-bh:0,w:10,h:bh,fill:{color:"FFFFFF"},line:{color:"FFFFFF"}});}
-  // PptxGenJS expects "mediaType;base64,<data>" (no leading "data:")
   const imgData=data.startsWith("data:")?data.slice(5):data;
   try{s.addImage({data:imgData,x,y,w:fw,h:fh});}catch(e){console.error("addLogo error:",e);}
 }
@@ -106,13 +101,13 @@ async function buildPptx(slides,theme,pres,logoImg,logoPos,logoWb){
       }else if(el.type==="shape"){
         if(w<0.01||h<0.01)continue;
         const fill=toHex(el.fill||"#cccccc");
-        if(!fill)continue; // skip transparent/near-transparent shapes
+        if(!fill)continue;
         s.addShape(pres.shapes.RECTANGLE,{x,y,w,h,fill:{color:fill},line:{color:fill}});
       }else if(el.type==="circle"){
         if(w<0.01||h<0.01)continue;
         const cf_hex=el.fill&&el.fill!=="transparent"?toHex(el.fill):null;
         const cs_hex=el.stroke?toHex(el.stroke):null;
-        if(cf_hex===null&&cs_hex===null)continue; // fully invisible
+        if(cf_hex===null&&cs_hex===null)continue;
         const cf=cf_hex?{color:cf_hex}:{type:"none"};
         const cs=cs_hex?{color:cs_hex,pt:Math.max(1,Math.round((el.strokeWidth||2)*0.75))}:{type:"none"};
         s.addShape(pres.shapes.ELLIPSE,{x,y,w,h,fill:cf,line:cs});
@@ -127,18 +122,13 @@ module.exports=async function handler(req,res){
   res.setHeader("Access-Control-Allow-Headers","Content-Type");
   if(req.method==="OPTIONS")return res.status(200).end();
   if(req.method!=="POST")return res.status(405).json({error:"Method not allowed"});
-
-  // Guard against missing body (e.g. malformed request)
   if(!req.body||typeof req.body!=="object")
     return res.status(400).json({error:"Request body missing or not JSON"});
-
   try{
     const{action,input,slideCount,style,title,slides,logoData,logoPos,logoWhiteBg,brandOn,brandColors}=req.body;
     const apiKey=process.env.ANTHROPIC_API_KEY;
     const model=process.env.CLAUDE_MODEL||"claude-sonnet-4-20250514";
-
     if(action==="outline"){
-      // Cap slide count to prevent runaway API usage
       const count=Math.max(2,Math.min(MAX_SLIDES,parseInt(slideCount)||8));
       const prompt=`You are an expert presentation consultant. Create a ${count}-slide presentation.
 USER INPUT:\n${input}
@@ -172,12 +162,10 @@ Each object must have ALL these exact fields:
       catch(parseErr){return res.status(500).json({error:"Model returned invalid JSON: "+parseErr.message});}
       return res.status(200).json({outline});
     }
-
     if(action==="pptx"){
       const theme=getTheme(style,brandOn,brandColors);
       const pres=new PptxGenJS();
       pres.layout="LAYOUT_16x9";pres.title=title||"Presentation";
-      // Normalise logo: keep full data URI; addLogo strips "data:" prefix internally
       let logoImg=null;
       if(logoData){
         logoImg=logoData.startsWith("data:")||logoData.includes(";base64,")
@@ -197,19 +185,6 @@ Each object must have ALL these exact fields:
       res.setHeader("Content-Length",buf.length);
       return res.status(200).send(buf);
     }
-
-    if(action==="regenBlock"){
-      const{blockType,prompt}=req.body;
-      if(!prompt)return res.status(400).json({error:"Missing prompt"});
-      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
-        headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
-        body:JSON.stringify({model,max_tokens:400,messages:[{role:"user",content:prompt}]})});
-      const d=await r.json();
-      if(!r.ok)return res.status(r.status).json({error:d.error?.message||"API error"});
-      const text=d.content.map(b=>b.text||"").join("").trim();
-      return res.status(200).json({text});
-    }
-
     return res.status(400).json({error:"Invalid action"});
   }catch(err){console.error(err);return res.status(500).json({error:err.message});}
 };
