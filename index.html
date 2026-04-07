@@ -353,8 +353,10 @@ function initCanvas(){
   fc.on('selection:cleared',onDesel);
   fc.on('object:modified',function(){saveSlide();pushHist();setTimeout(function(){renderThumb(cur);},80);});
   fc.on('text:changed',function(){saveSlide();});
-  // Right-click context menu
-  document.getElementById('c').addEventListener('contextmenu',function(e){e.preventDefault();showCtx(e.clientX,e.clientY);});
+  // Right-click context menu — must attach to Fabric's upper canvas,
+  // which is the element that actually receives mouse events after Fabric initialises.
+  var upperCanvas=fc.upperCanvasEl||fc.wrapperEl||document.getElementById('c');
+  upperCanvas.addEventListener('contextmenu',function(e){e.preventDefault();showCtx(e.clientX,e.clientY);});
   if(slides.length)loadSlide(cur);
 }
 
