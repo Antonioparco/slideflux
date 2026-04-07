@@ -1057,19 +1057,26 @@ async function suggestSlotImg(k){
   try{
     var kwEl=document.getElementById('isl-kw-'+k);
     var kw=kwEl&&kwEl.value.trim();
-    // Use a deterministic seed so the same keyword gives a consistent image.
-    // Unsplash source API (source.unsplash.com) was shut down in 2023 so we
-    // fall back to Lorem Picsum with a keyword-derived numeric seed.
     var seed=kw
       ? Math.abs(kw.split('').reduce(function(acc,ch){return acc*31+ch.charCodeAt(0)|0;},0))%9973+1
       : Math.floor(Math.random()*9973)+1;
     var url='https://picsum.photos/seed/'+seed+'/960/540';
-    // Fetch and convert to base64 so PPTX export works
-    var blob=await fetch(url).then(function(r){
-      if(!r.ok)throw new Error('HTTP '+r.status);
-      return r.blob();
+    // Use Image+canvas to read pixels cross-origin — fetch() is blocked by
+    // CORS on picsum.photos because it redirects to a CDN domain.
+    var b64=await new Promise(function(resolve,reject){
+      var img=new Image();
+      img.crossOrigin='anonymous';
+      img.onload=function(){
+        try{
+          var c=document.createElement('canvas');
+          c.width=img.naturalWidth||960;c.height=img.naturalHeight||540;
+          c.getContext('2d').drawImage(img,0,0);
+          resolve(c.toDataURL('image/jpeg',0.88));
+        }catch(err){reject(new Error('Canvas export failed: '+err.message));}
+      };
+      img.onerror=function(){reject(new Error('Image failed to load'));};
+      img.src=url+'?t='+Date.now();
     });
-    var b64=await new Promise(function(res){var fr=new FileReader();fr.onload=function(e){res(e.target.result);};fr.readAsDataURL(blob);});
     setSlotImg(k,b64);toast('Image added');
   }catch(e){toast('Could not load image: '+e.message);}
 }
