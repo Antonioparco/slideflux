@@ -5,71 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Slideflux</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js">
-// ── BLOCK REGENERATE OVERLAY ──
-var REGEN_SVG='<svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M13.5 2.5A6.5 6.5 0 0 0 2 8m0 5.5A6.5 6.5 0 0 0 14 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 13.5V9.5H6M14 2.5V6.5H10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-var BLOCK_LABELS={heading:'Heading',subheading:'Subheading',body:'Body',bullets:'Bullets',stat:'Stat',quote:'Quote'};
-
-function buildBlockOverlay(){
-  var ov=document.getElementById('block-overlay');
-  if(!ov||!fc)return;
-  ov.innerHTML='';
-  if(!slides[cur]||!slides[cur]._raw)return;
-  fc.getObjects().forEach(function(obj){
-    if(!obj._blockType)return;
-    var b=obj.getBoundingRect(true);
-    var chip=document.createElement('div');
-    chip.className='blk-chip';
-    chip.style.left=Math.max(0,b.left)+'px';
-    chip.style.top=Math.max(0,b.top-26)+'px';
-    chip.dataset.bid=obj._blockId;
-    var lbl=BLOCK_LABELS[obj._blockType]||obj._blockType;
-    chip.innerHTML='<div class="blk-inner"><span class="blk-lbl">'+lbl+'</span>'
-      +'<button class="blk-btn" onclick="regenBlock(''+obj._blockId+'',this)">'+REGEN_SVG+' Regen</button></div>';
-    ov.appendChild(chip);
-  });
-}
-
-async function regenBlock(blockId,btn){
-  var obj=fc.getObjects().find(function(o){return o._blockId===blockId;});
-  if(!obj)return;
-  var raw=(slides[cur]&&slides[cur]._raw)||{};
-  btn.classList.add('loading');
-  btn.innerHTML='<div class="spin" style="width:9px;height:9px;border-width:1.5px"></div>';
-  try{
-    var cur_text=obj.type==='textbox'?obj.text:'';
-    var ctx='Slide: "'+( raw.heading||raw.title||'')+'"\n';
-    var instMap={
-      heading:'Write a NEW specific headline (6-12 words). No quotes. Current: "'+cur_text+'".',
-      subheading:'Write a NEW subheading (10-18 words). No quotes. Current: "'+cur_text+'".',
-      body:'Write a NEW body paragraph (40-60 words). Current: "'+cur_text+'".',
-      bullets:'Write 4 NEW bullet points (12-22 words each, one per line, no symbols). Current:\n"'+cur_text+'".',
-      stat:'Write a NEW statistic with units e.g. "87%". Current: "'+cur_text+'".',
-      quote:'Write a NEW expert quote (20-30 words). No attribution. Current: "'+cur_text+'".'
-    };
-    var prompt=ctx+(instMap[obj._blockType]||'Rewrite this block. Return ONLY the new text.')+' Return ONLY the replacement text, nothing else.';
-    var res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({action:'regenBlock',prompt:prompt})});
-    var data=await res.json();
-    if(!res.ok)throw new Error(data.error||'API error');
-    var text=(data.text||'').trim().replace(/^["“]|["”]$/g,'');
-    if(text){
-      if(obj._blockType==='bullets'){
-        var lines=text.split('\n').map(function(l){return l.replace(/^[-•·*\d.]+\s*/,'').trim();}).filter(Boolean);
-        obj.set('text',lines.join('\n'));
-      }else{
-        obj.set('text',text);
-      }
-      fc.renderAll();
-      saveSlide();pushHist();
-      setTimeout(function(){renderThumb(cur);buildBlockOverlay();},80);
-      toast('Block regenerated');
-    }
-  }catch(e){toast('Error: '+e.message);}
-  finally{btn.classList.remove('loading');btn.innerHTML=REGEN_SVG+' Regen';}
-}
-
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1253,6 +1189,70 @@ async function doExport(){
 }
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.classList.remove('show');},2800);}
+
+// ── BLOCK REGENERATE OVERLAY ──
+var REGEN_SVG='<svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M13.5 2.5A6.5 6.5 0 0 0 2 8m0 5.5A6.5 6.5 0 0 0 14 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 13.5V9.5H6M14 2.5V6.5H10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+var BLOCK_LABELS={heading:'Heading',subheading:'Subheading',body:'Body',bullets:'Bullets',stat:'Stat',quote:'Quote'};
+
+function buildBlockOverlay(){
+  var ov=document.getElementById('block-overlay');
+  if(!ov||!fc)return;
+  ov.innerHTML='';
+  if(!slides[cur]||!slides[cur]._raw)return;
+  fc.getObjects().forEach(function(obj){
+    if(!obj._blockType)return;
+    var b=obj.getBoundingRect(true);
+    var chip=document.createElement('div');
+    chip.className='blk-chip';
+    chip.style.left=Math.max(0,b.left)+'px';
+    chip.style.top=Math.max(0,b.top-26)+'px';
+    chip.dataset.bid=obj._blockId;
+    var lbl=BLOCK_LABELS[obj._blockType]||obj._blockType;
+    chip.innerHTML='<div class="blk-inner"><span class="blk-lbl">'+lbl+'</span>'
+      +'<button class="blk-btn" onclick="regenBlock(''+obj._blockId+'',this)">'+REGEN_SVG+' Regen</button></div>';
+    ov.appendChild(chip);
+  });
+}
+
+async function regenBlock(blockId,btn){
+  var obj=fc.getObjects().find(function(o){return o._blockId===blockId;});
+  if(!obj)return;
+  var raw=(slides[cur]&&slides[cur]._raw)||{};
+  btn.classList.add('loading');
+  btn.innerHTML='<div class="spin" style="width:9px;height:9px;border-width:1.5px"></div>';
+  try{
+    var cur_text=obj.type==='textbox'?obj.text:'';
+    var ctx='Slide: "'+( raw.heading||raw.title||'')+'"\n';
+    var instMap={
+      heading:'Write a NEW specific headline (6-12 words). No quotes. Current: "'+cur_text+'".',
+      subheading:'Write a NEW subheading (10-18 words). No quotes. Current: "'+cur_text+'".',
+      body:'Write a NEW body paragraph (40-60 words). Current: "'+cur_text+'".',
+      bullets:'Write 4 NEW bullet points (12-22 words each, one per line, no symbols). Current:\n"'+cur_text+'".',
+      stat:'Write a NEW statistic with units e.g. "87%". Current: "'+cur_text+'".',
+      quote:'Write a NEW expert quote (20-30 words). No attribution. Current: "'+cur_text+'".'
+    };
+    var prompt=ctx+(instMap[obj._blockType]||'Rewrite this block. Return ONLY the new text.')+' Return ONLY the replacement text, nothing else.';
+    var res=await fetch('/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'regenBlock',prompt:prompt})});
+    var data=await res.json();
+    if(!res.ok)throw new Error(data.error||'API error');
+    var text=(data.text||'').trim().replace(/^["“]|["”]$/g,'');
+    if(text){
+      if(obj._blockType==='bullets'){
+        var lines=text.split('\n').map(function(l){return l.replace(/^[-•·*\d.]+\s*/,'').trim();}).filter(Boolean);
+        obj.set('text',lines.join('\n'));
+      }else{
+        obj.set('text',text);
+      }
+      fc.renderAll();
+      saveSlide();pushHist();
+      setTimeout(function(){renderThumb(cur);buildBlockOverlay();},80);
+      toast('Block regenerated');
+    }
+  }catch(e){toast('Error: '+e.message);}
+  finally{btn.classList.remove('loading');btn.innerHTML=REGEN_SVG+' Regen';}
+}
+
 </script>
 </body>
 </html>

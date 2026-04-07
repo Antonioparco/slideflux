@@ -99,6 +99,7 @@ module.exports=async function handler(req,res){
   try{
     const{action,input,slideCount,style,title,slides,logoData,logoPos,logoWhiteBg,brandOn,brandColors}=req.body;
     const apiKey=process.env.ANTHROPIC_API_KEY;
+    const model=process.env.CLAUDE_MODEL||"claude-sonnet-4-20250514";
     if(action==="outline"){
       const prompt=`You are an expert presentation consultant. Create a ${slideCount}-slide presentation.
 USER INPUT:\n${input}
@@ -120,7 +121,7 @@ Each object must have ALL these exact fields:
 {"title":"3-6 words","type":"title|content|data|quote|cta","dark":true,"layout":"cover-center|cover-split|cover-circle|cover-dark|default|two-col|three-col|title-body|quote|big-statement|agenda|closing|stat|three-stats|timeline|four-icons|two-icons|comparison|process|pyramid|img-right|img-left|img-full|img-top|two-images|three-images|img-mosaic|img-hero","heading":"specific headline","subheading":"","bullets":["Sentence one with data.","Sentence two.","Sentence three.","Sentence four."],"paragraph":"40-55 word expert insight paragraph.","stat":"","quote":"","author":"","imageKeyword":"3-5 words","speakerNote":"one sentence"}`;
       const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
         headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
-        body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:8000,messages:[{role:"user",content:prompt}]})});
+        body:JSON.stringify({model,max_tokens:8000,messages:[{role:"user",content:prompt}]})});
       const d=await r.json();
       if(!r.ok)return res.status(r.status).json({error:d.error?.message||"API error"});
       const text=d.content.map(b=>b.text||"").join("");
@@ -134,7 +135,7 @@ Each object must have ALL these exact fields:
       const pres=new PptxGenJS();
       pres.layout="LAYOUT_16x9";pres.title=title||"Presentation";
       let logoImg=null;
-      if(logoData)logoImg=logoData.startsWith("data:")?logoData.replace("data:",""):await fetchB64(logoData);
+      if(logoData){logoImg=logoData.startsWith("data:")||logoData.includes(";base64,")?logoData:await fetchB64(logoData);}
       await buildPptx(slides,theme,pres,logoImg,logoPos,logoWhiteBg);
       const buf=await pres.write({outputType:"nodebuffer"});
       const safe=(title||"presentation").replace(/[^a-z0-9]/gi,"_");
