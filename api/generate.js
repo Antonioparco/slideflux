@@ -100,7 +100,6 @@ module.exports=async function handler(req,res){
     const{action,input,slideCount,style,title,slides,logoData,logoPos,logoWhiteBg,brandOn,brandColors}=req.body;
     const apiKey=process.env.ANTHROPIC_API_KEY;
     const model=process.env.CLAUDE_MODEL||"claude-sonnet-4-20250514";
-    const model=process.env.CLAUDE_MODEL||"claude-sonnet-4-20250514";
     if(action==="outline"){
       const prompt=`You are an expert presentation consultant. Create a ${slideCount}-slide presentation.
 USER INPUT:\n${input}
