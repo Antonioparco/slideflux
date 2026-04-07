@@ -185,6 +185,17 @@ Each object must have ALL these exact fields:
       res.setHeader("Content-Length",buf.length);
       return res.status(200).send(buf);
     }
+    if(action==="regenBlock"){
+      const{prompt}=req.body;
+      if(!prompt)return res.status(400).json({error:"Missing prompt"});
+      const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",
+        headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01"},
+        body:JSON.stringify({model,max_tokens:400,messages:[{role:"user",content:prompt}]})});
+      const d=await r.json();
+      if(!r.ok)return res.status(r.status).json({error:d.error?.message||"API error"});
+      const text=d.content.map(b=>b.text||"").join("").trim();
+      return res.status(200).json({text});
+    }
     return res.status(400).json({error:"Invalid action"});
   }catch(err){console.error(err);return res.status(500).json({error:err.message});}
 };
