@@ -216,6 +216,35 @@ textarea{line-height:1.55}
 .toast{position:fixed;bottom:14px;right:14px;background:var(--t0);border:1px solid var(--line2);color:#fff;padding:8px 14px;border-radius:8px;font-size:10px;font-weight:600;font-family:var(--m);opacity:0;transition:opacity .2s;pointer-events:none;z-index:9999;box-shadow:var(--shadow-lg)}
 .toast.show{opacity:1}
 
+
+/* ── BLOCK OVERLAY ── */
+#block-overlay{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:10;}
+.block-chip{position:absolute;pointer-events:all;opacity:0;transition:opacity .15s;}
+.block-chip:hover,.block-chip.pinned{opacity:1;}
+.block-chip-inner{
+  display:flex;align-items:center;gap:0;
+  background:#fff;border:1.5px solid var(--line2);border-radius:6px;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+  overflow:hidden;
+  font-family:var(--f);
+}
+.block-label{
+  font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--t2);padding:3px 7px;background:var(--bg2);border-right:1px solid var(--line);
+  white-space:nowrap;
+}
+.block-regen{
+  display:flex;align-items:center;gap:4px;
+  padding:3px 8px;background:#fff;border:none;cursor:pointer;
+  font-size:9px;font-weight:700;color:var(--teal);font-family:var(--f);
+  transition:background .11s;white-space:nowrap;
+}
+.block-regen:hover{background:var(--tg);}
+.block-regen.loading{color:var(--t3);pointer-events:none;}
+.block-regen svg{flex-shrink:0;}
+/* Show all chips when hovering the canvas wrapper */
+#cw:hover .block-chip{opacity:1;}
+
 /* ── SPINNER ── */
 .spin{width:11px;height:11px;border:2px solid rgba(26,158,143,.2);border-top-color:var(--teal);border-radius:50%;animation:spin .65s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -304,7 +333,7 @@ textarea{line-height:1.55}
     <div class="tsep"></div>
     <button class="tbtn go" id="export-btn" onclick="doExport()">&#8599; Export .pptx</button>
   </div>
-  <div class="cs" id="cs"><div class="cw" id="cw"><canvas id="c"></canvas></div></div>
+  <div class="cs" id="cs"><div class="cw" id="cw"><canvas id="c"></canvas><div id="block-overlay"></div></div></div>
   <div class="sbar"><span class="sbar-t" id="sbar-t">No slides</span><button class="nav-btn" id="btn-prev" onclick="nav(-1)" disabled>&#8592; Prev</button><button class="nav-btn" id="btn-next" onclick="nav(1)" disabled>Next &#8594;</button></div>
 </div>
 <div class="rp">
@@ -442,6 +471,7 @@ function resizeCanvas(){
     o.setCoords();
   });
   fc.renderAll();saveSlide();
+  setTimeout(refreshOverlay,50);
 }
 
 // ── SELECTION ──
@@ -551,13 +581,15 @@ function mkSlide(sl,idx,t,isDark){
   function R(x,y,w,h,fill,sel){return new fabric.Rect({left:px(x),top:px(y),width:px(w),height:px(h),fill:fill||'#ccc',stroke:null,selectable:sel!==false,evented:sel!==false});}
   function T(txt,x,y,w,sz,o){
     o=o||{};
-    return new fabric.Textbox(txt||'',{
+    var obj=new fabric.Textbox(txt||'',{
       left:px(x),top:px(y),width:px(w),
       fontSize:px(sz||14),fontFamily:o.ff||'Arial',
       fontWeight:o.bold?'bold':'normal',fontStyle:o.it?'italic':'normal',
       fill:o.c||'#1A2320',textAlign:o.al||'left',
       lineHeight:o.lh||1.3,editable:true,selectable:true
     });
+    if(o.bt){obj._blockType=o.bt;obj._blockId=o.bt+'_'+Math.random().toString(36).slice(2,7);}
+    return obj;
   }
   function CI(cx,cy,r,fill,stroke){return new fabric.Circle({left:px(cx-r),top:px(cy-r),radius:px(r),fill:fill||'transparent',stroke:stroke||ac,strokeWidth:px(2),selectable:true});}
   function IP(x,y,w,h,lb,slot){
@@ -577,20 +609,20 @@ function mkSlide(sl,idx,t,isDark){
   // ── COVER LAYOUTS ──
   if(lay==='cover-center'||lay==='title-center'||(idx===0&&(lay==='default'||!lay))){
     os.push(R(0,0,5,540,ac,false));
-    os.push(T(sl.heading||sl.title,            76,130,760,36,{bold:true,c:tc,lh:1.1}));
+    os.push(T(sl.heading||sl.title,            76,130,760,36,{bold:true,c:tc,lh:1.1,bt:'heading'}));
     os.push(R(76,200,70,3,ac,false));
-    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 76,214,700,16,{c:bc,lh:1.3}));
-    if(sl.paragraph) os.push(T(sl.paragraph,  76,260,680,12,{it:true,c:bc,lh:1.4}));
+    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 76,214,700,16,{c:bc,lh:1.3,bt:'subheading'}));
+    if(sl.paragraph) os.push(T(sl.paragraph,  76,260,680,12,{it:true,c:bc,lh:1.4,bt:'body'}));
     IP(756,44,180,450,'+ Image',0);
 
   }else if(lay==='cover-split'){
     os.push(R(474,0,486,540,ac+'22',false));
     os.push(R(472,0,4,540,ac,false));
     os.push(R(0,0,5,540,ac,false));
-    os.push(T(sl.heading||sl.title,            52,130,380,32,{bold:true,c:tc,lh:1.15}));
+    os.push(T(sl.heading||sl.title,            52,130,380,32,{bold:true,c:tc,lh:1.15,bt:'heading'}));
     os.push(R(52,200,60,3,ac,false));
-    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 52,214,360,14,{c:bc,lh:1.3}));
-    if(sl.paragraph) os.push(T(sl.paragraph,  52,256,360,11,{it:true,c:bc,lh:1.4}));
+    os.push(T(sl.subheading||(sl.bullets||[])[0]||'', 52,214,360,14,{c:bc,lh:1.3,bt:'subheading'}));
+    if(sl.paragraph) os.push(T(sl.paragraph,  52,256,360,11,{it:true,c:bc,lh:1.4,bt:'body'}));
     IP(484,10,464,520,'+ Image',0);
 
   }else if(lay==='cover-circle'){
@@ -616,14 +648,14 @@ function mkSlide(sl,idx,t,isDark){
   // ── TEXT LAYOUTS ──
   }else if(lay==='default'){
     // Title: 14, bar: 50, bullets start: 60, paragraph: 420 max
-    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1}));
+    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1,bt:'heading'}));
     os.push(R(38,50,70,3,ac,false));
     var bt=(sl.bullets||[]).join('\n');
-    if(bt) os.push(T(bt, 38,60,884,13,{c:bc,lh:1.5}));
-    if(sl.paragraph) os.push(T(sl.paragraph, 38,400,884,11,{it:true,c:bc,lh:1.4}));
+    if(bt) os.push(T(bt, 38,60,884,13,{c:bc,lh:1.5,bt:'bullets'}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 38,400,884,11,{it:true,c:bc,lh:1.4,bt:'body'}));
 
   }else if(lay==='two-col'){
-    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1}));
+    os.push(T(sl.heading||sl.title,  38,14,884,20,{bold:true,c:tc,lh:1.1,bt:'heading'}));
     os.push(R(38,50,70,3,ac,false));
     os.push(R(478,58,2,460,ac+'30',false));
     var h2=Math.ceil((sl.bullets||[]).length/2);
@@ -647,21 +679,21 @@ function mkSlide(sl,idx,t,isDark){
     if(sl.paragraph) os.push(T(sl.paragraph, 38,440,884,11,{it:true,c:bc,al:'center'}));
 
   }else if(lay==='title-body'){
-    os.push(T(sl.heading||sl.title,  38,16,884,22,{bold:true,c:tc,lh:1.1}));
+    os.push(T(sl.heading||sl.title,  38,16,884,22,{bold:true,c:tc,lh:1.1,bt:'heading'}));
     os.push(R(38,54,80,3,ac,false));
-    if(sl.paragraph) os.push(T(sl.paragraph, 38,68,884,14,{c:bc,lh:1.55}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 38,68,884,14,{c:bc,lh:1.55,bt:'body'}));
     var tb2=(sl.bullets||[]).join('\n');
-    if(tb2) os.push(T(tb2, 38,216,884,13,{c:bc,lh:1.5}));
+    if(tb2) os.push(T(tb2, 38,216,884,13,{c:bc,lh:1.5,bt:'bullets'}));
 
   }else if(lay==='quote'){
     os.push(T('\u201c', 28,8,110,64,{bold:true,c:ac}));
-    os.push(T(sl.quote||(sl.bullets||[])[0]||sl.heading||sl.title, 58,110,844,20,{it:true,c:tc,al:'center',lh:1.45}));
+    os.push(T(sl.quote||(sl.bullets||[])[0]||sl.heading||sl.title, 58,110,844,20,{it:true,c:tc,al:'center',lh:1.45,bt:'quote'}));
     os.push(R(420,326,120,3,ac,false));
     if(sl.author) os.push(T('\u2014 '+sl.author, 58,340,844,14,{c:ac,al:'center'}));
     if(sl.paragraph) os.push(T(sl.paragraph, 80,382,800,11,{it:true,c:bc,al:'center',lh:1.4}));
 
   }else if(lay==='big-statement'){
-    os.push(T(sl.heading||sl.title,  38,96,884,30,{bold:true,c:tc,al:'center',lh:1.2}));
+    os.push(T(sl.heading||sl.title,  38,96,884,30,{bold:true,c:tc,al:'center',lh:1.2,bt:'heading'}));
     os.push(R(360,188,240,3,ac,false));
     if(sl.paragraph) os.push(T(sl.paragraph, 80,204,800,15,{c:bc,al:'center',lh:1.5}));
 
@@ -680,7 +712,7 @@ function mkSlide(sl,idx,t,isDark){
     os[0]=R(0,0,960,540,bg,false);
     os.push(R(0,0,960,5,ac,false));
     os.push(R(0,535,960,5,ac,false));
-    os.push(T(sl.heading||sl.title,  80,148,800,32,{bold:true,c:tc,al:'center',lh:1.2}));
+    os.push(T(sl.heading||sl.title,  80,148,800,32,{bold:true,c:tc,al:'center',lh:1.2,bt:'heading'}));
     os.push(R(380,210,200,3,ac,false));
     os.push(T(sl.subheading||sl.paragraph||(sl.bullets||[])[0]||'', 80,224,800,15,{c:bc,al:'center',lh:1.4}));
     var cta=(sl.bullets||[]).find(function(b){return /contact|visit|www|email/i.test(b);});
@@ -688,8 +720,8 @@ function mkSlide(sl,idx,t,isDark){
 
   // ── INFOGRAPHIC LAYOUTS ──
   }else if(lay==='stat'){
-    os.push(T(sl.heading||sl.title,  38,18,884,18,{bold:true,c:tc,al:'center',lh:1.1}));
-    os.push(T(sl.stat||'100%',        140,80,680,72,{bold:true,c:ac,al:'center',lh:1.0}));
+    os.push(T(sl.heading||sl.title,  38,18,884,18,{bold:true,c:tc,al:'center',lh:1.1,bt:'heading'}));
+    os.push(T(sl.stat||'100%',        140,80,680,72,{bold:true,c:ac,al:'center',lh:1.0,bt:'stat'}));
     os.push(R(380,210,200,3,ac,false));
     var stb=(sl.bullets||[]).join('  \u00b7  ');
     if(stb) os.push(T(stb, 80,224,800,13,{c:bc,al:'center'}));
@@ -787,11 +819,11 @@ function mkSlide(sl,idx,t,isDark){
 
   // ── IMAGE LAYOUTS ──
   }else if(lay==='img-right'){
-    os.push(T(sl.heading||sl.title,  38,14,468,20,{bold:true,c:tc,lh:1.1}));
+    os.push(T(sl.heading||sl.title,  38,14,468,20,{bold:true,c:tc,lh:1.1,bt:'heading'}));
     os.push(R(38,50,70,3,ac,false));
     var ir=(sl.bullets||[]).join('\n');
-    if(ir) os.push(T(ir, 38,60,468,13,{c:bc,lh:1.5}));
-    if(sl.paragraph) os.push(T(sl.paragraph, 38,388,468,11,{it:true,c:bc,lh:1.4}));
+    if(ir) os.push(T(ir, 38,60,468,13,{c:bc,lh:1.5,bt:'bullets'}));
+    if(sl.paragraph) os.push(T(sl.paragraph, 38,388,468,11,{it:true,c:bc,lh:1.4,bt:'body'}));
     IP(518,0,442,540,'+ Image',0);
 
   }else if(lay==='img-left'){
@@ -864,11 +896,18 @@ function mkSlide(sl,idx,t,isDark){
 // ── LOAD SLIDE ──
 function loadSlide(idx){
   if(!fc||idx<0||idx>=slides.length)return;
+  // clear old overlay immediately when switching slides
+  var ov=document.getElementById('block-overlay');if(ov)ov.innerHTML='';
   cur=idx;hist=[];hIdx=-1;
   var sl=slides[idx];
   fc.clear();fc.backgroundColor=sl.bg||'#FFFFFF';
   document.getElementById('bgcol').value=sl.bg||'#FFFFFF';
-  function done(){fc.renderAll();sl._json=JSON.stringify(fc.toJSON(['_imgSrc','_imgSlot']));pushHist();updateUI();}
+  function done(){
+    fc.renderAll();
+    sl._json=JSON.stringify(fc.toJSON(['_imgSrc','_imgSlot','_blockType','_blockId']));
+    pushHist();updateUI();
+    setTimeout(buildBlockOverlay,100);
+  }
   if(sl._json){fc.loadFromJSON(sl._json,function(){fc.backgroundColor=sl.bg||'#FFFFFF';replacePlaceholders(done);});}
   else if(sl._os&&sl._os.length){sl._os.forEach(function(o){fc.add(o);});replacePlaceholders(done);}
   else done();
@@ -897,19 +936,19 @@ function replacePlaceholders(cb){
 
 function saveSlide(){
   if(!fc||!slides.length)return;
-  slides[cur]._json=JSON.stringify(fc.toJSON(['_imgSrc','_imgSlot']));
+  slides[cur]._json=JSON.stringify(fc.toJSON(['_imgSrc','_imgSlot','_blockType','_blockId']));
   slides[cur].bg=fc.backgroundColor;
 }
 function pushHist(){
   if(!fc)return;
-  var s=JSON.stringify(fc.toJSON(['_imgSrc','_imgSlot']));
+  var s=JSON.stringify(fc.toJSON(['_imgSrc','_imgSlot','_blockType','_blockId']));
   hist=hist.slice(0,hIdx+1);hist.push({s:s,bg:fc.backgroundColor});
   if(hist.length>40)hist.shift();hIdx=hist.length-1;
 }
 function undo(){
   if(hIdx<=0){toast('Nothing to undo');return;}
   hIdx--;var snap=hist[hIdx];
-  fc.loadFromJSON(snap.s,function(){fc.backgroundColor=snap.bg;fc.renderAll();if(slides[cur]){slides[cur]._json=snap.s;slides[cur].bg=snap.bg;}setTimeout(function(){renderThumb(cur);},80);});
+  fc.loadFromJSON(snap.s,function(){fc.backgroundColor=snap.bg;fc.renderAll();if(slides[cur]){slides[cur]._json=snap.s;slides[cur].bg=snap.bg;}setTimeout(function(){renderThumb(cur);buildBlockOverlay();},80);});
 }
 
 // ── UI UPDATE ──
@@ -1247,6 +1286,145 @@ async function doExport(){
 }
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.classList.remove('show');},2800);}
+
+// ══════════════════════════════════════════════════════════
+// BLOCK SYSTEM — each Fabric object is tagged with:
+//   _blockType: 'heading'|'subheading'|'body'|'bullets'|'image'|'stat'|'quote'
+//   _blockId:   unique string per block on this slide
+//   _blockCtx:  the slide raw data (for regeneration context)
+// An HTML overlay shows a regenerate chip per block on hover.
+// ══════════════════════════════════════════════════════════
+
+var BLOCK_LABELS={
+  heading:'Heading',subheading:'Subheading',body:'Body text',
+  bullets:'Bullet list',stat:'Stat',quote:'Quote',image:'Image',accent:'Accent bar'
+};
+
+// Tag a fabric object as a block
+function tagBlock(obj, type, ctx){
+  obj._blockType = type;
+  obj._blockId   = type + '_' + Math.random().toString(36).slice(2,7);
+  obj._blockCtx  = ctx || {};
+  return obj;
+}
+
+// Build the overlay chips for current slide
+function buildBlockOverlay(){
+  var overlay = document.getElementById('block-overlay');
+  if(!overlay || !fc) return;
+  overlay.innerHTML = '';
+  if(!slides[cur] || !slides[cur]._raw) return; // only for AI-generated slides
+
+  var sc = fc._sc || 1;
+  fc.getObjects().forEach(function(obj){
+    if(!obj._blockType || obj._blockType === 'accent') return;
+    var bounds = obj.getBoundingRect(true);
+    var chip = document.createElement('div');
+    chip.className = 'block-chip';
+    chip.style.left  = Math.max(0, bounds.left) + 'px';
+    chip.style.top   = Math.max(0, bounds.top - 26) + 'px';
+    chip.dataset.blockId   = obj._blockId;
+    chip.dataset.blockType = obj._blockType;
+
+    var label = BLOCK_LABELS[obj._blockType] || obj._blockType;
+    var regenIcon = '<svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M13.5 2.5A6.5 6.5 0 0 0 2 8m0 5.5A6.5 6.5 0 0 0 14 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 13.5V9.5H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2.5V6.5H10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    chip.innerHTML =
+      '<div class="block-chip-inner">' +
+      '<span class="block-label">' + label + '</span>' +
+      '<button class="block-regen" onclick="regenBlock('' + obj._blockId + '',this)" title="Regenerate this block">' +
+        regenIcon + ' Regenerate' +
+      '</button></div>';
+
+    overlay.appendChild(chip);
+  });
+}
+
+// Refresh overlay positions (after resize / zoom)
+function refreshOverlay(){
+  if(!fc || !slides[cur] || !slides[cur]._raw) return;
+  var chips = document.querySelectorAll('.block-chip');
+  fc.getObjects().forEach(function(obj){
+    if(!obj._blockId) return;
+    var chip = document.querySelector('[data-block-id="' + obj._blockId + '"]');
+    if(!chip) return;
+    var bounds = obj.getBoundingRect(true);
+    chip.style.left = Math.max(0, bounds.left) + 'px';
+    chip.style.top  = Math.max(0, bounds.top - 26) + 'px';
+  });
+}
+
+// Regenerate a single block via Claude API
+async function regenBlock(blockId, btn){
+  var obj = fc.getObjects().find(function(o){ return o._blockId === blockId; });
+  if(!obj) return;
+
+  var blockType = obj._blockType;
+  var raw = (slides[cur] && slides[cur]._raw) || {};
+  var t = th();
+
+  btn.classList.add('loading');
+  btn.innerHTML = '<div class="spin" style="width:9px;height:9px;border-width:1.5px"></div> Generating…';
+
+  try{
+    var prompt = buildBlockPrompt(blockType, raw, obj);
+    var res = await fetch('/api/generate',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({action:'regenBlock', blockType:blockType, prompt:prompt})
+    });
+    var data = await res.json();
+    if(!res.ok) throw new Error(data.error || 'API error');
+
+    applyBlockResult(obj, blockType, data.text, t, raw);
+    saveSlide(); pushHist();
+    setTimeout(function(){ renderThumb(cur); buildBlockOverlay(); }, 80);
+    toast('Block regenerated');
+  } catch(e){
+    toast('Error: ' + e.message);
+  } finally {
+    btn.classList.remove('loading');
+    var icon = '<svg width="10" height="10" viewBox="0 0 16 16" fill="none"><path d="M13.5 2.5A6.5 6.5 0 0 0 2 8m0 5.5A6.5 6.5 0 0 0 14 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 13.5V9.5H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 2.5V6.5H10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    btn.innerHTML = icon + ' Regenerate';
+  }
+}
+
+function buildBlockPrompt(blockType, raw, obj){
+  var ctx = 'Slide title: "' + (raw.title||'') + '"\n' +
+            'Slide topic: "' + (raw.heading||raw.title||'') + '"\n' +
+            'Audience context: ' + (raw.paragraph ? raw.paragraph.slice(0,120) : 'general') + '\n\n';
+
+  var current = (obj.type === 'textbox') ? obj.text : '[image]';
+
+  var instructions = {
+    heading:    'Write a NEW, different, specific data-driven headline (6-12 words) for this slide. Current: "' + current + '". Return ONLY the headline text, nothing else.',
+    subheading: 'Write a NEW supporting subheading (10-18 words) that complements the slide. Current: "' + current + '". Return ONLY the subheading text.',
+    body:       'Write a NEW body paragraph (40-60 words) of expert insight for this slide. Current: "' + current + '". Return ONLY the paragraph text.',
+    bullets:    'Write 4 NEW bullet points (each 12-22 words, one per line, no bullet symbols) for this slide. Current:\n"' + current + '"\nReturn ONLY the 4 lines, nothing else.',
+    stat:       'Write a NEW striking statistic with units (e.g. "87%", "$2.4T", "3x faster") for this slide. Current: "' + current + '". Return ONLY the stat, nothing else.',
+    quote:      'Write a NEW realistic expert quote (20-30 words) relevant to this slide. Current: "' + current + '". Return ONLY the quote text, no attribution.',
+  };
+  return ctx + (instructions[blockType] || 'Rewrite this block content. Return ONLY the new text.');
+}
+
+function applyBlockResult(obj, blockType, text, t, raw){
+  text = text.trim();
+  if(!text) return;
+
+  if(obj.type === 'textbox'){
+    if(blockType === 'bullets'){
+      // normalise — strip leading dashes/bullets if model added them
+      var lines = text.split('\n').map(function(l){ return l.replace(/^[-•*·\d.]+\s*/,'').trim(); }).filter(Boolean);
+      obj.set('text', lines.join('\n'));
+    } else {
+      obj.set('text', text);
+    }
+    fc.renderAll();
+  }
+}
+
+// overlay hooks are patched directly into loadSlide and resizeCanvas
+
 </script>
 </body>
 </html>
