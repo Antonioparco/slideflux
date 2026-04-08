@@ -1,7 +1,7 @@
 {
   "name": "slideflux",
-  "version": "1.0.0",
-  "description": "Slideflux AI Presentation Builder",
+  "version": "2.0.0",
+  "description": "SlideFlux — AI Presentation Generator",
   "scripts": {
     "dev": "vercel dev",
     "start": "vercel dev",
