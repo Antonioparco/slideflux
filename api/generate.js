@@ -96,35 +96,110 @@ async function addLogo(s, pres, data, pos, withBg, isCover) {
 }
 
 async function buildPptx(slides, theme, pres, logoImg, logoPos, logoWb) {
-  const CW = 960, PW = 10, CH = 540, PH = 5.625;
-  const ix = px => Math.round((px / CW) * PW * 1000) / 1000;
-  const iy = px => Math.round((px / CH) * PH * 1000) / 1000;
+  // ── Design system (matches reference decks exactly) ─────────────────────
+  // Slide: 10" x 5.625" (16:9)
+  const W = 10, H = 5.625;
+  const ML = 0.55, MR = 0.55, CW = W - ML - MR; // margins & content width
+  // Y positions
+  const TY = 0.36;   // title top
+  const SY = 0.90;   // subtitle / eyebrow
+  const CY = 1.15;   // content start
+  const BH = 0.62;   // bullet row height
+  // Font sizes (pt)
+  const F_COVER  = 44;
+  const F_TITLE  = 26;
+  const F_HEAD   = 17;
+  const F_BODY   = 13;
+  const F_CAP    = 10;
+  const F_STAT   = 56;
+  const F_QUOTE  = 24;
+  // Card widths for 3-col (matches deck1: 2.98" per card, 0.12" gap)
+  const CW3 = 2.98, CG3 = 0.12;
+  const CX3 = [ML, ML + CW3 + CG3, ML + (CW3 + CG3) * 2];
+
   const clamp = (v, mn, mx) => Math.max(mn, Math.min(mx, v));
+
+  // shadow factory — never reuse objects (PptxGenJS mutates them)
+  const mk = () => ({ type:"outer", color:"000000", blur:8, offset:2, angle:135, opacity:0.12 });
 
   for (let si = 0; si < slides.length; si++) {
     const sd = slides[si];
+    const lay = sd.layout || 'default';
     const s = pres.addSlide();
     const bgHex = toHex(sd.background || "#FFFFFF") || "FFFFFF";
     s.background = { color: bgHex };
     await addLogo(s, pres, logoImg, logoPos || "top-left", logoWb, si === 0);
 
-    for (const el of (sd.elements || [])) {
-      const x = ix(clamp(el.left   || 0,  -10, 960));
-      const y = iy(clamp(el.top    || 0,  -10, 540));
-      const w = ix(clamp(el.width  || 100,  2, 960));
-      const h = iy(clamp(el.height || 20,   1, 540));
+    // helpers scoped to this slide
+    const txt = (text, x, y, w, h, opts={}) => {
+      if (!text) return;
+      const o = {
+        x, y, w, h,
+        fontSize: opts.sz || F_BODY,
+        fontFace: opts.ff || "Calibri",
+        bold: !!opts.bold, italic: !!opts.it,
+        color: toHex(opts.c || "#1A2320") || "1A2320",
+        align: opts.al || "left", valign: opts.va || "top",
+        wrap: true, margin: [0,0,0,0],
+        lineSpacingMultiple: opts.lh || 1.3,
+      };
+      if (opts.charSpacing) o.charSpacing = opts.charSpacing;
+      s.addText(text, o);
+    };
+    const rect = (x, y, w, h, color, transparency=0) => {
+      s.addShape(pres.shapes.RECTANGLE, {
+        x, y, w, h,
+        fill: { color: toHex(color) || "CCCCCC", transparency },
+        line: { type: "none" },
+      });
+    };
+    const card = (x, y, w, h, headerH, accentCol, bodyAlpha=90) => {
+      s.addShape(pres.shapes.RECTANGLE, { x, y, w, h,
+        fill: { color: toHex(accentCol) || "CCCCCC", transparency: bodyAlpha },
+        line: { color: "DDDDDD", width: 0.5 }, shadow: mk() });
+      s.addShape(pres.shapes.RECTANGLE, { x, y, w, h: headerH,
+        fill: { color: toHex(accentCol) || "CCCCCC", transparency: 0 },
+        line: { type:"none" } });
+    };
+    const imgZone = async (x, y, w, h, src) => {
+      if (!src) return;
+      const d = await prepImg(src);
+      if (d) {
+        try { s.addImage({ data:d, x, y, w, h, sizing:{ type:"cover", w, h } }); }
+        catch(e) { console.error("addImage:", e.message); }
+      }
+    };
+
+    // Extract elements
+    const els = sd.elements || [];
+    // Separate image elements from text/shape elements
+    const imgEls = els.filter(e => e.type === 'image');
+    const textEls = els.filter(e => e.type !== 'image');
+
+    // ── Render elements ────────────────────────────────────────────────────
+    // Process in order — images first (background), then shapes, then text
+    for (const el of els) {
+      const ix = px => Math.round(px / 960 * W * 1000) / 1000;
+      const iy = px => Math.round(px / 540 * H * 1000) / 1000;
+      const ex = ix(clamp(el.left   || 0, -10, 960));
+      const ey = iy(clamp(el.top    || 0, -10, 540));
+      const ew = ix(clamp(el.width  || 100, 2, 960));
+      const eh = iy(clamp(el.height || 20,  1, 540));
 
       if (el.type === "text") {
         const pt     = clamp(Math.round((el.fontSize || 18) * 0.75), 6, 60);
         const colHex = toHex(el.color || "#1A2320") || "1A2320";
         const lh     = el.lineHeight || 1.35;
         const raw    = el.text || "";
+        if (!raw.trim()) continue;
         const baseOpts = {
-          x, y, w, h, fontFace: el.fontFamily || "Calibri",
+          x: ex, y: ey, w: ew, h: eh,
+          fontFace: el.fontFamily || "Calibri",
           bold: !!el.bold, italic: !!el.italic,
           fontSize: pt, color: colHex,
           align: el.align || "left", valign: "top",
-          wrap: true, margin: [2, 4, 2, 4],
+          wrap: true, margin: [0,0,0,0],
+          lineSpacingMultiple: lh,
         };
         if (raw.includes("\n")) {
           const lines = raw.split("\n");
@@ -138,7 +213,7 @@ async function buildPptx(slides, theme, pres, logoImg, logoPos, logoWb) {
                 breakLine: j < lines.length - 1,
               },
             })),
-            { x, y, w, h, valign: "top", wrap: true, margin: [2, 4, 2, 4] }
+            { x: ex, y: ey, w: ew, h: eh, valign: "top", wrap: true, margin: [0,0,0,0] }
           );
         } else {
           s.addText(raw, baseOpts);
@@ -147,18 +222,19 @@ async function buildPptx(slides, theme, pres, logoImg, logoPos, logoWb) {
       } else if (el.type === "image") {
         const d = await prepImg(el.src);
         if (d) {
-          try { s.addImage({ data: d, x, y, w, h, sizing: { type: "cover", w, h } }); }
-          catch (e) { console.error("addImage:", e.message); }
+          try { s.addImage({ data:d, x:ex, y:ey, w:ew, h:eh, sizing:{ type:"cover", w:ew, h:eh } }); }
+          catch(e) { console.error("addImage:", e.message); }
         }
 
       } else if (el.type === "shape") {
-        if (w < 0.01 || h < 0.01) continue;
+        if (ew < 0.01 || eh < 0.01) continue;
         const fill = toHex(el.fill || "#cccccc");
         if (!fill) continue;
-        s.addShape(pres.shapes.RECTANGLE, { x, y, w, h, fill: { color: fill }, line: { color: fill } });
+        s.addShape(pres.shapes.RECTANGLE, { x:ex, y:ey, w:ew, h:eh,
+          fill:{ color:fill }, line:{ color:fill } });
 
       } else if (el.type === "circle") {
-        if (w < 0.01 || h < 0.01) continue;
+        if (ew < 0.01 || eh < 0.01) continue;
         const cfHex = el.fill && el.fill !== "transparent" ? toHex(el.fill) : null;
         const csHex = el.stroke ? toHex(el.stroke) : null;
         if (!cfHex && !csHex) continue;
@@ -166,7 +242,7 @@ async function buildPptx(slides, theme, pres, logoImg, logoPos, logoWb) {
         const cs = csHex
           ? { color: csHex, pt: Math.max(1, Math.round((el.strokeWidth || 2) * 0.75)) }
           : { type: "none" };
-        s.addShape(pres.shapes.ELLIPSE, { x, y, w, h, fill: cf, line: cs });
+        s.addShape(pres.shapes.ELLIPSE, { x:ex, y:ey, w:ew, h:eh, fill:cf, line:cs });
       }
     }
   }
