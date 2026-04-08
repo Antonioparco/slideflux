@@ -197,6 +197,36 @@ input[type=text]::placeholder{color:var(--t3)}
 
 /* Slide preview zoom scale */
 .slide-scale-wrap{transform-origin:top left}
+/* ── EDITOR ── */
+.el-node{cursor:pointer;user-select:none}
+.el-node:hover{outline:1.5px dashed rgba(37,99,235,.45)}
+.el-selected{outline:2px solid #2563EB !important;outline-offset:0px}
+.el-selected.el-node:hover{outline:2px solid #2563EB !important}
+.el-handle{position:absolute;width:9px;height:9px;background:#2563EB;border:1.5px solid #fff;border-radius:2px;z-index:9999;pointer-events:all}
+.el-handle.nw{top:-5px;left:-5px;cursor:nwse-resize}
+.el-handle.ne{top:-5px;right:-5px;cursor:nesw-resize}
+.el-handle.sw{bottom:-5px;left:-5px;cursor:nesw-resize}
+.el-handle.se{bottom:-5px;right:-5px;cursor:nwse-resize}
+.el-handle.n{top:-5px;left:50%;margin-left:-4px;cursor:ns-resize}
+.el-handle.s{bottom:-5px;left:50%;margin-left:-4px;cursor:ns-resize}
+.el-handle.e{right:-5px;top:50%;margin-top:-4px;cursor:ew-resize}
+.el-handle.w{left:-5px;top:50%;margin-top:-4px;cursor:ew-resize}
+.el-move-bar{position:absolute;top:-18px;left:0;right:0;height:16px;background:#2563EB;border-radius:3px 3px 0 0;cursor:move;display:flex;align-items:center;justify-content:center;gap:3px;z-index:9998}
+.el-move-dot{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.6)}
+.el-toolbar{position:fixed;z-index:99999;background:#1e2130;border:1px solid #363d52;border-radius:8px;padding:5px 8px;display:none;align-items:center;gap:4px;box-shadow:0 8px 32px rgba(0,0,0,.5);pointer-events:all;white-space:nowrap}
+.el-toolbar.show{display:flex}
+.etb-btn{padding:4px 8px;border-radius:5px;border:1px solid #363d52;background:#111318;color:#cbd5e1;font-size:10px;cursor:pointer;font-family:'DM Mono',monospace;transition:all .1s;font-weight:600}
+.etb-btn:hover{border-color:#2563EB;color:#fff;background:rgba(37,99,235,.2)}
+.etb-btn.on{background:#1d4ed8;border-color:#2563EB;color:#fff}
+.etb-sep{width:1px;height:16px;background:#363d52;flex-shrink:0}
+.etb-color-wrap{width:22px;height:22px;border-radius:4px;border:1.5px solid #363d52;overflow:hidden;position:relative;flex-shrink:0;cursor:pointer}
+.etb-color-swatch{position:absolute;inset:0;border-radius:2px}
+.etb-color{position:absolute;inset:0;opacity:0;cursor:pointer;width:200%;height:200%;left:-50%;top:-50%}
+.etb-sel{padding:3px 5px;border-radius:5px;border:1px solid #363d52;background:#111318;color:#cbd5e1;font-size:10px;font-family:'DM Mono',monospace;outline:none;cursor:pointer;max-width:90px}
+.etb-sel:focus{border-color:#2563EB}
+.etb-del{color:#ef4444!important;border-color:rgba(239,68,68,.3)!important}
+.etb-del:hover{background:rgba(239,68,68,.15)!important;border-color:#ef4444!important}
+
 </style>
 </head>
 <body>
@@ -506,29 +536,35 @@ function getTheme(sl){
   };
 }
 
+var _elIdx=0;
+
 function imgEl(src,x,y,w,h,kw){
-  // src = base64 or null; kw = keyword for placeholder
+  var idx=_elIdx++;
+  var imgSrc;
   if(src&&src.length>20){
-    return '<img class="sl-img" src="'+escHtml(src)+'" style="left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;object-fit:cover" loading="lazy"/>';
+    imgSrc=escHtml(src);
+  }else{
+    var seed=kw?Math.abs(kw.split('').reduce(function(a,c){return(a*31+c.charCodeAt(0))|0;},0))%1000:Math.floor(Math.random()*999);
+    imgSrc='https://picsum.photos/seed/'+seed+'/'+w+'/'+h;
   }
-  // Picsum placeholder using keyword seed
-  var seed=kw?Math.abs(kw.split('').reduce(function(a,c){return(a*31+c.charCodeAt(0))|0;},0))%1000:Math.floor(Math.random()*999);
-  var url='https://picsum.photos/seed/'+seed+'/'+w+'/'+h;
-  return '<img class="sl-img" src="'+url+'" style="left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;object-fit:cover" loading="lazy" onerror="this.style.background=\'#1e2130\'"/>';
+  return '<img class="sl-img el-node" data-el="'+idx+'" data-type="img" data-kw="'+escHtml(kw||'')+'" src="'+imgSrc+'" style="left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;object-fit:cover;cursor:pointer" loading="lazy" onerror="this.style.background=\'#1e2130\'"/>';
 }
 
 function rectEl(x,y,w,h,fill,opacity){
+  var idx=_elIdx++;
   var op=opacity!==undefined?opacity:1;
-  return '<div class="sl-rect" style="left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;background:'+fill+';opacity:'+op+'"></div>';
+  return '<div class="sl-rect el-node" data-el="'+idx+'" data-type="rect" style="left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;background:'+fill+';opacity:'+op+'"></div>';
 }
 
 function circleEl(x,y,w,h,fill,borderColor,borderW){
+  var idx=_elIdx++;
   var border=borderColor?'border:'+(borderW||2)+'px solid '+borderColor+';':'';
-  return '<div class="sl-circle" style="left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;background:'+(fill||'transparent')+';'+border+'"></div>';
+  return '<div class="sl-circle el-node" data-el="'+idx+'" data-type="circle" style="left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;background:'+(fill||'transparent')+';'+border+'"></div>';
 }
 
 function txtEl(text,x,y,w,h,sz,opts){
   opts=opts||{};
+  var idx=_elIdx++;
   var style='left:'+x+'px;top:'+y+'px;width:'+w+'px;'+(h?'height:'+h+'px;':'')
     +'font-size:'+sz+'px;'
     +'color:'+(opts.c||'#FFFFFF')+';'
@@ -538,9 +574,9 @@ function txtEl(text,x,y,w,h,sz,opts){
     +'text-align:'+(opts.al||'left')+';'
     +'line-height:'+(opts.lh||1.35)+';'
     +'letter-spacing:'+(opts.ls||0)+'px;'
-    +'overflow:hidden;'
-    +(h?'display:flex;flex-direction:column;justify-content:'+(opts.va||'flex-start')+';':'');
-  return '<div class="sl-text" style="'+style+'">'+escHtml(text)+'</div>';
+    +'cursor:pointer;'
+    +(h?'overflow:hidden;display:flex;flex-direction:column;justify-content:'+(opts.va||'flex-start')+';':'overflow:hidden;');
+  return '<div class="sl-text el-node" data-el="'+idx+'" data-type="text" data-sz="'+sz+'" data-c="'+escHtml(opts.c||'#FFFFFF')+'" data-bold="'+(opts.bold?1:0)+'" data-it="'+(opts.it?1:0)+'" data-al="'+(opts.al||'left')+'" style="'+style+'">'+escHtml(text)+'</div>';
 }
 
 function bulletsHtml(items,x,y,w,sz,col,bh){
@@ -552,6 +588,7 @@ function bulletsHtml(items,x,y,w,sz,col,bh){
 }
 
 function renderSlideHtml(sl,imgMap){
+  _elIdx=0;
   var t=getTheme(sl);
   var lay=sl.layout||'default';
   var imgs=imgMap||{};
@@ -1061,15 +1098,7 @@ async function doExport(){
   }
 }
 
-// ── KEYBOARD SHORTCUTS ────────────────────────────────────────────────────────
-document.addEventListener('keydown',function(e){
-  var tag=(document.activeElement||{}).tagName||'';
-  var editing=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT';
-  if(editing)return;
-  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();nav(-1);}
-  else if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();nav(1);}
-  else if((e.key==='d'||e.key==='D')&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(deck)dupSlide(cur);}
-});
+// Keyboard shortcuts moved to editor engine
 
 // ── RESIZE ────────────────────────────────────────────────────────────────────
 window.addEventListener('resize',scaleSlide);
@@ -1077,5 +1106,353 @@ window.addEventListener('resize',scaleSlide);
 // ── INIT ──────────────────────────────────────────────────────────────────────
 scaleSlide();
 </script>
+
+<!-- ── ELEMENT TOOLBAR ── -->
+<div class="el-toolbar" id="el-toolbar">
+  <button class="etb-btn" id="etb-bold" onclick="edTog('bold')" title="Bold">B</button>
+  <button class="etb-btn" id="etb-it" onclick="edTog('italic')" title="Italic"><i>I</i></button>
+  <div class="etb-sep"></div>
+  <button class="etb-btn" id="etb-al-l" onclick="edAlign('left')" title="Align left">L</button>
+  <button class="etb-btn" id="etb-al-c" onclick="edAlign('center')" title="Align center">C</button>
+  <button class="etb-btn" id="etb-al-r" onclick="edAlign('right')" title="Align right">R</button>
+  <div class="etb-sep"></div>
+  <select class="etb-sel" id="etb-sz" onchange="edFontSize(this.value)" title="Font size">
+    <option value="9">9</option><option value="11">11</option><option value="13">13</option>
+    <option value="15">15</option><option value="18">18</option><option value="22">22</option>
+    <option value="26">26</option><option value="30">30</option><option value="36">36</option>
+    <option value="44">44</option><option value="58">58</option><option value="74">74</option>
+  </select>
+  <div class="etb-sep"></div>
+  <div class="etb-color-wrap" title="Text/fill colour">
+    <div class="etb-color-swatch" id="etb-cswatch" style="background:#fff"></div>
+    <input type="color" class="etb-color" id="etb-color" value="#ffffff" oninput="edColor(this.value)"/>
+  </div>
+  <div class="etb-sep"></div>
+  <button class="etb-btn etb-del" onclick="edDelete()" title="Delete element">✕</button>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+// EDITOR ENGINE
+// ════════════════════════════════════════════════════════════════════════════
+
+var edSel=null;       // currently selected DOM element
+var edSlide=null;     // slide container DOM element
+var edScale=1;        // current canvas scale factor
+var edDragging=false, edResizing=false;
+var edDragSX=0,edDragSY=0,edDragOX=0,edDragOY=0;
+var edResizeDir='',edResizeSX=0,edResizeSY=0;
+var edResizeOW=0,edResizeOH=0,edResizeOX=0,edResizeOY=0;
+
+// ── Initialise editor on a newly rendered slide ───────────────────────────
+function edInit(){
+  var wrap=document.getElementById('slide-display');
+  if(!wrap)return;
+  edSlide=wrap.querySelector('.slide');
+  if(!edSlide)return;
+  edDeselect();
+
+  // Click handler — select element
+  edSlide.addEventListener('mousedown',function(e){
+    var node=e.target.closest('.el-node');
+    if(!node){edDeselect();return;}
+    e.preventDefault();
+    edSelect(node);
+    // Start drag
+    edDragging=true;
+    edDragSX=e.clientX;edDragSY=e.clientY;
+    edDragOX=parseFloat(node.style.left)||0;
+    edDragOY=parseFloat(node.style.top)||0;
+  },true);
+
+  // Double-click text — inline edit
+  edSlide.addEventListener('dblclick',function(e){
+    var node=e.target.closest('.el-node');
+    if(!node||node.dataset.type!=='text')return;
+    e.preventDefault();
+    edInlineEdit(node);
+  },true);
+}
+
+function edSelect(node){
+  edDeselect();
+  edSel=node;
+  node.classList.add('el-selected');
+  // Add move bar + resize handles
+  edAddHandles(node);
+  edShowToolbar(node);
+}
+
+function edDeselect(){
+  if(edSel){
+    edSel.classList.remove('el-selected');
+    // Remove handles
+    var old=document.querySelectorAll('.el-handle,.el-move-bar');
+    old.forEach(function(h){h.remove();});
+    edSel=null;
+  }
+  edHideToolbar();
+}
+
+function edAddHandles(node){
+  var dirs=['nw','ne','sw','se','n','s','e','w'];
+  dirs.forEach(function(d){
+    var h=document.createElement('div');
+    h.className='el-handle '+d;
+    h.dataset.dir=d;
+    node.appendChild(h);
+    h.addEventListener('mousedown',function(e){
+      e.stopPropagation();e.preventDefault();
+      edResizing=true;edDragging=false;
+      edResizeDir=d;
+      edResizeSX=e.clientX;edResizeSY=e.clientY;
+      edResizeOW=parseFloat(node.style.width)||node.offsetWidth;
+      edResizeOH=parseFloat(node.style.height)||node.offsetHeight;
+      edResizeOX=parseFloat(node.style.left)||0;
+      edResizeOY=parseFloat(node.style.top)||0;
+    });
+  });
+  // Move bar
+  var mb=document.createElement('div');
+  mb.className='el-move-bar';
+  for(var i=0;i<5;i++){var d=document.createElement('div');d.className='el-move-dot';mb.appendChild(d);}
+  node.appendChild(mb);
+  mb.addEventListener('mousedown',function(e){
+    e.stopPropagation();e.preventDefault();
+    edDragging=true;edResizing=false;
+    edDragSX=e.clientX;edDragSY=e.clientY;
+    edDragOX=parseFloat(node.style.left)||0;
+    edDragOY=parseFloat(node.style.top)||0;
+  });
+}
+
+// ── Global mousemove / mouseup ────────────────────────────────────────────
+document.addEventListener('mousemove',function(e){
+  if(!edSel)return;
+  var sc=edGetScale();
+
+  if(edDragging){
+    var dx=(e.clientX-edDragSX)/sc, dy=(e.clientY-edDragSY)/sc;
+    var nx=Math.round(edDragOX+dx), ny=Math.round(edDragOY+dy);
+    nx=Math.max(-200,Math.min(nx,1100));
+    ny=Math.max(-100,Math.min(ny,640));
+    edSel.style.left=nx+'px';
+    edSel.style.top=ny+'px';
+    edUpdateToolbarPos();
+  }
+
+  if(edResizing){
+    var dx2=(e.clientX-edResizeSX)/sc, dy2=(e.clientY-edResizeSY)/sc;
+    var d=edResizeDir;
+    var nw=edResizeOW, nh=edResizeOH, nx2=edResizeOX, ny2=edResizeOY;
+    if(d.indexOf('e')!==-1) nw=Math.max(20,edResizeOW+dx2);
+    if(d.indexOf('s')!==-1) nh=Math.max(10,edResizeOH+dy2);
+    if(d.indexOf('w')!==-1){nw=Math.max(20,edResizeOW-dx2);nx2=edResizeOX+edResizeOW-nw;}
+    if(d.indexOf('n')!==-1){nh=Math.max(10,edResizeOH-dy2);ny2=edResizeOY+edResizeOH-nh;}
+    edSel.style.width=Math.round(nw)+'px';
+    if(edSel.style.height||d.indexOf('s')!==-1||d.indexOf('n')!==-1)
+      edSel.style.height=Math.round(nh)+'px';
+    edSel.style.left=Math.round(nx2)+'px';
+    edSel.style.top=Math.round(ny2)+'px';
+    edUpdateToolbarPos();
+  }
+});
+
+document.addEventListener('mouseup',function(){
+  edDragging=false;edResizing=false;
+});
+
+// ── Toolbar ───────────────────────────────────────────────────────────────
+function edShowToolbar(node){
+  var tb=document.getElementById('el-toolbar');
+  tb.classList.add('show');
+  // Update state
+  if(node.dataset.type==='text'){
+    document.getElementById('etb-bold').classList.toggle('on',node.style.fontWeight==='700'||node.style.fontWeight==='bold');
+    document.getElementById('etb-it').classList.toggle('on',node.style.fontStyle==='italic');
+    var sz=parseInt(node.style.fontSize)||18;
+    // Pick closest option
+    var sel=document.getElementById('etb-sz');
+    var closest=Array.from(sel.options).reduce(function(a,b){return Math.abs(parseInt(b.value)-sz)<Math.abs(parseInt(a.value)-sz)?b:a;});
+    sel.value=closest.value;
+    var col=node.style.color||'#ffffff';
+    document.getElementById('etb-color').value=rgbToHex(col);
+    document.getElementById('etb-cswatch').style.background=col;
+    // Show/hide font controls
+    document.getElementById('etb-bold').style.display='';
+    document.getElementById('etb-it').style.display='';
+    document.getElementById('etb-sz').style.display='';
+    document.getElementById('etb-al-l').style.display='';
+    document.getElementById('etb-al-c').style.display='';
+    document.getElementById('etb-al-r').style.display='';
+  }else{
+    // Non-text: hide text-only controls
+    document.getElementById('etb-bold').style.display='none';
+    document.getElementById('etb-it').style.display='none';
+    document.getElementById('etb-sz').style.display='none';
+    document.getElementById('etb-al-l').style.display='none';
+    document.getElementById('etb-al-c').style.display='none';
+    document.getElementById('etb-al-r').style.display='none';
+    var bg=node.style.background||node.style.backgroundColor||'#888888';
+    document.getElementById('etb-color').value=rgbToHex(bg);
+    document.getElementById('etb-cswatch').style.background=bg;
+  }
+  edUpdateToolbarPos();
+}
+
+function edHideToolbar(){
+  document.getElementById('el-toolbar').classList.remove('show');
+}
+
+function edUpdateToolbarPos(){
+  if(!edSel)return;
+  var tb=document.getElementById('el-toolbar');
+  var rect=edSel.getBoundingClientRect();
+  var tbH=tb.offsetHeight||36;
+  var top=rect.top-tbH-8;
+  if(top<4)top=rect.bottom+8;
+  tb.style.top=Math.max(4,top)+'px';
+  tb.style.left=Math.max(4,Math.min(rect.left,window.innerWidth-tb.offsetWidth-4))+'px';
+}
+
+function edGetScale(){
+  var wrap=document.getElementById('slide-wrap');
+  if(!wrap)return 1;
+  var m=wrap.style.transform.match(/scale\(([^)]+)\)/);
+  return m?parseFloat(m[1]):1;
+}
+
+// ── Edit actions ──────────────────────────────────────────────────────────
+function edTog(prop){
+  if(!edSel||edSel.dataset.type!=='text')return;
+  if(prop==='bold'){
+    var isBold=edSel.style.fontWeight==='700'||edSel.style.fontWeight==='bold';
+    edSel.style.fontWeight=isBold?'400':'700';
+    document.getElementById('etb-bold').classList.toggle('on',!isBold);
+  }else if(prop==='italic'){
+    var isIt=edSel.style.fontStyle==='italic';
+    edSel.style.fontStyle=isIt?'normal':'italic';
+    document.getElementById('etb-it').classList.toggle('on',!isIt);
+  }
+}
+
+function edAlign(al){
+  if(!edSel||edSel.dataset.type!=='text')return;
+  edSel.style.textAlign=al;
+  ['l','c','r'].forEach(function(a){
+    document.getElementById('etb-al-'+a).classList.toggle('on',
+      (a==='l'&&al==='left')||(a==='c'&&al==='center')||(a==='r'&&al==='right'));
+  });
+}
+
+function edFontSize(v){
+  if(!edSel||edSel.dataset.type!=='text')return;
+  edSel.style.fontSize=v+'px';
+}
+
+function edColor(v){
+  if(!edSel)return;
+  document.getElementById('etb-cswatch').style.background=v;
+  if(edSel.dataset.type==='text'){
+    edSel.style.color=v;
+  }else{
+    // Shape/rect/circle — change background
+    edSel.style.background=v;
+    edSel.style.backgroundColor=v;
+  }
+}
+
+function edDelete(){
+  if(!edSel)return;
+  edSel.remove();
+  edSel=null;
+  edHideToolbar();
+}
+
+// ── Inline text editing ───────────────────────────────────────────────────
+function edInlineEdit(node){
+  edHideToolbar();
+  // Remove handles temporarily
+  node.querySelectorAll('.el-handle,.el-move-bar').forEach(function(h){h.remove();});
+  // Make editable
+  node.contentEditable='true';
+  node.style.cursor='text';
+  node.style.overflow='visible';
+  node.style.outline='2px solid #22d3ee';
+  node.focus();
+  // Select all text
+  var range=document.createRange();
+  range.selectNodeContents(node);
+  var sel2=window.getSelection();
+  sel2.removeAllRanges();
+  sel2.addRange(range);
+
+  function done(){
+    node.contentEditable='false';
+    node.style.cursor='pointer';
+    node.style.outline='2px solid #2563EB';
+    node.removeEventListener('blur',done);
+    node.removeEventListener('keydown',onKey);
+    edAddHandles(node);
+    edShowToolbar(node);
+  }
+  function onKey(e){
+    if(e.key==='Escape'){done();}
+    e.stopPropagation();
+  }
+  node.addEventListener('blur',done);
+  node.addEventListener('keydown',onKey);
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────
+document.addEventListener('keydown',function(e){
+  var tag=(document.activeElement||{}).tagName||'';
+  var editing=tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||
+    (document.activeElement&&document.activeElement.contentEditable==='true');
+  if(editing)return;
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();nav(-1);return;}
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();nav(1);return;}
+  if((e.key==='Delete'||e.key==='Backspace')&&edSel){e.preventDefault();edDelete();return;}
+  if((e.key==='d'||e.key==='D')&&(e.ctrlKey||e.metaKey)){e.preventDefault();if(deck)dupSlide(cur);return;}
+  if(e.key==='Escape'){edDeselect();}
+  // Arrow nudge selected element
+  if(edSel&&!e.ctrlKey&&!e.metaKey){
+    var step=e.shiftKey?10:1;
+    if(e.key==='ArrowLeft'){e.preventDefault();edSel.style.left=(parseFloat(edSel.style.left)||0)-step+'px';edUpdateToolbarPos();}
+    else if(e.key==='ArrowRight'){e.preventDefault();edSel.style.left=(parseFloat(edSel.style.left)||0)+step+'px';edUpdateToolbarPos();}
+    else if(e.key==='ArrowUp'){e.preventDefault();edSel.style.top=(parseFloat(edSel.style.top)||0)-step+'px';edUpdateToolbarPos();}
+    else if(e.key==='ArrowDown'){e.preventDefault();edSel.style.top=(parseFloat(edSel.style.top)||0)+step+'px';edUpdateToolbarPos();}
+  }
+});
+
+// ── Utility ───────────────────────────────────────────────────────────────
+function rgbToHex(c){
+  if(!c)return'#888888';
+  if(c.startsWith('#'))return c;
+  var m=c.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+  if(m)return'#'+[m[1],m[2],m[3]].map(function(v){return('0'+parseInt(v).toString(16)).slice(-2);}).join('');
+  return'#888888';
+}
+
+// ── Hook into renderCurrentSlide ─────────────────────────────────────────
+var _origRender=renderCurrentSlide;
+renderCurrentSlide=function(){
+  _origRender();
+  // Small delay to let DOM settle
+  setTimeout(edInit,50);
+};
+
+// Close toolbar on outside click
+document.addEventListener('mousedown',function(e){
+  var tb=document.getElementById('el-toolbar');
+  if(tb&&!tb.contains(e.target)&&edSel&&!edSel.contains(e.target)){
+    // Don't deselect if clicking a handle
+    if(!e.target.classList.contains('el-handle')&&!e.target.classList.contains('el-move-bar')&&!e.target.closest('.el-move-bar')){
+      edDeselect();
+    }
+  }
+},true);
+</script>
+
 </body>
 </html>
