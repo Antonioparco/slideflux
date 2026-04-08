@@ -2,8 +2,16 @@
   "name": "slideflux",
   "version": "1.0.0",
   "description": "Slideflux AI Presentation Builder",
+  "scripts": {
+    "dev": "vercel dev",
+    "start": "vercel dev",
+    "deploy": "vercel --prod"
+  },
   "dependencies": {
     "pptxgenjs": "^3.12.0"
+  },
+  "devDependencies": {
+    "vercel": "latest"
   },
   "engines": {
     "node": ">=18"
