@@ -193,24 +193,32 @@ module.exports = async function handler(req, res) {
 
     if (action === "outline") {
       const count = Math.max(2, Math.min(20, parseInt(slideCount) || 8));
-      const prompt = `You are an expert presentation consultant. Create a ${count}-slide presentation.
+      const prompt = `You are a world-class presentation designer. Create a ${count}-slide deck.
 USER INPUT:\n${input}
 
-STRICT RULES:
-- "heading": specific data-driven headline e.g. "Solar Costs Fell 89% in One Decade" NOT "Cost Trends"
-- "bullets": EXACTLY 4 bullets, each a complete sentence 15-25 words with real numbers/data
-- "paragraph": ALWAYS write 40-55 words of expert prose insight. Never omit.
-- "subheading": 12-18 words for cover/closing slides only
-- "stat": most striking number with units for stat layout
-- "quote": realistic expert quote 20-30 words for quote layout
-- "author": "Name, Title, Org" for quote layout
-- First slide: layout "cover-center", dark:true
-- Last slide: layout "closing", dark:true
-- Mix layouts — use stat/quote/timeline/comparison/two-col to vary the deck
+CONTENT BUDGET — these limits are HARD, never exceed them:
+- "heading": MAX 8 words. Sharp, specific, data-driven. e.g. "Solar Costs Fell 89% Since 2010" not "Cost Trends"
+- "bullets": MAX 3 bullets. Each MAX 8 words. No full sentences. Use fragments like "↑42% YoY revenue growth"
+- "paragraph": MAX 20 words. Only include on text-heavy layouts (default, title-body, two-col). Leave EMPTY "" on all image, stat, quote, cover, closing layouts.
+- "subheading": MAX 10 words. Only on cover and closing slides.
+- "stat": single striking number with unit e.g. "$4.2B" or "89%" or "3.2×"
+- "quote": MAX 15 words. Punchy, attributed.
+- "author": "First Last, Title" — short
+
+LAYOUT RULES:
+- Slide 1: layout "cover-center", dark:true — cinematic full-image cover
+- Last slide: layout "closing", dark:true — full-image close
+- Use image layouts (img-full, img-right, img-left, img-hero) for at least 30% of slides
+- For image layouts paragraph MUST be ""
+- Mix variety: never use the same layout twice in a row
+- Use stat layout when there is a striking number
+- Use quote layout when there is a strong quote or claim
+
+IMAGEKEY: always provide a vivid 3-word Pexels search term matching the slide topic e.g. "solar panels desert"
 
 Return ONLY a raw JSON array of exactly ${count} objects. No markdown, no fences.
-Each object must have ALL these exact fields:
-{"title":"3-6 words","type":"title|content|data|quote|cta","dark":true,"layout":"cover-center|cover-split|cover-circle|cover-dark|default|two-col|three-col|title-body|quote|big-statement|agenda|closing|stat|three-stats|timeline|four-icons|two-icons|comparison|process|pyramid|img-right|img-left|img-full|img-top|two-images|three-images|img-mosaic|img-hero","heading":"specific headline","subheading":"","bullets":["Sentence one with data.","Sentence two.","Sentence three.","Sentence four."],"paragraph":"40-55 word expert insight paragraph.","stat":"","quote":"","author":"","imageKeyword":"3-5 words","speakerNote":"one sentence"}`;
+Each object MUST have ALL these exact fields — no extras, no missing:
+{"title":"max 5 words","type":"title|content|data|quote|cta","dark":false,"layout":"cover-center|cover-split|cover-circle|cover-dark|default|two-col|three-col|title-body|quote|big-statement|agenda|closing|stat|three-stats|timeline|four-icons|two-icons|comparison|process|pyramid|img-right|img-left|img-full|img-top|two-images|three-images|img-mosaic|img-hero","heading":"max 8 words","subheading":"","bullets":["max 8 words","max 8 words","max 8 words"],"paragraph":"","stat":"","quote":"","author":"","imageKeyword":"3 vivid words","speakerNote":"one sentence"}`;
 
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",

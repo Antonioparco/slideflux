@@ -494,6 +494,39 @@ function mkSlide(sl,idx,t,isDark){
   var os=[];
   var imgs=(slides[idx]&&slides[idx]._imgs)||{};
 
+  // ── Normalise content to hard limits so nothing ever overflows ──────────
+  // Heading: max 8 words
+  var rawHead=sl.heading||sl.title||'';
+  var headWords=rawHead.trim().split(/\s+/);
+  if(headWords.length>8) rawHead=headWords.slice(0,8).join(' ')+'…';
+  sl.heading=rawHead;
+
+  // Bullets: max 3, each max 8 words
+  var rawBullets=(sl.bullets||[]).slice(0,3).map(function(b){
+    var ws=String(b).trim().split(/\s+/);
+    return ws.length>8?ws.slice(0,8).join(' ')+'…':String(b).trim();
+  });
+  sl.bullets=rawBullets;
+
+  // Paragraph: strip completely from layouts that have no room
+  var noParaLayouts=['cover-center','cover-split','cover-circle','cover-dark',
+    'closing','stat','three-stats','quote','big-statement','img-full','img-right',
+    'img-left','img-top','img-hero','img-mosaic','two-images','three-images',
+    'four-icons','two-icons','timeline'];
+  if(noParaLayouts.indexOf(lay)!==-1) sl.paragraph='';
+
+  // Paragraph: max 20 words
+  if(sl.paragraph){
+    var pw=sl.paragraph.trim().split(/\s+/);
+    if(pw.length>20) sl.paragraph=pw.slice(0,20).join(' ')+'…';
+  }
+
+  // Subheading: max 10 words
+  if(sl.subheading){
+    var sw=sl.subheading.trim().split(/\s+/);
+    if(sw.length>10) sl.subheading=sw.slice(0,10).join(' ')+'…';
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────────
   function R(x,y,w,h,fill,sel){
     return new fabric.Rect({left:px(x),top:px(y),width:px(w),height:px(h),
@@ -1068,19 +1101,62 @@ async function suggestSlotImg(k){
   try{
     var kwEl=document.getElementById('isl-kw-'+k);
     var kw=(kwEl&&kwEl.value.trim())||(slides[cur]&&slides[cur].imageKeyword)||'abstract';
-    // Use Unsplash Source — actually searches by keyword, 960x540 dimensions
-    var url='https://source.unsplash.com/960x540/?'+encodeURIComponent(kw)+'&sig='+Date.now();
-    var b64=await new Promise(function(res,rej){
-      var img=new Image();img.crossOrigin='anonymous';
-      img.onload=function(){try{var c=document.createElement('canvas');c.width=img.naturalWidth||960;c.height=img.naturalHeight||540;c.getContext('2d').drawImage(img,0,0);res(c.toDataURL('image/jpeg',0.88));}catch(e){
-        // Canvas tainted by CORS — fall back to direct URL
-        res(url);
-      }};
-      img.onerror=function(){rej(new Error('Failed to load image. Try a different keyword.'));};
-      img.src=url;
-    });
+    // Pexels curated search — CORS-friendly, no API key needed for embed URLs
+    // We fetch their search page JSON endpoint which returns public image URLs
+    var page=Math.floor(Math.random()*5)+1;
+    var apiUrl='https://api.pexels.com/v1/search?query='+encodeURIComponent(kw)+'&per_page=15&page='+page+'&orientation=landscape';
+    var pexKey=typeof PEXELS_API_KEY!=='undefined'?PEXELS_API_KEY:'';
+    var photos=null;
+    if(pexKey){
+      // If operator has set a Pexels API key, use the proper API
+      var pr=await fetch(apiUrl,{headers:{Authorization:pexKey}});
+      var pd=await pr.json();
+      photos=pd.photos||[];
+    }
+    if(!photos||!photos.length){
+      // Fallback: use Lorem Picsum with a keyword-derived seed (always works, no CORS)
+      var seed=kw.split('').reduce(function(a,c){return(a*31+c.charCodeAt(0))|0;},0);
+      seed=Math.abs(seed)%1000;
+      // Pick a different image each click by offsetting seed with timestamp
+      seed=(seed+Math.floor(Date.now()/10000))%1000;
+      var fallbackUrl='https://picsum.photos/seed/'+seed+'/960/540';
+      var b64=await urlToB64(fallbackUrl);
+      setSlotImg(k,b64);toast('Image added (generic — type a keyword for better results)');
+      return;
+    }
+    // Pick a random photo from results
+    var pick=photos[Math.floor(Math.random()*photos.length)];
+    var imgUrl=pick.src.landscape||pick.src.large2x||pick.src.large;
+    var b64=await urlToB64(imgUrl);
     setSlotImg(k,b64);toast('Image added');
-  }catch(e){toast(e.message);}
+  }catch(e){
+    // Last resort fallback
+    try{
+      var fb='https://picsum.photos/seed/'+Math.floor(Math.random()*999)+'/960/540';
+      var b64=await urlToB64(fb);
+      setSlotImg(k,b64);toast('Image added');
+    }catch(e2){toast('Could not load image: '+e2.message);}
+  }
+}
+
+async function urlToB64(url){
+  return new Promise(function(res,rej){
+    var img=new Image();
+    img.crossOrigin='anonymous';
+    img.onload=function(){
+      try{
+        var c=document.createElement('canvas');
+        c.width=img.naturalWidth||960;c.height=img.naturalHeight||540;
+        c.getContext('2d').drawImage(img,0,0);
+        res(c.toDataURL('image/jpeg',0.88));
+      }catch(e){
+        // CORS taint — return the URL directly, image will still display in canvas
+        res(url);
+      }
+    };
+    img.onerror=function(){rej(new Error('Image failed to load'));};
+    img.src=url+'?t='+Date.now();
+  });
 }
 function uploadSlotImg(k){document.getElementById('isl-in-'+k).click();}
 function handleSlotUpload(inp,k){if(!inp.files[0])return;var r=new FileReader();r.onload=function(ev){setSlotImg(k,ev.target.result);toast('Image uploaded');};r.readAsDataURL(inp.files[0]);inp.value='';}
