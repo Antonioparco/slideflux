@@ -43,6 +43,19 @@ function alpha(hex, pct) {
   return hex + a;
 }
 
+function cssAlpha(c) {
+  const m = String(c||"").match(/rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+(?:\s*,\s*([\d.]+))?\s*\)/i);
+  return m && m[1] !== undefined ? Math.max(0, Math.min(1, parseFloat(m[1]))) : 1;
+}
+
+function px(v) {
+  return (parseFloat(v)||0) / 96;
+}
+
+function pxFont(v) {
+  return Math.max(6, Math.round((parseFloat(v)||18) * 0.75));
+}
+
 // ── Image helpers ────────────────────────────────────────────────────────────
 async function fetchB64(url) {
   try {
@@ -416,6 +429,49 @@ async function buildSlide(s, pres, sd, theme, logoImg, logoPos, logoWb, isFirst)
 }
 
 // ── Main PPTX builder ────────────────────────────────────────────────────────
+async function buildCustomSlide(s, pres, sd, theme, logoImg, logoPos, logoWb, isFirst) {
+  const isDark = !!sd.dark;
+  const BG = toHex(sd._customBg) || (isDark ? theme.dark : theme.light);
+  const TC = isDark ? "FFFFFF" : theme.text;
+  s.background = { color: BG };
+  await addLogo(s, pres, logoImg, logoPos||"top-left", logoWb, isFirst);
+
+  for (const el of (sd._elements||[])) {
+    const x=px(el.x), y=px(el.y), w=Math.max(0.02,px(el.w)), h=Math.max(0.02,px(el.h));
+    if (el.type === "img") {
+      const d = await prepImg(el.src);
+      if (d) { try { s.addImage({data:d,x,y,w,h,sizing:{type:"cover",w,h}}); } catch(e){} }
+    } else if (el.type === "rect" || el.type === "circle") {
+      const shape = el.type === "circle" ? pres.shapes.OVAL : pres.shapes.RECTANGLE;
+      const fill = toHex(el.fill) || "CCCCCC";
+      const op = Math.max(0, Math.min(1, (el.opacity ?? 1) * cssAlpha(el.fill)));
+      const opts = {
+        x,y,w,h,
+        fill:{color:fill, transparency:Math.round((1-op)*100)},
+        line:{type:"none"},
+      };
+      const border = toHex(el.borderColor);
+      if (border && (parseFloat(el.borderWidth)||0) > 0) opts.line = {color:border,width:Math.max(0.25,(parseFloat(el.borderWidth)||1)*0.75)};
+      s.addShape(shape, opts);
+    } else if (el.type === "text" && String(el.text||"").trim()) {
+      s.addText(String(el.text), {
+        x,y,w,h,
+        fontSize:pxFont(el.fontSize),
+        fontFace:"Calibri",
+        bold:/bold|^[7-9]00$/.test(String(el.fontWeight||"")),
+        italic:el.fontStyle==="italic",
+        color:toHex(el.color)||TC,
+        align:["left","center","right"].includes(el.textAlign)?el.textAlign:"left",
+        valign:"top",
+        lineSpacingMultiple:parseFloat(el.lineHeight)||1.25,
+        charSpacing:parseFloat(el.letterSpacing)||0,
+        wrap:true,
+        margin:[0,0,0,0],
+      });
+    }
+  }
+}
+
 async function buildPptx(deck, pres, logoImg, logoPos, logoWb) {
   pres.layout = "LAYOUT_16x9";
   pres.title  = deck.title || "Presentation";
@@ -423,16 +479,29 @@ async function buildPptx(deck, pres, logoImg, logoPos, logoWb) {
   for (let i=0; i<deck.slides.length; i++) {
     const sd = deck.slides[i];
     const s  = pres.addSlide();
-    await buildSlide(s, pres, sd, deck.theme, logoImg, logoPos, logoWb, i===0);
+    if (sd._elements && sd._elements.length) {
+      await buildCustomSlide(s, pres, sd, deck.theme, logoImg, logoPos, logoWb, i===0);
+    } else {
+      await buildSlide(s, pres, sd, deck.theme, logoImg, logoPos, logoWb, i===0);
+    }
   }
 }
 
 // ── AI prompt ─────────────────────────────────────────────────────────────────
-function buildPrompt(input, count, style) {
+function buildPrompt(input, count, style, creativeMode) {
   return `You are a world-class presentation designer. Create a ${count}-slide deck.
 
 USER INPUT: ${input}
 STYLE: ${style}
+CREATIVE DIRECTION: ${creativeMode || "boardroom"}
+
+DESIGN BRIEF:
+- Build a clear narrative arc: tension, insight, proof, decision.
+- Make each slide earn its place. Avoid filler, generic claims, and plain bullet dumps.
+- Use strong visual contrast, editorial pacing, and varied slide types.
+- Prefer concise headlines that sound like conclusions, not section labels.
+- When facts are not provided, phrase them as directional insights instead of inventing precise data.
+- Image prompts should be concrete visual briefs, not single nouns.
 
 SLIDE SCHEMA — return ONLY a raw JSON object with this exact structure, no markdown:
 {
@@ -454,8 +523,8 @@ SLIDE SCHEMA — return ONLY a raw JSON object with this exact structure, no mar
       "left": ["header item","bullet 1","bullet 2"],
       "right": ["header item","bullet 1","bullet 2"],
       "cta": "Call to action text — only for closing",
-      "images": ["3-5 word Pexels keyword for each image slot"],
-      "imageKeyword": "3-5 words for main image",
+      "images": ["4-8 word visual search phrase for each image slot"],
+      "imageKeyword": "4-8 word visual search phrase for main image",
       "speakerNote": "One sentence for presenter"
     }
   ]
@@ -472,7 +541,7 @@ STRICT RULES:
 8. "three-stats" requires stats array: [{"value":"...","label":"...","sub":"..."}] × 3
 9. "three-cards" requires cards array: [{"title":"...","body":"..."}] × 3
 10. "comparison" requires left array and right array, first item of each is the column header
-11. images array: provide one keyword per image slot the layout needs
+11. images array: provide one concrete visual phrase per image slot the layout needs
 12. paragraph MUST be empty string "" on: cover, closing, stat, three-stats, quote, big-statement, img-*, two-images, img-mosaic, four-icons, timeline, process
 13. bullets MUST be empty array [] on: stat, three-stats, three-cards, two-cols-cards, comparison, quote, img-mosaic`;
 }
@@ -488,7 +557,7 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({error:"Request body missing or not JSON"});
 
   try {
-    const { action, input, slideCount, style, deck,
+    const { action, input, slideCount, style, creativeMode, deck,
             logoData, logoPos, logoWhiteBg, brandOn, brandColors } = req.body;
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
@@ -496,8 +565,9 @@ module.exports = async function handler(req, res) {
 
     // ── Generate deck outline ──────────────────────────────────────────────
     if (action === "generate") {
+      if (!apiKey) return res.status(500).json({error:"ANTHROPIC_API_KEY is not configured"});
       const count = Math.max(4, Math.min(20, parseInt(slideCount)||8));
-      const prompt = buildPrompt(input, count, style||"midnight");
+      const prompt = buildPrompt(input, count, style||"midnight", creativeMode||"boardroom");
 
       const r = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST",
